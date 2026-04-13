@@ -10,16 +10,9 @@ import {
 import { formatCurrency, formatDate, timeAgo } from "@/lib/utils";
 import {
   X, Upload, FileText, AlertTriangle, CheckCircle2, Clock,
-  Send, Shield, ChevronRight, Search, Plus, Copy, Eye
+  Send, Shield, ChevronRight, Search, Copy, Eye
 } from "lucide-react";
 
-/* ─── Status styles ─────────────────────────────────────────────── */
-const statusStyles: Record<string, { bg: string; text: string; label: string }> = {
-  active: { bg: "bg-[#EBF5EB]", text: "text-[#4A9060]", label: "Active" },
-  expired: { bg: "bg-[#F2EEE8]", text: "text-[#9A9088]", label: "Expired" },
-  pending_signature: { bg: "bg-[#FBF5EC]", text: "text-[#D4A030]", label: "Pending Signature" },
-  disputed: { bg: "bg-[#FEF0EB]", text: "text-[#E05C3A]", label: "Disputed" },
-};
 
 const scoreColors: Record<string, { bg: string; text: string }> = {
   Favorable: { bg: "bg-[#EBF5EB]", text: "text-[#4A9060]" },
@@ -72,8 +65,6 @@ function allAlerts() {
 function ContractPanel({ contract, onClose }: { contract: AgencyContract; onClose: () => void }) {
   const stageStyle = contractStageColors[contract.stage];
   const analysis = contract.aiAnalysis;
-  const signedCount = contract.signatures.filter(s => s.status === "signed").length;
-  const pendingCount = contract.signatures.filter(s => s.status === "pending").length;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
