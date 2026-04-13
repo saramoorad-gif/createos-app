@@ -1053,3 +1053,95 @@ export const exclusivityMap = [
   { creator: "Brianna Cole", category: "Beauty", brand: "Glossier", start: "2026-01-10", end: "2026-04-10" },
   { creator: "Camille Reyes", category: "Grocery", brand: "Whole Foods", start: "2026-04-02", end: "2026-05-02" },
 ];
+
+// ─── Enhanced Messaging System ───────────────────────────────────
+
+export interface MessageThread {
+  id: string;
+  agencyId: string;
+  creatorId: string | null;
+  creatorName: string | null;
+  creatorAvatar: string | null;
+  topic: string;
+  threadType: "creator_facing" | "internal" | "brand_log";
+  lastMessageAt: string;
+  unreadAgency: number;
+  unreadCreator: number;
+}
+
+export interface Message {
+  id: string;
+  threadId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: string;
+  senderType: "creator" | "agency_user";
+  body: string;
+  attachments: { name: string; type: string }[];
+  linkedObjectType: "deal" | "invoice" | "contract" | "campaign" | null;
+  linkedObjectName: string | null;
+  isInternal: boolean;
+  isUrgent: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface CreatorTask {
+  id: string;
+  creatorId: string;
+  title: string;
+  dueDate: string | null;
+  completed: boolean;
+  fromMessage: string | null;
+  createdAt: string;
+}
+
+export interface Announcement {
+  id: string;
+  body: string;
+  sentTo: "all" | "selected";
+  sentAt: string;
+}
+
+export const messageThreads: MessageThread[] = [
+  { id: "mt_01", agencyId: "agency_001", creatorId: "usr_brianna_001", creatorName: "Brianna Cole", creatorAvatar: "BC", topic: "Mejuri Reel #2 feedback", threadType: "creator_facing", lastMessageAt: "2026-04-12T14:35:00Z", unreadAgency: 1, unreadCreator: 0 },
+  { id: "mt_02", agencyId: "agency_001", creatorId: "usr_brianna_001", creatorName: "Brianna Cole", creatorAvatar: "BC", topic: "Aritzia contract review", threadType: "creator_facing", lastMessageAt: "2026-04-11T10:20:00Z", unreadAgency: 0, unreadCreator: 1 },
+  { id: "mt_03", agencyId: "agency_001", creatorId: "usr_jade_001", creatorName: "Jade Park", creatorAvatar: "JP", topic: "Glow Recipe brief questions", threadType: "creator_facing", lastMessageAt: "2026-04-12T11:00:00Z", unreadAgency: 1, unreadCreator: 0 },
+  { id: "mt_04", agencyId: "agency_001", creatorId: "usr_camille_001", creatorName: "Camille Reyes", creatorAvatar: "CR", topic: "Whole Foods content approval", threadType: "creator_facing", lastMessageAt: "2026-04-10T16:00:00Z", unreadAgency: 0, unreadCreator: 0 },
+  { id: "mt_05", agencyId: "agency_001", creatorId: null, creatorName: null, creatorAvatar: null, topic: "Brianna rate increase discussion", threadType: "internal", lastMessageAt: "2026-04-11T14:00:00Z", unreadAgency: 0, unreadCreator: 0 },
+  { id: "mt_06", agencyId: "agency_001", creatorId: null, creatorName: null, creatorAvatar: null, topic: "Q2 campaign planning", threadType: "internal", lastMessageAt: "2026-04-09T09:30:00Z", unreadAgency: 0, unreadCreator: 0 },
+  { id: "mt_07", agencyId: "agency_001", creatorId: null, creatorName: null, creatorAvatar: null, topic: "Glossier — campaign debrief notes", threadType: "brand_log", lastMessageAt: "2026-04-08T15:00:00Z", unreadAgency: 0, unreadCreator: 0 },
+  { id: "mt_08", agencyId: "agency_001", creatorId: null, creatorName: null, creatorAvatar: null, topic: "Whole Foods — brand call recap", threadType: "brand_log", lastMessageAt: "2026-04-07T11:30:00Z", unreadAgency: 0, unreadCreator: 0 },
+];
+
+export const messageData: Message[] = [
+  // Brianna — Mejuri thread
+  { id: "m_01", threadId: "mt_01", senderId: "usr_brianna_001", senderName: "Brianna Cole", senderRole: "Creator", senderType: "creator", body: "Hey! Just finished the first Mejuri reel. Uploading to Google Drive now — should be there in 10 min.", attachments: [], linkedObjectType: "deal", linkedObjectName: "Mejuri — Gold Drop Collection", isInternal: false, isUrgent: false, readAt: "2026-04-12T14:25:00Z", createdAt: "2026-04-12T14:20:00Z" },
+  { id: "m_02", threadId: "mt_01", senderId: "agency_001", senderName: "Jamie Torres", senderRole: "Account Manager", senderType: "agency_user", body: "Amazing, thanks Bri! I'll forward to Mejuri for approval. Quick note — they want the product shot at 0:08 to be a bit longer. Can you do a quick revision?", attachments: [], linkedObjectType: "deal", linkedObjectName: "Mejuri — Gold Drop Collection", isInternal: false, isUrgent: false, readAt: null, createdAt: "2026-04-12T14:35:00Z" },
+  { id: "m_03", threadId: "mt_01", senderId: "usr_brianna_001", senderName: "Brianna Cole", senderRole: "Creator", senderType: "creator", body: "Sure thing! I'll re-edit tonight and upload by morning.", attachments: [], linkedObjectType: null, linkedObjectName: null, isInternal: false, isUrgent: false, readAt: null, createdAt: "2026-04-12T15:10:00Z" },
+
+  // Brianna — Aritzia thread
+  { id: "m_04", threadId: "mt_02", senderId: "agency_001", senderName: "Jamie Torres", senderRole: "Account Manager", senderType: "agency_user", body: "Hey Bri — Aritzia sent over the final contract. I've flagged two concerns: the 90-day exclusivity is very broad (all fashion, not just their competitors) and the kill fee is only 50%. Want to push back on both.", attachments: [{ name: "aritzia-contract-v2.pdf", type: "pdf" }], linkedObjectType: "contract", linkedObjectName: "Aritzia — UGC Partnership", isInternal: false, isUrgent: true, readAt: "2026-04-11T10:30:00Z", createdAt: "2026-04-11T10:00:00Z" },
+  { id: "m_05", threadId: "mt_02", senderId: "usr_brianna_001", senderName: "Brianna Cole", senderRole: "Creator", senderType: "creator", body: "Agreed. Can we negotiate the exclusivity down to just Aritzia direct competitors? And bump the kill fee to 75%? Otherwise I'm good with everything else.", attachments: [], linkedObjectType: null, linkedObjectName: null, isInternal: false, isUrgent: false, readAt: "2026-04-11T10:25:00Z", createdAt: "2026-04-11T10:20:00Z" },
+
+  // Jade — Glow Recipe thread
+  { id: "m_06", threadId: "mt_03", senderId: "usr_jade_001", senderName: "Jade Park", senderRole: "Creator", senderType: "creator", body: "Got the Glow Recipe brief. Quick question — do they want the before/after at the beginning or end of the video?", attachments: [], linkedObjectType: "deal", linkedObjectName: "Glow Recipe — Dew Drops Launch", isInternal: false, isUrgent: false, readAt: null, createdAt: "2026-04-12T11:00:00Z" },
+
+  // Internal — rate discussion
+  { id: "m_07", threadId: "mt_05", senderId: "agency_001", senderName: "Jamie Torres", senderRole: "Account Manager", senderType: "agency_user", body: "Brianna wants to move her influencer base rate to $1,500 starting May. Her engagement and brand demand justify it — she's consistently booking $2K+ deals. Recommend approving.", attachments: [], linkedObjectType: null, linkedObjectName: null, isInternal: true, isUrgent: false, readAt: "2026-04-11T14:10:00Z", createdAt: "2026-04-11T14:00:00Z" },
+  { id: "m_08", threadId: "mt_05", senderId: "agency_001", senderName: "Alex Rivera", senderRole: "Agency Owner", senderType: "agency_user", body: "Approved. Update her rate card and let her know. Also flag this to brands we're currently negotiating with.", attachments: [], linkedObjectType: null, linkedObjectName: null, isInternal: true, isUrgent: false, readAt: null, createdAt: "2026-04-11T15:30:00Z" },
+
+  // Brand log — Glossier
+  { id: "m_09", threadId: "mt_07", senderId: "agency_001", senderName: "Jamie Torres", senderRole: "Account Manager", senderType: "agency_user", body: "Call with Sarah at Glossier — they're happy with the Clean Girl Summer campaign so far. Want to extend to include a holiday campaign in Q4. Budget TBD but they mentioned $20K range. They specifically asked for Brianna and Maya again.", attachments: [{ name: "glossier-call-notes-apr8.pdf", type: "pdf" }], linkedObjectType: "campaign", linkedObjectName: "Glossier Clean Girl Summer", isInternal: true, isUrgent: false, readAt: null, createdAt: "2026-04-08T15:00:00Z" },
+];
+
+export const creatorTasks: CreatorTask[] = [
+  { id: "ct_01", creatorId: "usr_brianna_001", title: "Submit raw files for Mejuri Reel #2", dueDate: "2026-04-15", completed: false, fromMessage: "m_02", createdAt: "2026-04-12T14:35:00Z" },
+  { id: "ct_02", creatorId: "usr_brianna_001", title: "Review Aritzia contract and confirm terms", dueDate: "2026-04-14", completed: false, fromMessage: "m_04", createdAt: "2026-04-11T10:00:00Z" },
+  { id: "ct_03", creatorId: "usr_jade_001", title: "Confirm Glow Recipe before/after placement", dueDate: "2026-04-13", completed: false, fromMessage: "m_06", createdAt: "2026-04-12T11:00:00Z" },
+];
+
+export const announcements: Announcement[] = [
+  { id: "ann_01", body: "Platform update: new rate calculator launched! Check it out in your dashboard → Rate Calculator.", sentTo: "all", sentAt: "2026-04-10T09:00:00Z" },
+  { id: "ann_02", body: "Reminder: please update your media kits with your latest follower counts before end of week.", sentTo: "all", sentAt: "2026-04-07T10:00:00Z" },
+];

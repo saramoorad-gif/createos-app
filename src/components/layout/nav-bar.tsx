@@ -11,6 +11,7 @@ const creatorLinks = [
   { name: "TODAY", href: "/dashboard" },
   { name: "DEALS", href: "/deals" },
   { name: "INVOICES", href: "/invoices" },
+  { name: "INBOX", href: "/inbox" },
   { name: "BRANDS", href: "/brand-radar" },
   { name: "MEDIA KIT", href: "/media-kit" },
 ];
@@ -99,6 +100,9 @@ export function NavBar() {
                 >
                   {link.name}
                   {isActive && <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#C4714A]" />}
+                  {link.name === "INBOX" && (
+                    <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#C4714A]" />
+                  )}
                 </Link>
               );
             })}
