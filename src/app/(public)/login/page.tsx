@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import {
   Sparkles,
   LogIn,
@@ -43,7 +43,8 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const sb = getSupabase();
+    const { error: signInError } = await sb.auth.signInWithPassword({
       email,
       password,
     });
@@ -77,7 +78,8 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    const { error: magicError } = await supabase.auth.signInWithOtp({
+    const sb = getSupabase();
+    const { error: magicError } = await sb.auth.signInWithOtp({
       email,
       options: {
         emailRedirectTo: `${window.location.origin}${redirect}`,

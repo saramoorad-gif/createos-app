@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { supabase, isSupabaseConfigured, type Profile } from "@/lib/supabase";
+import { getSupabase, isSupabaseConfigured, type Profile } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
 type AuthContextType = {
@@ -31,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
-      // Demo mode — use placeholder profile
       setProfile({
         id: "demo",
         full_name: "Brianna Cole",
@@ -45,8 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const sb = getSupabase();
+
+    sb.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
@@ -55,10 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = sb.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
@@ -72,7 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function fetchProfile(userId: string) {
-    const { data } = await supabase
+    const sb = getSupabase();
+    const { data } = await sb
       .from("profiles")
       .select("*")
       .eq("id", userId)
@@ -83,7 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    const sb = getSupabase();
+    await sb.auth.signOut();
     setUser(null);
     setProfile(null);
     window.location.href = "/login";

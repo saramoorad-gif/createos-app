@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { Sparkles, UserPlus, Loader2, AlertCircle } from "lucide-react";
 
 type AccountType = "ugc" | "influencer" | "agency";
@@ -46,7 +46,8 @@ export default function SignUpPage() {
 
     setLoading(true);
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const sb = getSupabase();
+    const { data, error: signUpError } = await sb.auth.signUp({
       email,
       password,
       options: {
@@ -65,7 +66,7 @@ export default function SignUpPage() {
 
     // Create profile record
     if (data.user) {
-      await supabase.from("profiles").insert({
+      await sb.from("profiles").insert({
         id: data.user.id,
         full_name: fullName,
         email,
