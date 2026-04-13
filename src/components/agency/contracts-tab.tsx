@@ -355,7 +355,7 @@ export function ContractsTab() {
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingTemplate, setEditingTemplate] = useState<ContractTemplate | null>(null);
-  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
+  const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
 
   const pending = agencyContracts.filter(c => c.status === "pending_signature").length;
   const active = agencyContracts.filter(c => c.status === "active").length;
@@ -379,7 +379,7 @@ export function ContractsTab() {
   }, [stageFilter, searchQuery]);
 
   const alerts = useMemo(() => {
-    return allAlerts().filter(a => !a.dismissed && !dismissedAlerts.has(a.id));
+    return allAlerts().filter(a => !a.dismissed && !dismissedAlerts.includes(a.id));
   }, [dismissedAlerts]);
 
   const filterPills: { key: StageFilter; label: string }[] = [
@@ -605,7 +605,7 @@ export function ContractsTab() {
                       <p className="text-[13px] font-sans text-[#1C1714] leading-[1.4]">{a.message}</p>
                     </div>
                     <button
-                      onClick={() => setDismissedAlerts(prev => new Set([...prev, a.id]))}
+                      onClick={() => setDismissedAlerts(prev => [...prev, a.id])}
                       className="text-[#9A9088] hover:text-[#1C1714] flex-shrink-0"
                     >
                       <X className="h-4 w-4" />
