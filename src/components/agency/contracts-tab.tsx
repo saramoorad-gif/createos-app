@@ -4,7 +4,7 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { agencyContracts, exclusivityMap, type AgencyContract } from "@/lib/placeholder-data";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { X, Upload, AlertTriangle, FileText, Shield } from "lucide-react";
+import { X, Upload, AlertTriangle } from "lucide-react";
 
 const statusStyles: Record<string, { bg: string; text: string; label: string }> = {
   active: { bg: "bg-[#EBF5EB]", text: "text-[#4A9060]", label: "Active" },

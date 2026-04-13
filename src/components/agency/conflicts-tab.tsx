@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { conflicts, exclusivityMap, type ConflictEntry } from "@/lib/placeholder-data";
+import { conflicts, exclusivityMap } from "@/lib/placeholder-data";
 import { formatDate, timeAgo } from "@/lib/utils";
-import { AlertTriangle, Shield, CheckCircle2, Eye } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 const severityStyles: Record<string, { bg: string; text: string; dot: string }> = {
   high: { bg: "bg-[#FEF0EB]", text: "text-[#E05C3A]", dot: "bg-[#E05C3A]" },

@@ -35,8 +35,6 @@ export function NavBar() {
   const displayName = profile?.full_name || "Creator";
   const initials = displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
-  const links = isAgency ? agencyLinks : creatorLinks;
-
   return (
     <header className="sticky top-0 z-50 w-full h-[52px] bg-[#1C1714] flex items-center px-6">
       {/* Left — Logo */}

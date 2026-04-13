@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ArrowLeft, Search, Star, Pin, ChevronRight, TrendingUp, Users, Briefcase, DollarSign, BarChart3, FileText, MessageSquare } from "lucide-react";
+import { ArrowLeft, Search, Pin, ChevronRight } from "lucide-react";
 import { agencyRoster, type CreatorProfile } from "@/lib/placeholder-data";
 import { formatCurrency } from "@/lib/utils";
 

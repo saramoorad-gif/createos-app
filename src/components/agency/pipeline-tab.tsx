@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import {
   agencyPipeline,
-  agencyRoster,
   dealStageLabels,
   type DealStage,
 } from "@/lib/placeholder-data";
@@ -69,11 +68,9 @@ const activityLog = [
 // ─── Quick-Add Modal ────────────────────────────────────────────────
 function QuickAddModal({
   creator,
-  creatorId,
   onClose,
 }: {
   creator: string;
-  creatorId: string;
   onClose: () => void;
 }) {
   const [brand, setBrand] = useState("");
@@ -386,12 +383,6 @@ export function PipelineTab() {
     .filter((d) => activeStages.includes(d.stage))
     .reduce((sum, d) => sum + d.value, 0);
   const totalCommission = deals.reduce((sum, d) => sum + d.commission, 0);
-
-  const uniqueCreators = useMemo(() => {
-    const map = new Map<string, string>();
-    deals.forEach((d) => map.set(d.creator, d.creatorId));
-    return Array.from(map.entries());
-  }, [deals]);
 
   // Sort deals
   const sortedDeals = useMemo(() => {
@@ -834,7 +825,6 @@ export function PipelineTab() {
       {quickAddCreator && (
         <QuickAddModal
           creator={quickAddCreator.name}
-          creatorId={quickAddCreator.id}
           onClose={() => setQuickAddCreator(null)}
         />
       )}
