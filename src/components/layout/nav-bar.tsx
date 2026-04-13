@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 
 const navLinks = [
   { name: "TODAY", href: "/dashboard" },
@@ -68,9 +68,16 @@ export function NavBar() {
         <div className="h-8 w-8 rounded-full bg-[rgba(247,244,239,0.12)] flex items-center justify-center text-[11px] font-sans font-500 text-[rgba(247,244,239,0.7)]">
           {initials}
         </div>
+        <Link
+          href="/settings"
+          className="text-[rgba(247,244,239,0.3)] hover:text-[rgba(247,244,239,0.7)] transition-colors"
+          title="Settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Link>
         <button
           onClick={signOut}
-          className="text-[rgba(247,244,239,0.3)] hover:text-[rgba(247,244,239,0.7)] transition-colors ml-1"
+          className="text-[rgba(247,244,239,0.3)] hover:text-[rgba(247,244,239,0.7)] transition-colors"
           title="Sign out"
         >
           <LogOut className="h-4 w-4" />

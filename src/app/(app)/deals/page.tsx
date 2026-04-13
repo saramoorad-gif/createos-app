@@ -35,13 +35,18 @@ function DealPanel({ deal, onClose }: { deal: Deal; onClose: () => void }) {
           </button>
         </div>
         <div className="p-6 space-y-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full bg-[#F2EEE8] text-[#9A9088]">
               {dealStageLabels[deal.stage]}
             </span>
             <span className="text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full bg-[#FBF0EA] text-[#C4714A]">
               {deal.deal_type === "ugc" ? "UGC" : "Influencer"}
             </span>
+            {deal.created_by_agency && deal.agency_name && (
+              <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-[#F2EEE8] text-[#9A9088]">
+                Added by {deal.agency_name}
+              </span>
+            )}
           </div>
 
           <div className="h-[3px] w-full bg-[#E5E0D8] rounded-full overflow-hidden">
@@ -142,11 +147,16 @@ export default function DealsPage() {
             className="w-full text-left bg-white border border-[#E5E0D8] rounded-[10px] p-5 hover:border-[#C4714A]/30 transition-colors"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <p className="text-[15px] font-sans font-600 text-[#1C1714]">{deal.brand_name}</p>
                 <span className="text-[10px] font-sans font-500 uppercase tracking-[1px] px-2 py-0.5 rounded-full bg-[#FBF0EA] text-[#C4714A]">
                   {deal.deal_type === "ugc" ? "UGC" : "Influencer"}
                 </span>
+                {deal.created_by_agency && deal.agency_name && (
+                  <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-[#F2EEE8] text-[#9A9088]">
+                    Added by {deal.agency_name}
+                  </span>
+                )}
               </div>
               <p className="text-[20px] font-serif text-[#1C1714]">
                 {deal.value > 0 ? formatCurrency(deal.value) : "TBD"}

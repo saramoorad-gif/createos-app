@@ -29,8 +29,32 @@ export interface Deal {
   exclusivity_days: number | null;
   exclusivity_category: string | null;
   notes: string;
+  created_by_agency: boolean;
+  agency_id: string | null;
+  agency_name: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ActivityLogEntry {
+  id: string;
+  actor_id: string;
+  actor_name: string;
+  actor_type: "creator" | "agency";
+  action: string;
+  action_label: string;
+  target_name: string;
+  created_at: string;
+}
+
+export interface AgencyCreatorLink {
+  agency_id: string;
+  agency_name: string;
+  creator_id: string;
+  creator_name: string;
+  commission_rate: number;
+  status: "active" | "pending" | "disconnected";
+  linked_at: string;
 }
 
 export interface Invoice {
@@ -106,6 +130,9 @@ export const deals: Deal[] = [
     exclusivity_days: 30,
     exclusivity_category: "Beauty",
     notes: "Spring campaign — clean girl aesthetic",
+    created_by_agency: false,
+    agency_id: null,
+    agency_name: null,
     created_at: "2026-01-10T09:00:00Z",
     updated_at: "2026-03-05T14:00:00Z",
   },
@@ -123,6 +150,9 @@ export const deals: Deal[] = [
     exclusivity_days: null,
     exclusivity_category: null,
     notes: "Wellness routine integration, mention subscription",
+    created_by_agency: false,
+    agency_id: null,
+    agency_name: null,
     created_at: "2026-02-20T11:00:00Z",
     updated_at: "2026-04-06T10:00:00Z",
   },
@@ -140,6 +170,9 @@ export const deals: Deal[] = [
     exclusivity_days: 14,
     exclusivity_category: "Jewelry",
     notes: "New collection launch — gold jewelry focus",
+    created_by_agency: true,
+    agency_id: "agency_001",
+    agency_name: "Bright Talent Mgmt",
     created_at: "2026-03-01T08:00:00Z",
     updated_at: "2026-04-01T16:00:00Z",
   },
@@ -157,6 +190,9 @@ export const deals: Deal[] = [
     exclusivity_days: null,
     exclusivity_category: null,
     notes: "Morning routine content, casual vibe",
+    created_by_agency: false,
+    agency_id: null,
+    agency_name: null,
     created_at: "2026-03-15T14:00:00Z",
     updated_at: "2026-04-08T09:00:00Z",
   },
@@ -174,6 +210,9 @@ export const deals: Deal[] = [
     exclusivity_days: 90,
     exclusivity_category: "Fashion",
     notes: "They want whitelisting rights for 90 days",
+    created_by_agency: true,
+    agency_id: "agency_001",
+    agency_name: "Bright Talent Mgmt",
     created_at: "2026-04-02T10:00:00Z",
     updated_at: "2026-04-10T11:00:00Z",
   },
@@ -191,6 +230,9 @@ export const deals: Deal[] = [
     exclusivity_days: null,
     exclusivity_category: null,
     notes: "Want authentic day-in-the-life style",
+    created_by_agency: false,
+    agency_id: null,
+    agency_name: null,
     created_at: "2026-04-05T16:00:00Z",
     updated_at: "2026-04-11T08:00:00Z",
   },
@@ -208,6 +250,9 @@ export const deals: Deal[] = [
     exclusivity_days: null,
     exclusivity_category: "Skincare",
     notes: "DM'd about summer campaign, waiting on brief",
+    created_by_agency: false,
+    agency_id: null,
+    agency_name: null,
     created_at: "2026-04-09T13:00:00Z",
     updated_at: "2026-04-09T13:00:00Z",
   },
@@ -225,6 +270,9 @@ export const deals: Deal[] = [
     exclusivity_days: null,
     exclusivity_category: null,
     notes: "Intro from talent manager, exploratory",
+    created_by_agency: true,
+    agency_id: "agency_001",
+    agency_name: "Bright Talent Mgmt",
     created_at: "2026-04-10T09:00:00Z",
     updated_at: "2026-04-10T09:00:00Z",
   },
@@ -678,3 +726,45 @@ export const mediaKitData = {
   },
   brands_worked_with: ["Glossier", "Mejuri", "Ritual Vitamins", "Oatly", "Notion"],
 };
+
+// ─── Agency System ───────────────────────────────────────────────
+
+export const agencyLink: AgencyCreatorLink = {
+  agency_id: "agency_001",
+  agency_name: "Bright Talent Mgmt",
+  creator_id: "usr_brianna_001",
+  creator_name: "Brianna Cole",
+  commission_rate: 15,
+  status: "active",
+  linked_at: "2025-11-01T10:00:00Z",
+};
+
+export const agencyPermissions = {
+  canDo: [
+    "Create and edit deals on your behalf",
+    "Create invoices for your deals",
+    "Upload contracts to deals",
+    "Add notes to deals",
+    "Move deals between pipeline stages",
+  ],
+  cannotDo: [
+    "Edit your profile or bio",
+    "Change your media kit",
+    "Modify your rate card",
+    "Change your subscription tier",
+    "Access your email inbox",
+  ],
+};
+
+export const activityLog: ActivityLogEntry[] = [
+  { id: "log_01", actor_id: "agency_001", actor_name: "Bright Talent Mgmt", actor_type: "agency", action: "created_deal", action_label: "Created deal", target_name: "Canva — UGC package", created_at: "2026-04-10T09:00:00Z" },
+  { id: "log_02", actor_id: "agency_001", actor_name: "Bright Talent Mgmt", actor_type: "agency", action: "created_deal", action_label: "Created deal", target_name: "Aritzia — UGC partnership", created_at: "2026-04-02T10:00:00Z" },
+  { id: "log_03", actor_id: "agency_001", actor_name: "Bright Talent Mgmt", actor_type: "agency", action: "updated_deal", action_label: "Updated deal", target_name: "Mejuri — moved to In Progress", created_at: "2026-04-01T16:00:00Z" },
+  { id: "log_04", actor_id: "agency_001", actor_name: "Bright Talent Mgmt", actor_type: "agency", action: "uploaded_contract", action_label: "Uploaded contract", target_name: "Aritzia — partnership agreement.pdf", created_at: "2026-04-03T14:30:00Z" },
+  { id: "log_05", actor_id: "agency_001", actor_name: "Bright Talent Mgmt", actor_type: "agency", action: "created_invoice", action_label: "Created invoice", target_name: "Mejuri — $1,600", created_at: "2026-04-08T14:00:00Z" },
+  { id: "log_06", actor_id: "agency_001", actor_name: "Bright Talent Mgmt", actor_type: "agency", action: "added_note", action_label: "Added note", target_name: "Aritzia — whitelisting terms discussion", created_at: "2026-04-05T11:00:00Z" },
+  { id: "log_07", actor_id: "agency_001", actor_name: "Bright Talent Mgmt", actor_type: "agency", action: "moved_stage", action_label: "Moved stage", target_name: "Canva — Pitched → Negotiating", created_at: "2026-04-11T08:30:00Z" },
+  { id: "log_08", actor_id: "agency_001", actor_name: "Bright Talent Mgmt", actor_type: "agency", action: "updated_deal", action_label: "Updated deal value", target_name: "Aritzia — $4,500", created_at: "2026-04-10T11:00:00Z" },
+  { id: "log_09", actor_id: "agency_001", actor_name: "Bright Talent Mgmt", actor_type: "agency", action: "created_deal", action_label: "Created deal", target_name: "Mejuri — gold collection", created_at: "2026-03-01T08:00:00Z" },
+  { id: "log_10", actor_id: "agency_001", actor_name: "Bright Talent Mgmt", actor_type: "agency", action: "added_note", action_label: "Added note", target_name: "Mejuri — content direction approved", created_at: "2026-03-15T10:00:00Z" },
+];
