@@ -5,7 +5,6 @@ import {
   mediaKitData,
   platformStats,
   currentUser,
-  totalFollowers,
 } from "@/lib/placeholder-data";
 import { Send, CheckCircle2 } from "lucide-react";
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { mediaKitData, platformStats, currentUser, totalFollowers } from "@/lib/placeholder-data";
+import { mediaKitData, platformStats, currentUser } from "@/lib/placeholder-data";
 import { Copy, Check, ExternalLink } from "lucide-react";
 
 export default function MediaKitPage() {

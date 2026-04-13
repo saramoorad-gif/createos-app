@@ -5,7 +5,6 @@ import { AgencyDashboard } from "@/components/agency/agency-dashboard";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   deals,
-  invoices,
   revenueStats,
   totalFollowers,
   dealStageLabels,
@@ -43,7 +42,6 @@ const calendarDays = [
   { day: "Friday, Apr 18", items: ["Weekly digest review", "Content batch day"] },
 ];
 
-const stageOrder = ["contracted", "in_progress", "delivered"] as const;
 const stageProgress: Record<string, number> = {
   pitched: 10,
   negotiating: 25,
