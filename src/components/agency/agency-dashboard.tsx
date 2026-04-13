@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { deals, invoices, dealStageLabels, type Deal, type DealStage } from "@/lib/placeholder-data";
+import { deals, dealStageLabels, type DealStage } from "@/lib/placeholder-data";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { X, Plus, ChevronRight, FileText, Upload, Save } from "lucide-react";
 

@@ -105,7 +105,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="bg-white border border-[#E5E0D8] rounded-[10px] overflow-hidden">
-            {activityLog.map((entry, i) => (
+            {activityLog.map((entry) => (
               <div
                 key={entry.id}
                 className="flex items-center gap-3 px-5 py-3 border-b border-[#E5E0D8] last:border-b-0"
