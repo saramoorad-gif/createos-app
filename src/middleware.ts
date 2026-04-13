@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Public routes that don't require authentication
-const publicRoutes = ["/login", "/onboarding", "/kit"];
+const publicRoutes = ["/login", "/signup", "/onboarding", "/kit"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -21,20 +20,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for Supabase auth token in cookies
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // If Supabase isn't configured yet, allow all routes (demo mode)
+  // Demo mode — no Supabase configured, allow everything
   if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.next();
   }
 
-  // Check for auth session via cookie
-  const authToken = request.cookies.get("sb-access-token")?.value;
+  // Check for Supabase auth session cookies
+  // Supabase JS client stores tokens in cookies with a project-ref prefix
+  const cookies = request.cookies.getAll();
+  const hasAuthCookie = cookies.some(
+    (c) =>
+      c.name.includes("auth-token") ||
+      c.name.includes("sb-") && c.name.includes("-auth-token")
+  );
 
-  if (!authToken) {
-    // Redirect to login
+  if (!hasAuthCookie) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
@@ -44,13 +47,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

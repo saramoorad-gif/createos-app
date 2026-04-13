@@ -5,7 +5,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { revenueStats, totalFollowers } from "@/lib/placeholder-data";
 import { formatCurrency } from "@/lib/utils";
-import { Sparkles } from "lucide-react";
+import { Sparkles, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 const tabs = [
   { name: "Dashboard", href: "/dashboard" },
@@ -15,8 +16,20 @@ const tabs = [
   { name: "Invoices", href: "/invoices" },
 ];
 
+const accountTypeLabels: Record<string, string> = {
+  ugc: "UGC Creator",
+  influencer: "Influencer",
+  agency: "Agency",
+};
+
 export function Topbar() {
   const pathname = usePathname();
+  const { profile, signOut } = useAuth();
+
+  const displayName = profile?.full_name || "Creator";
+  const accountLabel = profile?.account_type
+    ? accountTypeLabels[profile.account_type]
+    : "";
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-white/80 backdrop-blur-sm px-4 lg:px-6 h-14">
@@ -31,12 +44,11 @@ export function Topbar() {
           </span>
         </div>
         <div className="hidden sm:flex items-center gap-2">
-          <span className="inline-flex items-center rounded-full border border-terra-200 bg-terra-50 px-2.5 py-0.5 text-[11px] font-semibold text-terra-700">
-            UGC $27
-          </span>
-          <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
-            Influencer $39
-          </span>
+          {accountLabel && (
+            <span className="inline-flex items-center rounded-full border border-terra-200 bg-terra-50 px-2.5 py-0.5 text-[11px] font-semibold text-terra-700">
+              {accountLabel}
+            </span>
+          )}
         </div>
       </div>
 
@@ -62,7 +74,7 @@ export function Topbar() {
         })}
       </nav>
 
-      {/* Right — Quick stats */}
+      {/* Right — User name + stats + sign out */}
       <div className="hidden md:flex items-center gap-4 text-xs">
         <div className="text-right">
           <p className="text-muted-foreground">April Earned</p>
@@ -78,9 +90,17 @@ export function Topbar() {
           </p>
         </div>
         <div className="h-6 w-px bg-border" />
-        <div className="text-right">
-          <p className="text-muted-foreground">Eng. Rate</p>
-          <p className="font-semibold text-emerald-600 text-sm">6.4%</p>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-foreground">
+            {displayName.split(" ")[0]}
+          </span>
+          <button
+            onClick={signOut}
+            className="text-muted-foreground hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50"
+            title="Sign out"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
     </header>

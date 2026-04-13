@@ -20,10 +20,11 @@ import {
   Zap,
   Plug,
   DollarSign,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { currentUser, totalFollowers } from "@/lib/placeholder-data";
+import { useAuth } from "@/contexts/auth-context";
 
 type NavItem = {
   name: string;
@@ -71,16 +72,32 @@ const navGroups: NavGroup[] = [
   },
 ];
 
+const accountTypeLabels: Record<string, string> = {
+  ugc: "UGC Creator",
+  influencer: "Influencer",
+  agency: "Agency",
+};
+
 export function Sidebar() {
   const pathname = usePathname();
+  const { profile, signOut } = useAuth();
+
+  const displayName = profile?.full_name || "Creator";
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+  const accountLabel = profile?.account_type
+    ? accountTypeLabels[profile.account_type] || profile.account_type
+    : "";
 
   return (
     <aside className="flex h-screen w-[220px] flex-col border-r border-border bg-white">
       {/* Logo */}
       <div className="flex items-center gap-1.5 px-5 py-4 border-b border-border">
-        <span className="text-lg font-serif text-foreground">
-          create
-        </span>
+        <span className="text-lg font-serif text-foreground">create</span>
         <span className="text-lg font-serif italic text-terra-500 font-semibold">
           OS
         </span>
@@ -120,9 +137,7 @@ export function Sidebar() {
                       <span
                         className={cn(
                           "h-2 w-2 rounded-full flex-shrink-0",
-                          item.dot === "red"
-                            ? "bg-red-500"
-                            : "bg-amber-500"
+                          item.dot === "red" ? "bg-red-500" : "bg-amber-500"
                         )}
                       />
                     )}
@@ -145,20 +160,27 @@ export function Sidebar() {
         </p>
       </div>
 
-      {/* User Profile */}
+      {/* User Profile + Sign Out */}
       <div className="border-t border-border px-4 py-3">
         <div className="flex items-center gap-2.5">
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="text-xs">BC</AvatarFallback>
+            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
-              {currentUser.full_name}
+              {displayName}
             </p>
-            <p className="text-[11px] text-muted-foreground">
-              {(totalFollowers / 1000).toFixed(0)}K followers
-            </p>
+            {accountLabel && (
+              <p className="text-[11px] text-muted-foreground">{accountLabel}</p>
+            )}
           </div>
+          <button
+            onClick={signOut}
+            className="text-muted-foreground hover:text-red-500 transition-colors p-1"
+            title="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </aside>
