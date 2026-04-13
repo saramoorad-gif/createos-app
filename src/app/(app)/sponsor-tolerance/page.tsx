@@ -1,12 +1,16 @@
-import { EmptyState } from "@/components/shared/empty-state";
-import { ShieldCheck } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
 
 export default function SponsorTolerancePage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-serif font-bold text-foreground mb-1">Sponsor Tolerance</h1>
-      <p className="text-sm text-muted-foreground mb-8">Monitor your posting frequency and audience fatigue.</p>
-      <EmptyState icon={ShieldCheck} title="Sponsor tolerance tracker" description="This feature analyzes your posting frequency to prevent audience fatigue." />
+    <div>
+      <PageHeader
+        headline={<>Sponsor <em className="italic text-[#C4714A]">tolerance</em></>}
+        subheading="Monitor your posting frequency and audience fatigue."
+      />
+      <div className="text-center py-16">
+        <p className="text-[20px] font-serif italic text-[#9A9088]">Nothing here yet</p>
+        <button className="mt-4 text-[13px] font-sans font-500 text-[#C4714A] hover:underline">Get started →</button>
+      </div>
     </div>
   );
 }

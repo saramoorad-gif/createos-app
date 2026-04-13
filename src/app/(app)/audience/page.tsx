@@ -1,12 +1,16 @@
-import { EmptyState } from "@/components/shared/empty-state";
-import { Users } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
 
 export default function AudiencePage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-serif font-bold text-foreground mb-1">Audience</h1>
-      <p className="text-sm text-muted-foreground mb-8">Audience demographics and analytics.</p>
-      <EmptyState icon={Users} title="Audience insights coming soon" description="Connect your platforms to unlock audience demographics and analytics." />
+    <div>
+      <PageHeader
+        headline={<>Audience <em className="italic text-[#C4714A]">insights</em></>}
+        subheading="Audience demographics and analytics."
+      />
+      <div className="text-center py-16">
+        <p className="text-[20px] font-serif italic text-[#9A9088]">Nothing here yet</p>
+        <button className="mt-4 text-[13px] font-sans font-500 text-[#C4714A] hover:underline">Connect your platforms →</button>
+      </div>
     </div>
   );
 }

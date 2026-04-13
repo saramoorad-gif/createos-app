@@ -1,6 +1,4 @@
-import { Sidebar } from "@/components/layout/sidebar";
-import { Topbar } from "@/components/layout/topbar";
-import { QuickCapture } from "@/components/shared/quick-capture";
+import { NavBar } from "@/components/layout/nav-bar";
 import { AuthProvider } from "@/contexts/auth-context";
 
 export default function AppLayout({
@@ -10,17 +8,11 @@ export default function AppLayout({
 }) {
   return (
     <AuthProvider>
-      <div className="flex h-screen overflow-hidden">
-        <div className="sidebar-desktop">
-          <Sidebar />
-        </div>
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          <Topbar />
-          <main className="flex-1 overflow-y-auto bg-warm-50">
-            <div className="page-enter">{children}</div>
-          </main>
-        </div>
-        <QuickCapture />
+      <div className="min-h-screen bg-[#F7F4EF]">
+        <NavBar />
+        <main className="max-w-[1200px] mx-auto px-6 pb-16">
+          {children}
+        </main>
       </div>
     </AuthProvider>
   );

@@ -1,12 +1,16 @@
-import { EmptyState } from "@/components/shared/empty-state";
-import { Calendar } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
 
 export default function CalendarPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-serif font-bold text-foreground mb-1">Calendar</h1>
-      <p className="text-sm text-muted-foreground mb-8">Your upcoming events and deadlines.</p>
-      <EmptyState icon={Calendar} title="No events yet" description="Connect your calendar to see upcoming deadlines and meetings." />
+    <div>
+      <PageHeader
+        headline={<>Your <em className="italic text-[#C4714A]">calendar</em></>}
+        subheading="Your upcoming events and deadlines."
+      />
+      <div className="text-center py-16">
+        <p className="text-[20px] font-serif italic text-[#9A9088]">Nothing here yet</p>
+        <button className="mt-4 text-[13px] font-sans font-500 text-[#C4714A] hover:underline">Connect your calendar →</button>
+      </div>
     </div>
   );
 }

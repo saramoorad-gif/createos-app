@@ -1,49 +1,191 @@
-import { DealPipeline } from "@/components/dashboard/deal-pipeline";
-import { InvoiceSummary } from "@/components/dashboard/invoice-summary";
-import { PlatformStats } from "@/components/dashboard/platform-stats";
-import { HealthScore } from "@/components/dashboard/health-score";
-import { StatCards } from "@/components/dashboard/stat-cards";
-import { AlertStrip } from "@/components/dashboard/alert-strip";
-import { InsightStrip } from "@/components/dashboard/insight-strip";
-import { FoundingBanner, ReferralCard } from "@/components/dashboard/founding-banner";
+"use client";
 
-export default function DashboardPage() {
+import { useAuth } from "@/contexts/auth-context";
+import { AgencyDashboard } from "@/components/agency/agency-dashboard";
+import { PageHeader } from "@/components/layout/page-header";
+import {
+  deals,
+  invoices,
+  revenueStats,
+  totalFollowers,
+  dealStageLabels,
+  type Deal,
+} from "@/lib/placeholder-data";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import Link from "next/link";
+
+const priorityColors: Record<string, string> = {
+  high: "bg-[#E05C3A]",
+  medium: "bg-[#D4A030]",
+  low: "bg-[#4A9060]",
+};
+
+const tagStyles: Record<string, string> = {
+  Contract: "bg-[#F2EEE8] text-[#9A9088]",
+  Deliverable: "bg-[#FBF0EA] text-[#C4714A]",
+  Invoice: "bg-[#FEF0EB] text-[#E05C3A]",
+  Exclusivity: "bg-[#F5ECD4] text-[#A87C3A]",
+};
+
+const actionItems = [
+  { priority: "high", task: "Aritzia contract needs signature", detail: "90-day fashion exclusivity clause — review before signing", due: "Apr 15", tag: "Contract" },
+  { priority: "high", task: "Mejuri Reel #2 due tomorrow", detail: "Gold Drop Collection — second reel in the series", due: "Apr 15", tag: "Deliverable" },
+  { priority: "medium", task: "Glossier invoice is 14 days overdue", detail: "$1,200 remaining balance — consider sending follow-up", due: "Mar 30", tag: "Invoice" },
+  { priority: "low", task: "Oatly shoot prep — scripts approved", detail: "2 TikTok videos, casual morning routine vibe", due: "May 1", tag: "Deliverable" },
+  { priority: "low", task: "Glossier exclusivity expires in 5 days", detail: "Beauty category — you can pitch competing brands after Apr 19", due: "Apr 19", tag: "Exclusivity" },
+];
+
+const calendarDays = [
+  { day: "Monday, Apr 14", items: ["Mejuri Reel #2 filming", "Aritzia contract review call 2pm"] },
+  { day: "Tuesday, Apr 15", items: ["Aritzia contract deadline", "Mejuri Reel #2 due"] },
+  { day: "Wednesday, Apr 16", items: ["Oatly creative call 11am"] },
+  { day: "Thursday, Apr 17", items: ["Nothing scheduled"] },
+  { day: "Friday, Apr 18", items: ["Weekly digest review", "Content batch day"] },
+];
+
+const stageOrder = ["contracted", "in_progress", "delivered"] as const;
+const stageProgress: Record<string, number> = {
+  pitched: 10,
+  negotiating: 25,
+  contracted: 40,
+  in_progress: 65,
+  delivered: 85,
+  paid: 100,
+};
+
+function DealCard({ deal }: { deal: Deal }) {
   return (
-    <div className="p-6 space-y-5">
-      {/* Founding Creator Banner */}
-      <FoundingBanner />
-
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-serif font-bold text-foreground">
-          Good morning, Brianna
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Here&apos;s what&apos;s happening with your creator business today.
+    <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <p className="text-[14px] font-sans font-600 text-[#1C1714]">{deal.brand_name}</p>
+          <p className="text-[12px] font-sans text-[#9A9088] mt-0.5">{deal.deliverables}</p>
+        </div>
+        <p className="text-[20px] font-serif text-[#1C1714]">
+          {deal.value > 0 ? formatCurrency(deal.value) : "TBD"}
         </p>
       </div>
+      {/* Progress bar */}
+      <div className="flex items-center gap-0 mb-2">
+        {["Contract", "Brief", "Creation", "Review", "Paid"].map((stage, i) => (
+          <div key={stage} className="flex-1 flex flex-col items-center">
+            <div className={`h-[3px] w-full ${i === 0 ? "rounded-l-full" : ""} ${i === 4 ? "rounded-r-full" : ""} ${
+              i <= Math.floor((stageProgress[deal.stage] || 0) / 25) ? "bg-[#C4714A]" : "bg-[#E5E0D8]"
+            }`} />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#9A9088]">
+          {dealStageLabels[deal.stage]}
+        </p>
+        {deal.due_date && (
+          <p className="text-[11px] font-mono text-[#9A9088]">{formatDate(deal.due_date)}</p>
+        )}
+      </div>
+    </div>
+  );
+}
 
-      {/* Alert + Insight Strips */}
-      <AlertStrip />
-      <InsightStrip />
+export default function TodayPage() {
+  const { profile } = useAuth();
 
-      {/* 5 Stat Cards Row */}
-      <StatCards />
+  // Agency users see a different dashboard
+  if (profile?.account_type === "agency") {
+    return <AgencyDashboard />;
+  }
 
-      {/* Two-column: Pipeline + Invoices | Platform + Health + Referral */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-        {/* Left — Pipeline + Invoices */}
-        <div className="xl:col-span-2 space-y-5">
-          <DealPipeline />
-          <InvoiceSummary />
+  const activeDeals = deals.filter(
+    (d) => d.stage === "contracted" || d.stage === "in_progress" || d.stage === "delivered"
+  );
+
+  return (
+    <div>
+      <PageHeader
+        headline={
+          <>
+            {actionItems.length} items need your <em className="italic text-[#C4714A]">attention</em> today.
+          </>
+        }
+        subheading="Your creator business at a glance — focus on what matters."
+        stats={[
+          { value: formatCurrency(revenueStats.thisMonth), label: "April earned", change: "+12%" },
+          { value: `${(totalFollowers / 1000).toFixed(0)}K`, label: "Followers", change: "+2.1%" },
+          { value: `${deals.filter(d => d.stage !== "paid").length}`, label: "Active deals" },
+          { value: formatCurrency(revenueStats.invoicesOverdue), label: "Overdue" },
+        ]}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
+        {/* Main content */}
+        <div>
+          {/* Action items */}
+          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088] mb-4">
+            ACTION ITEMS
+          </p>
+          <div className="divide-y divide-[#E5E0D8]">
+            {actionItems.map((item, i) => (
+              <div key={i} className="flex items-center gap-4 py-4 first:pt-0">
+                <div className={`w-[3px] h-10 rounded-full ${priorityColors[item.priority]}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-sans font-500 text-[#1C1714]">
+                    {item.task}
+                  </p>
+                  <p className="text-[12px] font-sans text-[#9A9088] mt-0.5 truncate">
+                    {item.detail}
+                  </p>
+                </div>
+                <p className="text-[11px] font-mono text-[#9A9088] flex-shrink-0">
+                  {item.due}
+                </p>
+                <span className={`text-[10px] font-sans font-500 uppercase tracking-[1px] px-2 py-0.5 rounded-full ${tagStyles[item.tag]}`}>
+                  {item.tag}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Active deals */}
+          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088] mt-10 mb-4">
+            ACTIVE DEALS
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeDeals.slice(0, 4).map((deal) => (
+              <DealCard key={deal.id} deal={deal} />
+            ))}
+          </div>
+          {activeDeals.length > 4 && (
+            <Link
+              href="/deals"
+              className="text-[13px] font-sans font-500 text-[#C4714A] hover:underline mt-4 inline-block"
+            >
+              View all {activeDeals.length} deals →
+            </Link>
+          )}
         </div>
 
-        {/* Right — Platform Stats + Health Score + Referral */}
-        <div className="space-y-5">
-          <PlatformStats />
-          <HealthScore />
-          <ReferralCard />
-        </div>
+        {/* Aside — Calendar */}
+        <aside>
+          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088] mb-4">
+            THIS WEEK
+          </p>
+          <div className="space-y-5">
+            {calendarDays.map((day) => (
+              <div key={day.day}>
+                <p className="text-[12px] font-sans font-600 text-[#1C1714] mb-1.5">
+                  {day.day}
+                </p>
+                <div className="space-y-1">
+                  {day.items.map((item, i) => (
+                    <p key={i} className="text-[12px] font-sans text-[#9A9088] pl-3 relative before:content-[''] before:absolute before:left-0 before:top-[7px] before:h-[4px] before:w-[4px] before:rounded-full before:bg-[#E5E0D8]">
+                      {item}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
       </div>
     </div>
   );

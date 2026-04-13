@@ -3,10 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import { Sparkles, UserPlus, Loader2, AlertCircle } from "lucide-react";
 
 type AccountType = "ugc" | "influencer" | "agency";
 
@@ -22,7 +19,7 @@ export default function SignUpPage() {
   const [error, setError] = useState("");
 
   const inputClass =
-    "w-full rounded-lg border border-border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terra-500/20 focus:border-terra-500 bg-white";
+    "w-full rounded-[10px] border border-[#E5E0D8] px-3 py-2.5 text-[13px] font-sans text-[#1C1714] bg-white focus:outline-none focus:ring-2 focus:ring-[#C4714A]/20 focus:border-[#C4714A]";
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
@@ -39,7 +36,6 @@ export default function SignUpPage() {
     }
 
     if (!isSupabaseConfigured()) {
-      // Demo mode — just redirect
       router.push("/onboarding");
       return;
     }
@@ -64,7 +60,6 @@ export default function SignUpPage() {
       return;
     }
 
-    // Create profile record
     if (data.user) {
       await sb.from("profiles").insert({
         id: data.user.id,
@@ -80,152 +75,136 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-[#F7F4EF] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-1.5 mb-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-terra-500">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-          </div>
-          <h1 className="text-2xl font-serif font-bold text-foreground">
-            create<span className="italic text-terra-500">OS</span>
+          <h1 className="text-[28px] font-serif text-[#1C1714]">
+            create<em className="italic text-[#C4714A]">OS</em>
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-[13px] font-sans text-[#9A9088] mt-1">
             Create your creator business account
           </p>
         </div>
 
-        <Card>
-          <CardContent className="p-6">
-            <form onSubmit={handleSignUp} className="space-y-4">
-              {/* Error */}
-              {error && (
-                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
-                  <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              )}
+        <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-6">
+          <form onSubmit={handleSignUp} className="space-y-4">
+            {/* Error */}
+            {error && (
+              <div className="flex items-center gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5">
+                <span className="text-red-500 flex-shrink-0 text-sm">&#9888;</span>
+                <p className="text-[13px] font-sans text-red-700">{error}</p>
+              </div>
+            )}
 
-              {/* Full Name */}
+            {/* Full Name */}
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">
+                Full name
+              </label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Brianna Cole"
+                required
+                className={inputClass}
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="brianna@example.com"
+                required
+                className={inputClass}
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 6 characters"
+                required
+                className={inputClass}
+              />
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">
+                Confirm password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your password"
+                required
+                className={inputClass}
+              />
+            </div>
+
+            {/* Account Type */}
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">
+                I am a...
+              </label>
+              <select
+                value={accountType}
+                onChange={(e) => setAccountType(e.target.value as AccountType)}
+                className={inputClass}
+              >
+                <option value="ugc">UGC Creator</option>
+                <option value="influencer">Influencer</option>
+                <option value="agency">Agency</option>
+              </select>
+            </div>
+
+            {/* Agency Name — conditional */}
+            {accountType === "agency" && (
               <div>
-                <label className="text-sm font-medium text-foreground block mb-1.5">
-                  Full name
+                <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">
+                  Agency / Company name
                 </label>
                 <input
                   type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Brianna Cole"
+                  value={agencyName}
+                  onChange={(e) => setAgencyName(e.target.value)}
+                  placeholder="Your agency name"
                   required
                   className={inputClass}
                 />
               </div>
+            )}
 
-              {/* Email */}
-              <div>
-                <label className="text-sm font-medium text-foreground block mb-1.5">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="brianna@example.com"
-                  required
-                  className={inputClass}
-                />
-              </div>
+            <button
+              className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E] transition-colors disabled:opacity-50"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Creating account..." : "Create account"}
+            </button>
+          </form>
+        </div>
 
-              {/* Password */}
-              <div>
-                <label className="text-sm font-medium text-foreground block mb-1.5">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  required
-                  className={inputClass}
-                />
-              </div>
-
-              {/* Confirm Password */}
-              <div>
-                <label className="text-sm font-medium text-foreground block mb-1.5">
-                  Confirm password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
-                  required
-                  className={inputClass}
-                />
-              </div>
-
-              {/* Account Type */}
-              <div>
-                <label className="text-sm font-medium text-foreground block mb-1.5">
-                  I am a...
-                </label>
-                <select
-                  value={accountType}
-                  onChange={(e) => setAccountType(e.target.value as AccountType)}
-                  className={inputClass}
-                >
-                  <option value="ugc">UGC Creator</option>
-                  <option value="influencer">Influencer</option>
-                  <option value="agency">Agency</option>
-                </select>
-              </div>
-
-              {/* Agency Name — conditional */}
-              {accountType === "agency" && (
-                <div>
-                  <label className="text-sm font-medium text-foreground block mb-1.5">
-                    Agency / Company name
-                  </label>
-                  <input
-                    type="text"
-                    value={agencyName}
-                    onChange={(e) => setAgencyName(e.target.value)}
-                    placeholder="Your agency name"
-                    required
-                    className={inputClass}
-                  />
-                </div>
-              )}
-
-              <Button
-                className="w-full gap-2"
-                type="submit"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Creating
-                    account...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="h-4 w-4" /> Create account
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <p className="text-sm text-center text-muted-foreground mt-4">
+        <p className="text-[13px] text-center font-sans text-[#9A9088] mt-4">
           Already have an account?{" "}
           <Link
             href="/login"
-            className="text-terra-500 hover:text-terra-700 font-medium"
+            className="text-[#C4714A] hover:underline font-medium"
           >
             Sign in
           </Link>

@@ -1,12 +1,16 @@
-import { EmptyState } from "@/components/shared/empty-state";
-import { Lock } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
 
 export default function ExclusivityPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-serif font-bold text-foreground mb-1">Exclusivity</h1>
-      <p className="text-sm text-muted-foreground mb-8">Track exclusivity clauses across your deals.</p>
-      <EmptyState icon={Lock} title="No active exclusivity" description="When you sign deals with exclusivity clauses, they'll be tracked here." />
+    <div>
+      <PageHeader
+        headline={<>Exclusivity <em className="italic text-[#C4714A]">tracker</em></>}
+        subheading="Track exclusivity clauses across your deals."
+      />
+      <div className="text-center py-16">
+        <p className="text-[20px] font-serif italic text-[#9A9088]">Nothing here yet</p>
+        <button className="mt-4 text-[13px] font-sans font-500 text-[#C4714A] hover:underline">Get started →</button>
+      </div>
     </div>
   );
 }
