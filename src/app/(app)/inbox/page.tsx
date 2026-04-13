@@ -7,8 +7,6 @@ import {
   messageData,
   creatorTasks,
   announcements,
-  type MessageThread,
-  type Message,
 } from "@/lib/placeholder-data";
 import { timeAgo } from "@/lib/utils";
 import { Send, Paperclip, Flag, CheckCircle2, Megaphone, FileText } from "lucide-react";

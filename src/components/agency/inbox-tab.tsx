@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import {
   messageThreads,
   messageData,
-  announcements,
   type MessageThread,
 } from "@/lib/placeholder-data";
 import { timeAgo } from "@/lib/utils";
