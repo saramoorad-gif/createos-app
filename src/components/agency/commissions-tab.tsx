@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { commissionPayouts, agencyRoster } from "@/lib/placeholder-data";
 import { formatCurrency } from "@/lib/utils";
