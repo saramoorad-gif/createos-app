@@ -9,10 +9,14 @@ export default function AppLayout({
 }) {
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="sidebar-desktop">
+        <Sidebar />
+      </div>
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Topbar />
-        <main className="flex-1 overflow-y-auto bg-warm-50">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-warm-50">
+          <div className="page-enter">{children}</div>
+        </main>
       </div>
       <QuickCapture />
     </div>
