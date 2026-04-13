@@ -3,8 +3,6 @@
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { revenueStats } from "@/lib/placeholder-data";
 import { formatCurrency } from "@/lib/utils";

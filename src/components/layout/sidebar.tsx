@@ -19,7 +19,6 @@ import {
   Briefcase,
   Zap,
   Plug,
-  Sparkles,
   DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";

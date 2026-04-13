@@ -18,8 +18,6 @@ import {
   Edit3,
   Eye,
   Users,
-  TrendingUp,
-  Star,
 } from "lucide-react";
 
 function MediaKitPreview({

@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   inboundInquiries,
   type InboundInquiry,
@@ -231,7 +230,6 @@ function CaptureLink() {
 }
 
 export function InboundList() {
-  const newCount = inboundInquiries.filter((i) => i.status === "new").length;
 
   return (
     <div className="space-y-4">

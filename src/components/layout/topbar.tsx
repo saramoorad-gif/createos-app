@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { revenueStats, totalFollowers } from "@/lib/placeholder-data";
 import { formatCurrency } from "@/lib/utils";

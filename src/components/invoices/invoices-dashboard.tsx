@@ -20,7 +20,6 @@ import {
   Send,
   Eye,
   Bell,
-  FileText,
   X,
   Sparkles,
 } from "lucide-react";
