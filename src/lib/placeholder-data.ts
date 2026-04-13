@@ -952,6 +952,79 @@ export const campaigns: Campaign[] = [
 ];
 
 // Contracts
+export type ContractStage = "draft" | "sent_to_brand" | "under_review" | "redlined" | "countersigned" | "fully_executed" | "archived";
+
+export const contractStageLabels: Record<ContractStage, string> = {
+  draft: "Draft", sent_to_brand: "Sent to Brand", under_review: "Under Review",
+  redlined: "Redlined", countersigned: "Countersigned", fully_executed: "Fully Executed", archived: "Archived",
+};
+
+export const contractStageColors: Record<ContractStage, { bg: string; text: string }> = {
+  draft: { bg: "bg-[#F2EEE8]", text: "text-[#9A9088]" },
+  sent_to_brand: { bg: "bg-[#FBF5EC]", text: "text-[#D4A030]" },
+  under_review: { bg: "bg-[#FBF5EC]", text: "text-[#D4A030]" },
+  redlined: { bg: "bg-[#FEF0EB]", text: "text-[#E05C3A]" },
+  countersigned: { bg: "bg-[#EBF5EB]", text: "text-[#4A9060]" },
+  fully_executed: { bg: "bg-[#EBF5EB]", text: "text-[#4A9060]" },
+  archived: { bg: "bg-[#F2EEE8]", text: "text-[#9A9088]" },
+};
+
+export interface ContractAnalysis {
+  paymentAmount: string;
+  paymentSchedule: string;
+  latePaymentClause: string;
+  killFee: string;
+  deliverablesList: string[];
+  formatRequirements: string;
+  revisionLimit: string;
+  approvalProcess: string;
+  deadline: string;
+  usageRights: string;
+  exclusivityCategory: string;
+  exclusivityDuration: string;
+  geographicRestrictions: string;
+  platformRestrictions: string;
+  redFlags: { text: string; severity: "red" | "amber" | "green" }[];
+  negotiationSuggestions: { flag: string; suggestion: string }[];
+  overallScore: "Favorable" | "Neutral" | "Needs Negotiation" | "Creator Unfavorable";
+}
+
+export interface ContractVersion {
+  id: string;
+  versionNumber: number;
+  fileName: string;
+  notes: string;
+  uploadedAt: string;
+  uploadedBy: string;
+  isFinal: boolean;
+}
+
+export interface ContractSignature {
+  id: string;
+  signerName: string;
+  signerType: "creator" | "brand" | "agency";
+  signedAt: string | null;
+  method: "in_app" | "docusign" | null;
+  status: "pending" | "signed";
+}
+
+export interface ContractAlert {
+  id: string;
+  contractId: string;
+  alertType: "expiring_soon" | "usage_rights_expiring" | "payment_due" | "exclusivity_ending";
+  triggerDate: string;
+  message: string;
+  dismissed: boolean;
+}
+
+export interface ContractTemplate {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  variables: string[];
+}
+
 export interface AgencyContract {
   id: string;
   creator: string;
@@ -963,18 +1036,163 @@ export interface AgencyContract {
   expiryDate: string;
   exclusivityCategory: string | null;
   exclusivityDays: number | null;
+  stage: ContractStage;
   status: "active" | "expired" | "pending_signature" | "disputed";
-  aiAnalysis: { paymentTerms: string; deliverables: string; killFee: string; revisionLimit: string; usageRights: string; redFlags: string[] } | null;
+  aiAnalysis: ContractAnalysis | null;
+  legacyAnalysis: { paymentTerms: string; deliverables: string; killFee: string; revisionLimit: string; usageRights: string; redFlags: string[] } | null;
   fileName: string;
+  versions: ContractVersion[];
+  signatures: ContractSignature[];
+  alerts: ContractAlert[];
 }
 
+export const contractTemplates: ContractTemplate[] = [
+  { id: "tpl_01", name: "UGC Content Agreement", type: "ugc", description: "Standard agreement for UGC content creation", variables: ["creator_name", "brand_name", "deliverables", "payment_amount", "payment_terms", "usage_rights", "revision_limit", "content_deadline"] },
+  { id: "tpl_02", name: "Influencer Partnership Agreement", type: "influencer", description: "Full partnership agreement for influencer campaigns", variables: ["creator_name", "brand_name", "deliverables", "payment_amount", "payment_terms", "exclusivity_category", "exclusivity_duration", "usage_rights", "kill_fee", "revision_limit", "content_deadline"] },
+  { id: "tpl_03", name: "Usage Rights Extension", type: "extension", description: "Extend usage rights on existing content", variables: ["creator_name", "brand_name", "original_contract_date", "extension_duration", "payment_amount", "usage_rights"] },
+  { id: "tpl_04", name: "Ambassador / Retainer Agreement", type: "ambassador", description: "Long-term brand ambassador retainer", variables: ["creator_name", "brand_name", "monthly_retainer", "deliverables", "exclusivity_category", "exclusivity_duration", "term_length", "kill_fee"] },
+  { id: "tpl_05", name: "Talent Representation Agreement", type: "representation", description: "Agreement between agency and creator", variables: ["creator_name", "agency_name", "commission_rate", "term_length", "termination_notice", "exclusivity_clause"] },
+];
+
 export const agencyContracts: AgencyContract[] = [
-  { id: "con_01", creator: "Brianna Cole", creatorId: "usr_brianna_001", brand: "Aritzia", type: "UGC Partnership", value: 4500, signedDate: null, expiryDate: "2026-07-10", exclusivityCategory: "Fashion", exclusivityDays: 90, status: "pending_signature", aiAnalysis: { paymentTerms: "Net 30 after delivery", deliverables: "5 UGC videos for paid ads", killFee: "50% of total", revisionLimit: "2 rounds", usageRights: "90-day whitelisting + paid ads", redFlags: ["90-day exclusivity is broad — covers all fashion, not just Aritzia competitors", "Kill fee only 50% — industry standard is 75%"] }, fileName: "aritzia-ugc-partnership-2026.pdf" },
-  { id: "con_02", creator: "Brianna Cole", creatorId: "usr_brianna_001", brand: "Mejuri", type: "Influencer", value: 3200, signedDate: "2026-03-05", expiryDate: "2026-05-20", exclusivityCategory: "Jewelry", exclusivityDays: 14, status: "active", aiAnalysis: { paymentTerms: "50% upfront, 50% on delivery", deliverables: "3 IG Reels + 2 Stories", killFee: "75% of total", revisionLimit: "1 round", usageRights: "Organic only — no paid ads", redFlags: [] }, fileName: "mejuri-influencer-2026.pdf" },
-  { id: "con_03", creator: "Maya Chen", creatorId: "usr_maya_001", brand: "Glossier", type: "UGC", value: 2800, signedDate: "2026-03-20", expiryDate: "2026-05-28", exclusivityCategory: null, exclusivityDays: null, status: "active", aiAnalysis: { paymentTerms: "Net 14 after delivery", deliverables: "2 TikTok + 1 Reel", killFee: "100% of total", revisionLimit: "2 rounds", usageRights: "Organic + paid ads 30 days", redFlags: [] }, fileName: "glossier-maya-ugc.pdf" },
-  { id: "con_04", creator: "Jordan Ellis", creatorId: "usr_jordan_001", brand: "Oatly", type: "UGC", value: 1500, signedDate: "2026-04-08", expiryDate: "2026-06-01", exclusivityCategory: null, exclusivityDays: null, status: "active", aiAnalysis: { paymentTerms: "Net 30", deliverables: "2 TikTok videos", killFee: "50%", revisionLimit: "2 rounds", usageRights: "Organic only", redFlags: ["Payment terms slow — Net 30 for a $1,500 deal"] }, fileName: "oatly-jordan-ugc.pdf" },
-  { id: "con_05", creator: "Camille Reyes", creatorId: "usr_camille_001", brand: "Whole Foods", type: "Influencer", value: 4200, signedDate: "2026-04-02", expiryDate: "2026-05-30", exclusivityCategory: "Grocery", exclusivityDays: 30, status: "active", aiAnalysis: { paymentTerms: "Net 15", deliverables: "3 IG Reels + 1 YT + 4 Stories", killFee: "75%", revisionLimit: "2 rounds", usageRights: "Organic + paid 60 days", redFlags: [] }, fileName: "wholefoods-camille.pdf" },
-  { id: "con_06", creator: "Brianna Cole", creatorId: "usr_brianna_001", brand: "Glossier", type: "Influencer", value: 2800, signedDate: "2026-01-10", expiryDate: "2026-04-10", exclusivityCategory: "Beauty", exclusivityDays: 30, status: "expired", aiAnalysis: null, fileName: "glossier-brianna-spring.pdf" },
+  {
+    id: "con_01", creator: "Brianna Cole", creatorId: "usr_brianna_001", brand: "Aritzia", type: "UGC Partnership", value: 4500,
+    signedDate: null, expiryDate: "2026-07-10", exclusivityCategory: "Fashion", exclusivityDays: 90,
+    stage: "redlined", status: "pending_signature",
+    aiAnalysis: {
+      paymentAmount: "$4,500", paymentSchedule: "Net 30 after delivery", latePaymentClause: "No late payment penalty specified", killFee: "50% of total ($2,250)",
+      deliverablesList: ["5 UGC videos for brand paid ads", "Raw footage files included"], formatRequirements: "Vertical 9:16, min 15s max 60s", revisionLimit: "2 rounds", approvalProcess: "Brand reviews within 5 business days", deadline: "June 30, 2026",
+      usageRights: "90-day whitelisting + paid ads across Meta and TikTok", exclusivityCategory: "Fashion (all categories)", exclusivityDuration: "90 days from first content delivery", geographicRestrictions: "United States and Canada", platformRestrictions: "TikTok and Instagram only",
+      redFlags: [
+        { text: "90-day exclusivity covers ALL fashion — not limited to Aritzia competitors. This blocks deals with any fashion brand.", severity: "red" },
+        { text: "Kill fee only 50% — industry standard is 75%. If brand cancels, creator loses significant revenue.", severity: "red" },
+        { text: "No late payment penalty. Brand could delay payment with no consequence.", severity: "amber" },
+        { text: "Usage rights for paid ads without separate whitelisting fee baked in.", severity: "amber" },
+        { text: "Payment terms Net 30 are standard.", severity: "green" },
+        { text: "2 revision rounds is fair and industry standard.", severity: "green" },
+      ],
+      negotiationSuggestions: [
+        { flag: "90-day broad exclusivity", suggestion: "Counter with: 30-day exclusivity limited to Aritzia direct competitors (Zara, H&M, Uniqlo) only, with a $500 exclusivity premium added to the deal value." },
+        { flag: "Kill fee at 50%", suggestion: "Counter with: 75% kill fee if brand cancels after contract signing. 100% if cancellation occurs after content production begins." },
+        { flag: "No late payment penalty", suggestion: "Add clause: 1.5% monthly interest on payments more than 15 days past due." },
+        { flag: "No whitelisting fee", suggestion: "Counter with: $750 flat fee for paid ads usage, or 15% of ad spend if brand spends over $5,000." },
+      ],
+      overallScore: "Needs Negotiation",
+    },
+    legacyAnalysis: null, fileName: "aritzia-ugc-partnership-2026.pdf",
+    versions: [
+      { id: "v1_01", versionNumber: 1, fileName: "aritzia-v1-initial.pdf", notes: "Initial contract from brand", uploadedAt: "2026-04-03T10:00:00Z", uploadedBy: "Aritzia", isFinal: false },
+      { id: "v1_02", versionNumber: 2, fileName: "aritzia-v2-redlined.pdf", notes: "v2 — agency redlined exclusivity clause and kill fee. Waiting on brand response.", uploadedAt: "2026-04-08T14:00:00Z", uploadedBy: "Bright Talent Mgmt", isFinal: false },
+    ],
+    signatures: [
+      { id: "sig_01", signerName: "Brianna Cole", signerType: "creator", signedAt: null, method: null, status: "pending" },
+      { id: "sig_02", signerName: "Aritzia Partnerships", signerType: "brand", signedAt: null, method: null, status: "pending" },
+    ],
+    alerts: [
+      { id: "alt_01", contractId: "con_01", alertType: "exclusivity_ending", triggerDate: "2026-07-03", message: "Aritzia fashion exclusivity ends in 7 days — pitch competing brands", dismissed: false },
+    ],
+  },
+  {
+    id: "con_02", creator: "Brianna Cole", creatorId: "usr_brianna_001", brand: "Mejuri", type: "Influencer", value: 3200,
+    signedDate: "2026-03-05", expiryDate: "2026-05-20", exclusivityCategory: "Jewelry", exclusivityDays: 14,
+    stage: "fully_executed", status: "active",
+    aiAnalysis: {
+      paymentAmount: "$3,200", paymentSchedule: "50% upfront, 50% on delivery", latePaymentClause: "5% penalty after 14 days", killFee: "75% of total ($2,400)",
+      deliverablesList: ["3 Instagram Reels", "2 Instagram Stories"], formatRequirements: "Vertical, brand-approved music only", revisionLimit: "1 round", approvalProcess: "48-hour brand review", deadline: "April 20, 2026",
+      usageRights: "Organic only — no paid ads", exclusivityCategory: "Jewelry", exclusivityDuration: "14 days", geographicRestrictions: "None", platformRestrictions: "Instagram only",
+      redFlags: [
+        { text: "All payment and deliverable terms are fair and creator-friendly.", severity: "green" },
+        { text: "14-day exclusivity is very reasonable.", severity: "green" },
+        { text: "Kill fee at 75% is industry standard.", severity: "green" },
+      ],
+      negotiationSuggestions: [],
+      overallScore: "Favorable",
+    },
+    legacyAnalysis: null, fileName: "mejuri-influencer-2026.pdf",
+    versions: [
+      { id: "v2_01", versionNumber: 1, fileName: "mejuri-v1-final.pdf", notes: "Clean contract — no redlining needed", uploadedAt: "2026-03-02T10:00:00Z", uploadedBy: "Mejuri", isFinal: true },
+    ],
+    signatures: [
+      { id: "sig_03", signerName: "Brianna Cole", signerType: "creator", signedAt: "2026-03-05T09:00:00Z", method: "in_app", status: "signed" },
+      { id: "sig_04", signerName: "Mejuri Legal", signerType: "brand", signedAt: "2026-03-04T16:00:00Z", method: "docusign", status: "signed" },
+    ],
+    alerts: [
+      { id: "alt_02", contractId: "con_02", alertType: "expiring_soon", triggerDate: "2026-04-20", message: "Mejuri contract expires in 30 days", dismissed: false },
+      { id: "alt_03", contractId: "con_02", alertType: "exclusivity_ending", triggerDate: "2026-05-13", message: "Mejuri jewelry exclusivity ends in 7 days", dismissed: false },
+    ],
+  },
+  {
+    id: "con_03", creator: "Maya Chen", creatorId: "usr_maya_001", brand: "Glossier", type: "UGC", value: 2800,
+    signedDate: "2026-03-20", expiryDate: "2026-05-28", exclusivityCategory: null, exclusivityDays: null,
+    stage: "fully_executed", status: "active",
+    aiAnalysis: {
+      paymentAmount: "$2,800", paymentSchedule: "Net 14 after delivery", latePaymentClause: "None", killFee: "100% of total",
+      deliverablesList: ["2 TikTok videos", "1 Instagram Reel"], formatRequirements: "Vertical 9:16", revisionLimit: "2 rounds", approvalProcess: "Brand approves via email within 3 days", deadline: "April 28, 2026",
+      usageRights: "Organic + paid ads for 30 days", exclusivityCategory: "None", exclusivityDuration: "None", geographicRestrictions: "None", platformRestrictions: "None",
+      redFlags: [{ text: "No late payment penalty — consider adding for protection.", severity: "amber" }, { text: "All other terms are favorable.", severity: "green" }],
+      negotiationSuggestions: [{ flag: "No late payment clause", suggestion: "Add: 1.5% monthly interest after 14 days past due." }],
+      overallScore: "Favorable",
+    },
+    legacyAnalysis: null, fileName: "glossier-maya-ugc.pdf",
+    versions: [{ id: "v3_01", versionNumber: 1, fileName: "glossier-maya-v1.pdf", notes: "Standard UGC agreement", uploadedAt: "2026-03-18T10:00:00Z", uploadedBy: "Glossier", isFinal: true }],
+    signatures: [
+      { id: "sig_05", signerName: "Maya Chen", signerType: "creator", signedAt: "2026-03-20T11:00:00Z", method: "in_app", status: "signed" },
+      { id: "sig_06", signerName: "Glossier Legal", signerType: "brand", signedAt: "2026-03-19T14:00:00Z", method: "docusign", status: "signed" },
+    ],
+    alerts: [],
+  },
+  {
+    id: "con_04", creator: "Jordan Ellis", creatorId: "usr_jordan_001", brand: "Oatly", type: "UGC", value: 1500,
+    signedDate: "2026-04-08", expiryDate: "2026-06-01", exclusivityCategory: null, exclusivityDays: null,
+    stage: "fully_executed", status: "active",
+    aiAnalysis: {
+      paymentAmount: "$1,500", paymentSchedule: "Net 30 after delivery", latePaymentClause: "None", killFee: "50% of total",
+      deliverablesList: ["2 TikTok videos"], formatRequirements: "Casual, unscripted style", revisionLimit: "2 rounds", approvalProcess: "Brand review within 7 days", deadline: "May 1, 2026",
+      usageRights: "Organic only", exclusivityCategory: "None", exclusivityDuration: "None", geographicRestrictions: "None", platformRestrictions: "TikTok only",
+      redFlags: [{ text: "Net 30 for a $1,500 deal is slow. Push for Net 14.", severity: "amber" }, { text: "Kill fee at 50% is below standard.", severity: "amber" }],
+      negotiationSuggestions: [{ flag: "Net 30 on small deal", suggestion: "Counter with: Net 14 for deals under $2,000." }, { flag: "50% kill fee", suggestion: "Counter with: 75% kill fee as industry standard." }],
+      overallScore: "Neutral",
+    },
+    legacyAnalysis: null, fileName: "oatly-jordan-ugc.pdf",
+    versions: [{ id: "v4_01", versionNumber: 1, fileName: "oatly-jordan-v1.pdf", notes: "Accepted as-is due to timeline pressure", uploadedAt: "2026-04-06T10:00:00Z", uploadedBy: "Oatly", isFinal: true }],
+    signatures: [
+      { id: "sig_07", signerName: "Jordan Ellis", signerType: "creator", signedAt: "2026-04-08T10:00:00Z", method: "in_app", status: "signed" },
+      { id: "sig_08", signerName: "Oatly Partnerships", signerType: "brand", signedAt: "2026-04-07T15:00:00Z", method: "docusign", status: "signed" },
+    ],
+    alerts: [{ id: "alt_04", contractId: "con_04", alertType: "payment_due", triggerDate: "2026-05-08", message: "Oatly payment due in 2 days (Net 30)", dismissed: false }],
+  },
+  {
+    id: "con_05", creator: "Camille Reyes", creatorId: "usr_camille_001", brand: "Whole Foods", type: "Influencer", value: 4200,
+    signedDate: "2026-04-02", expiryDate: "2026-05-30", exclusivityCategory: "Grocery", exclusivityDays: 30,
+    stage: "fully_executed", status: "active",
+    aiAnalysis: {
+      paymentAmount: "$4,200", paymentSchedule: "Net 15", latePaymentClause: "2% penalty after 30 days", killFee: "75% of total",
+      deliverablesList: ["3 IG Reels", "1 YouTube video", "4 IG Stories"], formatRequirements: "Authentic style, no heavy editing", revisionLimit: "2 rounds", approvalProcess: "Brand internal review 5 days", deadline: "April 30, 2026",
+      usageRights: "Organic + paid ads 60 days", exclusivityCategory: "Grocery / food retail", exclusivityDuration: "30 days", geographicRestrictions: "US only", platformRestrictions: "None",
+      redFlags: [{ text: "All terms are favorable. Strong contract.", severity: "green" }],
+      negotiationSuggestions: [],
+      overallScore: "Favorable",
+    },
+    legacyAnalysis: null, fileName: "wholefoods-camille.pdf",
+    versions: [{ id: "v5_01", versionNumber: 1, fileName: "wholefoods-camille-v1.pdf", notes: "Clean contract from Whole Foods legal", uploadedAt: "2026-03-30T10:00:00Z", uploadedBy: "Whole Foods", isFinal: true }],
+    signatures: [
+      { id: "sig_09", signerName: "Camille Reyes", signerType: "creator", signedAt: "2026-04-02T09:00:00Z", method: "in_app", status: "signed" },
+      { id: "sig_10", signerName: "Whole Foods Legal", signerType: "brand", signedAt: "2026-04-01T17:00:00Z", method: "docusign", status: "signed" },
+    ],
+    alerts: [{ id: "alt_05", contractId: "con_05", alertType: "usage_rights_expiring", triggerDate: "2026-05-25", message: "Whole Foods paid ad usage rights expire in 5 days", dismissed: false }],
+  },
+  {
+    id: "con_06", creator: "Brianna Cole", creatorId: "usr_brianna_001", brand: "Glossier", type: "Influencer", value: 2800,
+    signedDate: "2026-01-10", expiryDate: "2026-04-10", exclusivityCategory: "Beauty", exclusivityDays: 30,
+    stage: "archived", status: "expired",
+    aiAnalysis: null, legacyAnalysis: null, fileName: "glossier-brianna-spring.pdf",
+    versions: [{ id: "v6_01", versionNumber: 1, fileName: "glossier-brianna-spring-v1.pdf", notes: "Executed and completed", uploadedAt: "2026-01-08T10:00:00Z", uploadedBy: "Glossier", isFinal: true }],
+    signatures: [
+      { id: "sig_11", signerName: "Brianna Cole", signerType: "creator", signedAt: "2026-01-10T09:00:00Z", method: "in_app", status: "signed" },
+      { id: "sig_12", signerName: "Glossier Legal", signerType: "brand", signedAt: "2026-01-09T16:00:00Z", method: "docusign", status: "signed" },
+    ],
+    alerts: [],
+  },
 ];
 
 // Commission payouts
