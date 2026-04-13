@@ -7,7 +7,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getSupabase, isSupabaseConfigured, type Profile } from "@/lib/supabase";
+import {
+  getSupabase,
+  isSupabaseConfigured,
+  setAuthCookie,
+  clearAuthCookie,
+  type Profile,
+} from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
 type AuthContextType = {
@@ -54,6 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sb.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
+        // Set cookie so middleware can detect auth
+        if (session.access_token) {
+          setAuthCookie(session.access_token);
+        }
         fetchProfile(session.user.id);
       } else {
         setLoading(false);
@@ -62,11 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = sb.auth.onAuthStateChange((_event, session) => {
+    } = sb.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
+        // Update cookie on every auth change
+        if (session.access_token) {
+          setAuthCookie(session.access_token);
+        }
         fetchProfile(session.user.id);
       } else {
+        clearAuthCookie();
         setProfile(null);
         setLoading(false);
       }
@@ -90,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     const sb = getSupabase();
     await sb.auth.signOut();
+    clearAuthCookie();
     setUser(null);
     setProfile(null);
     window.location.href = "/login";

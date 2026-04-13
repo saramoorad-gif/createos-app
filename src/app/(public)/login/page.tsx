@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getSupabase, isSupabaseConfigured, setAuthCookie } from "@/lib/supabase";
 
 function LoginContent() {
   const router = useRouter();
@@ -32,7 +32,7 @@ function LoginContent() {
     setLoading(true);
 
     const sb = getSupabase();
-    const { error: signInError } = await sb.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await sb.auth.signInWithPassword({
       email,
       password,
     });
@@ -50,6 +50,11 @@ function LoginContent() {
         setError(signInError.message);
       }
       return;
+    }
+
+    // Set cookie so middleware allows access
+    if (signInData.session?.access_token) {
+      setAuthCookie(signInData.session.access_token);
     }
 
     router.push(redirect);

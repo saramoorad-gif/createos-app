@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicRoutes = ["/login", "/signup", "/onboarding", "/kit"];
+const publicRoutes = ["/login", "/signup", "/onboarding", "/kit", "/pricing"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -23,21 +23,21 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Demo mode — no Supabase configured, allow everything
+  // Demo mode
   if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.next();
   }
 
-  // Check for Supabase auth session cookies
-  // Supabase JS client stores tokens in cookies with a project-ref prefix
+  // Check for our auth cookie (set by auth-context on login)
+  const authCookie = request.cookies.get("sb-auth-token");
+
+  // Also check for Supabase's own cookie format (sb-<ref>-auth-token)
   const cookies = request.cookies.getAll();
-  const hasAuthCookie = cookies.some(
-    (c) =>
-      c.name.includes("auth-token") ||
-      c.name.includes("sb-") && c.name.includes("-auth-token")
+  const hasSupabaseCookie = cookies.some(
+    (c) => c.name === "sb-auth-token" || (c.name.startsWith("sb-") && c.name.endsWith("-auth-token"))
   );
 
-  if (!hasAuthCookie) {
+  if (!authCookie && !hasSupabaseCookie) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);

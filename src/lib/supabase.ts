@@ -3,23 +3,42 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-// Lazy-initialize to avoid crashing during SSR when env vars aren't set
 let _supabase: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
   if (_supabase) return _supabase;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Return a dummy client that won't crash — auth calls will fail gracefully
     _supabase = createClient(
       "https://placeholder.supabase.co",
       "placeholder-key"
     );
   } else {
-    _supabase = createClient(supabaseUrl, supabaseAnonKey);
+    _supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        // Store in both localStorage (for client) and cookies (for middleware)
+        flowType: "pkce",
+        detectSessionInUrl: true,
+        persistSession: true,
+        storageKey: "sb-auth-token",
+      },
+    });
   }
 
   return _supabase;
+}
+
+// Helper: set auth cookie after sign-in so middleware can read it
+export function setAuthCookie(accessToken: string) {
+  if (typeof document !== "undefined") {
+    document.cookie = `sb-auth-token=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
+  }
+}
+
+export function clearAuthCookie() {
+  if (typeof document !== "undefined") {
+    document.cookie = "sb-auth-token=; path=/; max-age=0";
+  }
 }
 
 export type Profile = {
