@@ -1,204 +1,233 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { Copy, Check } from "lucide-react";
 
-type Tier = "ugc_creator" | "influencer";
+// ─── Creator Onboarding (4 steps) ────────────────────────────────
 
-export default function OnboardingPage() {
+function CreatorOnboarding() {
   const [step, setStep] = useState(1);
-  const [name, setName] = useState("");
   const [tiktok, setTiktok] = useState("");
   const [instagram, setInstagram] = useState("");
   const [youtube, setYoutube] = useState("");
   const [niche, setNiche] = useState("");
-  const [tier, setTier] = useState<Tier | null>(null);
+  const [hasAgency, setHasAgency] = useState<boolean | null>(null);
+  const [agencyCode, setAgencyCode] = useState("");
 
+  const totalSteps = 4;
   const inputClass =
     "w-full rounded-[10px] border border-[#E5E0D8] px-3 py-2.5 text-[13px] font-sans text-[#1C1714] bg-white focus:outline-none focus:ring-2 focus:ring-[#C4714A]/20 focus:border-[#C4714A]";
 
   return (
-    <div className="min-h-screen bg-[#F7F4EF] flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-6">
-          <h1 className="text-[22px] font-serif text-[#1C1714]">
-            create<em className="italic text-[#C4714A]">OS</em>
-          </h1>
-        </div>
+    <div className="w-full max-w-md">
+      <div className="text-center mb-6">
+        <h1 className="text-[22px] font-serif text-[#1C1714]">
+          create<em className="italic text-[#C4714A]">OS</em>
+        </h1>
+      </div>
 
-        {/* Progress */}
-        <div className="flex items-center gap-2 mb-6">
-          {[1, 2, 3].map((s) => (
-            <div
-              key={s}
-              className={`flex-1 h-1.5 rounded-full transition-colors ${
-                s <= step ? "bg-[#C4714A]" : "bg-[#E5E0D8]"
-              }`}
-            />
-          ))}
-        </div>
+      <div className="flex items-center gap-2 mb-6">
+        {Array.from({ length: totalSteps }).map((_, i) => (
+          <div key={i} className={`flex-1 h-1.5 rounded-full transition-colors ${i < step ? "bg-[#C4714A]" : "bg-[#E5E0D8]"}`} />
+        ))}
+      </div>
 
-        <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-6">
-          {/* Step 1: Name + Handles */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-[18px] font-serif text-[#1C1714]">Welcome! Let&apos;s set up your profile</h2>
-                <p className="text-[13px] font-sans text-[#9A9088] mt-1">Tell us about yourself.</p>
-              </div>
-
-              <div>
-                <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Full Name</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Brianna Cole"
-                />
-              </div>
-
-              <div>
-                <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">TikTok Handle</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={tiktok}
-                  onChange={(e) => setTiktok(e.target.value)}
-                  placeholder="@briannacole"
-                />
-              </div>
-
-              <div>
-                <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Instagram Handle</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={instagram}
-                  onChange={(e) => setInstagram(e.target.value)}
-                  placeholder="@brianna.cole"
-                />
-              </div>
-
-              <div>
-                <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">YouTube Channel</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={youtube}
-                  onChange={(e) => setYoutube(e.target.value)}
-                  placeholder="@BriannaColeCreates"
-                />
-              </div>
-
-              <button
-                className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E] transition-colors"
-                onClick={() => setStep(2)}
-              >
-                Continue &rarr;
-              </button>
+      <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-6">
+        {step === 1 && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-[18px] font-serif text-[#1C1714]">Connect your <em className="italic text-[#C4714A]">platforms</em></h2>
+              <p className="text-[13px] font-sans text-[#9A9088] mt-1">Add your social handles.</p>
             </div>
-          )}
-
-          {/* Step 2: Niche */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-[18px] font-serif text-[#1C1714]">What&apos;s your primary niche?</h2>
-                <p className="text-[13px] font-sans text-[#9A9088] mt-1">This helps us match you with brands.</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                {["Lifestyle", "Beauty", "Skincare", "Fashion", "Fitness", "Food", "Tech", "Travel", "Wellness", "Parenting"].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setNiche(n)}
-                    className={`rounded-[10px] border px-3 py-2.5 text-[13px] font-sans font-medium transition-colors ${
-                      niche === n
-                        ? "border-[#C4714A] bg-[#C4714A]/5 text-[#C4714A]"
-                        : "border-[#E5E0D8] bg-white text-[#9A9088] hover:border-[#1C1714]/20"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E] transition-colors"
-                onClick={() => setStep(3)}
-              >
-                Continue &rarr;
-              </button>
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">TikTok</label>
+              <input type="text" className={inputClass} value={tiktok} onChange={e => setTiktok(e.target.value)} placeholder="@briannacole" />
             </div>
-          )}
-
-          {/* Step 3: Choose Tier */}
-          {step === 3 && (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-[18px] font-serif text-[#1C1714]">Choose your plan</h2>
-                <p className="text-[13px] font-sans text-[#9A9088] mt-1">You can change this anytime.</p>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  onClick={() => setTier("ugc_creator")}
-                  className={`w-full rounded-[10px] border p-4 text-left transition-colors ${
-                    tier === "ugc_creator"
-                      ? "border-[#C4714A] bg-[#C4714A]/5"
-                      : "border-[#E5E0D8] bg-white hover:border-[#1C1714]/20"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[14px] font-sans font-semibold text-[#1C1714]">UGC Creator</span>
-                    <span className="text-[18px] font-serif text-[#C4714A]">$27/mo</span>
-                  </div>
-                  <p className="text-[12px] font-sans text-[#9A9088]">
-                    Deal pipeline, invoicing, inbox, inbound, brand radar, rate calculator
-                  </p>
-                  {tier === "ugc_creator" && (
-                    <div className="mt-2 text-[#C4714A] text-sm">&#10003;</div>
-                  )}
-                </button>
-
-                <button
-                  onClick={() => setTier("influencer")}
-                  className={`w-full rounded-[10px] border p-4 text-left transition-colors ${
-                    tier === "influencer"
-                      ? "border-[#C4714A] bg-[#C4714A]/5"
-                      : "border-[#E5E0D8] bg-white hover:border-[#1C1714]/20"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px] font-sans font-semibold text-[#1C1714]">Influencer</span>
-                      <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-[#C4714A] bg-[#C4714A]/10 rounded px-1.5 py-0.5">Popular</span>
-                    </div>
-                    <span className="text-[18px] font-serif text-[#C4714A]">$39/mo</span>
-                  </div>
-                  <p className="text-[12px] font-sans text-[#9A9088]">
-                    Everything in UGC + audience analytics, sponsor tolerance, exclusivity tracker, media kit, automations
-                  </p>
-                  {tier === "influencer" && (
-                    <div className="mt-2 text-[#C4714A] text-sm">&#10003;</div>
-                  )}
-                </button>
-              </div>
-
-              <button
-                className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E] transition-colors disabled:opacity-50"
-                disabled={!tier}
-                onClick={() => {
-                  window.location.href = "/dashboard";
-                }}
-              >
-                Launch my createOS
-              </button>
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Instagram</label>
+              <input type="text" className={inputClass} value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@brianna.cole" />
             </div>
-          )}
-        </div>
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">YouTube</label>
+              <input type="text" className={inputClass} value={youtube} onChange={e => setYoutube(e.target.value)} placeholder="@BriannaColeCreates" />
+            </div>
+            <button onClick={() => setStep(2)} className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E]">Continue &rarr;</button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-[18px] font-serif text-[#1C1714]">Your primary <em className="italic text-[#C4714A]">niche</em></h2>
+              <p className="text-[13px] font-sans text-[#9A9088] mt-1">This helps us match you with brands.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {["Lifestyle", "Beauty", "Skincare", "Fashion", "Fitness", "Food", "Tech", "Travel", "Wellness", "Parenting"].map(n => (
+                <button key={n} onClick={() => setNiche(n)} className={`rounded-[10px] border px-3 py-2.5 text-[13px] font-sans font-medium transition-colors ${niche === n ? "border-[#C4714A] bg-[#C4714A]/5 text-[#C4714A]" : "border-[#E5E0D8] bg-white text-[#9A9088] hover:border-[#1C1714]/20"}`}>{n}</button>
+              ))}
+            </div>
+            <button onClick={() => setStep(3)} className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E]">Continue &rarr;</button>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-[18px] font-serif text-[#1C1714]">Represented by an <em className="italic text-[#C4714A]">agency</em>?</h2>
+              <p className="text-[13px] font-sans text-[#9A9088] mt-1">If your agency uses CreateOS, link your accounts.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => setHasAgency(true)} className={`rounded-[10px] border px-3 py-3 text-[13px] font-sans font-medium ${hasAgency === true ? "border-[#C4714A] bg-[#C4714A]/5 text-[#C4714A]" : "border-[#E5E0D8] text-[#9A9088]"}`}>Yes</button>
+              <button onClick={() => setHasAgency(false)} className={`rounded-[10px] border px-3 py-3 text-[13px] font-sans font-medium ${hasAgency === false ? "border-[#C4714A] bg-[#C4714A]/5 text-[#C4714A]" : "border-[#E5E0D8] text-[#9A9088]"}`}>Not yet</button>
+            </div>
+            {hasAgency && (
+              <div>
+                <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Agency invite code</label>
+                <input type="text" className={inputClass} value={agencyCode} onChange={e => setAgencyCode(e.target.value)} placeholder="e.g., BRIGHT-TALENT-2026" />
+              </div>
+            )}
+            <button onClick={() => setStep(4)} className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E]">{hasAgency === false ? "Skip & continue" : "Continue"} &rarr;</button>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-4 text-center py-4">
+            <div className="w-12 h-12 rounded-full bg-[#EBF5EB] flex items-center justify-center mx-auto mb-2"><span className="text-[#4A9060] text-xl">&#10003;</span></div>
+            <h2 className="text-[20px] font-serif text-[#1C1714]">You&apos;re all <em className="italic text-[#C4714A]">set</em></h2>
+            <p className="text-[13px] font-sans text-[#9A9088]">Your creator dashboard is ready.</p>
+            <button onClick={() => { window.location.href = "/dashboard"; }} className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E]">Launch my CreateOS &rarr;</button>
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+// ─── Agency Onboarding (3 steps) ─────────────────────────────────
+
+function AgencyOnboarding() {
+  const [step, setStep] = useState(1);
+  const [agencyName, setAgencyName] = useState("");
+  const [role, setRole] = useState("");
+  const [rosterSize, setRosterSize] = useState("");
+  const [emails, setEmails] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [agencyPlan, setAgencyPlan] = useState<"starter" | "growth" | null>(null);
+
+  const inviteLink = "createsuite.co/join/BRIGHT-2026";
+  const inputClass =
+    "w-full rounded-[10px] border border-[#E5E0D8] px-3 py-2.5 text-[13px] font-sans text-[#1C1714] bg-white focus:outline-none focus:ring-2 focus:ring-[#C4714A]/20 focus:border-[#C4714A]";
+
+  return (
+    <div className="w-full max-w-lg">
+      <div className="text-center mb-6">
+        <h1 className="text-[22px] font-serif text-[#1C1714]">create<em className="italic text-[#C4714A]">OS</em></h1>
+        <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#9A9088] mt-2">AGENCY SETUP</p>
+      </div>
+      <div className="flex items-center gap-2 mb-6">
+        {[1, 2, 3].map(s => (<div key={s} className={`flex-1 h-1.5 rounded-full ${s <= step ? "bg-[#C4714A]" : "bg-[#E5E0D8]"}`} />))}
+      </div>
+      <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-6">
+        {step === 1 && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-[18px] font-serif text-[#1C1714]">Agency <em className="italic text-[#C4714A]">profile</em></h2>
+              <p className="text-[13px] font-sans text-[#9A9088] mt-1">Tell us about your agency.</p>
+            </div>
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Agency name</label>
+              <input type="text" className={inputClass} value={agencyName} onChange={e => setAgencyName(e.target.value)} placeholder="Bright Talent Mgmt" />
+            </div>
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Your role</label>
+              <div className="grid grid-cols-3 gap-2">
+                {["Owner", "Manager", "Assistant"].map(r => (
+                  <button key={r} onClick={() => setRole(r)} className={`rounded-[10px] border px-3 py-2.5 text-[13px] font-sans font-medium ${role === r ? "border-[#C4714A] bg-[#C4714A]/5 text-[#C4714A]" : "border-[#E5E0D8] text-[#9A9088]"}`}>{r}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Roster size</label>
+              <div className="grid grid-cols-2 gap-2">
+                {["1-5", "6-15", "16-40", "40+"].map(s => (
+                  <button key={s} onClick={() => setRosterSize(s)} className={`rounded-[10px] border px-3 py-2.5 text-[13px] font-sans font-medium ${rosterSize === s ? "border-[#C4714A] bg-[#C4714A]/5 text-[#C4714A]" : "border-[#E5E0D8] text-[#9A9088]"}`}>{s} creators</button>
+                ))}
+              </div>
+            </div>
+            <button onClick={() => setStep(2)} className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E]">Continue &rarr;</button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-[18px] font-serif text-[#1C1714]">Invite your <em className="italic text-[#C4714A]">roster</em></h2>
+              <p className="text-[13px] font-sans text-[#9A9088] mt-1">Share your invite link or enter emails. You can skip this.</p>
+            </div>
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Your invite link</label>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 rounded-[10px] bg-[#F7F4EF] border border-[#E5E0D8] px-3 py-2.5 text-[12px] font-mono text-[#9A9088]">{inviteLink}</code>
+                <button onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="flex items-center gap-1.5 px-3 py-2.5 border border-[#E5E0D8] rounded-[10px] text-[12px] font-sans font-500 text-[#C4714A] hover:bg-[#FBF0EA]">
+                  {copied ? <><Check className="h-3.5 w-3.5" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Or enter creator emails</label>
+              <textarea className={`${inputClass} resize-none`} rows={3} value={emails} onChange={e => setEmails(e.target.value)} placeholder={"brianna@example.com\nmaya@example.com"} />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setStep(3)} className="flex-1 border border-[#E5E0D8] rounded-[10px] px-4 py-2.5 text-[13px] font-sans font-500 text-[#9A9088] hover:bg-[#F7F4EF]">Skip for now</button>
+              <button onClick={() => setStep(3)} className="flex-1 bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E]">Send invites &rarr;</button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-[18px] font-serif text-[#1C1714]">Choose your <em className="italic text-[#C4714A]">plan</em></h2>
+              <p className="text-[13px] font-sans text-[#9A9088] mt-1">Select the plan that fits your roster.</p>
+            </div>
+            <div className="space-y-3">
+              {([
+                { key: "starter" as const, name: "Starter", price: "$149", desc: "Up to 15 creators", features: ["Roster dashboard", "Commission tracking", "Conflict manager", "Campaign builder", "Brand reports", "Deal management"] },
+                { key: "growth" as const, name: "Growth", price: "$249", desc: "Up to 40 creators — everything in Starter", features: ["Everything in Starter", "Up to 40 creators", "Priority support", "Custom reporting", "API access", "Advanced analytics"] },
+              ]).map(plan => (
+                <button key={plan.key} onClick={() => setAgencyPlan(plan.key)} className={`w-full text-left rounded-[10px] border p-5 transition-colors ${agencyPlan === plan.key ? "border-[#C4714A] ring-1 ring-[#C4714A]/20" : "border-[#E5E0D8] hover:border-[#1C1714]/20"}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[14px] font-sans font-600 text-[#1C1714]">{plan.name}</span>
+                    <span className="text-[20px] font-serif text-[#C4714A]">{plan.price}<span className="text-[12px] font-sans text-[#9A9088]">/mo</span></span>
+                  </div>
+                  <p className="text-[12px] font-sans text-[#9A9088] mb-2">{plan.desc}</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {plan.features.map(f => (<div key={f} className="flex items-start gap-1.5"><span className="text-[#4A9060] text-[10px] mt-0.5">&#10003;</span><span className="text-[11px] font-sans text-[#1C1714]">{f}</span></div>))}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button disabled={!agencyPlan} onClick={() => { window.location.href = "/dashboard"; }} className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E] disabled:opacity-50">Launch agency dashboard &rarr;</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Router ──────────────────────────────────────────────────────
+
+function OnboardingContent() {
+  const searchParams = useSearchParams();
+  const flow = searchParams.get("flow");
+  return (
+    <div className="min-h-screen bg-[#F7F4EF] flex items-center justify-center px-4 py-8">
+      {flow === "agency" ? <AgencyOnboarding /> : <CreatorOnboarding />}
+    </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (<Suspense><OnboardingContent /></Suspense>);
 }

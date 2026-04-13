@@ -26,8 +26,13 @@ export type Profile = {
   id: string;
   full_name: string;
   email: string;
-  account_type: "ugc" | "influencer" | "agency";
+  account_type: "free" | "ugc" | "ugc_influencer" | "agency";
   agency_name: string | null;
+  agency_plan: "starter" | "growth" | null;
+  roster_size: string | null;
+  agency_role: string | null;
+  has_agency: boolean;
+  linked_agency_id: string | null;
   avatar_url: string | null;
   created_at: string;
 };
