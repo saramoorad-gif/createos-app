@@ -1,10 +1,30 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicRoutes = ["/login", "/signup", "/onboarding", "/kit", "/pricing"];
+// Routes that do NOT require authentication
+const publicRoutes = [
+  "/login",
+  "/signup",
+  "/onboarding",
+  "/kit",
+  "/pricing",
+  "/for-creators",
+  "/for-agencies",
+  "/features",
+  "/faq",
+  "/help",
+  "/contact",
+  "/privacy",
+  "/terms",
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Homepage is always public
+  if (pathname === "/") {
+    return NextResponse.next();
+  }
 
   // Allow public routes
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
@@ -28,10 +48,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for our auth cookie (set by auth-context on login)
+  // Check for auth cookie
   const authCookie = request.cookies.get("sb-auth-token");
-
-  // Also check for Supabase's own cookie format (sb-<ref>-auth-token)
   const cookies = request.cookies.getAll();
   const hasSupabaseCookie = cookies.some(
     (c) => c.name === "sb-auth-token" || (c.name.startsWith("sb-") && c.name.endsWith("-auth-token"))
