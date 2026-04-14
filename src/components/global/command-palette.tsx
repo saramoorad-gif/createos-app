@@ -23,9 +23,17 @@ const items: CommandItem[] = [
   { name: "Settings", href: "/settings", icon: Settings, category: "Navigate" },
   { name: "Integrations", href: "/integrations", icon: Settings, category: "Navigate" },
   { name: "Import Data", href: "/import", icon: FileText, category: "Navigate" },
+  { name: "AI Negotiator", href: "/ai-negotiator", icon: Star, category: "Navigate" },
+  { name: "Revenue Forecast", href: "/forecast", icon: TrendingUp, category: "Navigate" },
+  { name: "Tax Prep", href: "/tax-export", icon: FileText, category: "Navigate" },
+  { name: "Content Calendar", href: "/content-calendar", icon: BarChart3, category: "Navigate" },
+  { name: "Content Briefs", href: "/briefs", icon: FileText, category: "Navigate" },
+  { name: "Marketplace", href: "/marketplace", icon: Briefcase, category: "Navigate" },
+  { name: "Help Center", href: "/help-center", icon: Mail, category: "Navigate" },
   { name: "New Deal", href: "/deals", icon: Plus, category: "Create" },
   { name: "New Invoice", href: "/invoices", icon: Plus, category: "Create" },
   { name: "Log Earnings", href: "/income", icon: DollarSign, category: "Create" },
+  { name: "Analyze Offer", href: "/ai-negotiator", icon: Star, category: "Create" },
   { name: "Import CSV", href: "/import", icon: FileText, category: "Create" },
 ];
 

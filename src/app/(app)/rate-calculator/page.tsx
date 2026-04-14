@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/components/global/toast";
+import { Sparkles, Loader2 } from "lucide-react";
 
 type Platform = "tiktok" | "instagram" | "youtube";
 type ContentType = "ugc_video" | "reel" | "static" | "story";
@@ -72,13 +75,43 @@ function fmt(n: number) {
 }
 
 export default function RateCalculatorPage() {
+  const { profile } = useAuth();
+  const { toast } = useToast();
   const [platform, setPlatform] = useState<Platform>("tiktok");
   const [contentType, setContentType] = useState<ContentType>("ugc_video");
-  const [followers, setFollowers] = useState(0);
+  const [followers, setFollowers] = useState(profile?.tiktok_followers || 0);
   const [engagementRate, setEngagementRate] = useState(0);
   const [usageRights, setUsageRights] = useState<UsageRights>("none");
   const [exclusivity, setExclusivity] = useState<ExclusivityDays>(0);
   const [calculated, setCalculated] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  // Auto-fill followers when platform changes
+  function handlePlatformChange(p: Platform) {
+    setPlatform(p);
+    if (p === "tiktok" && profile?.tiktok_followers) setFollowers(profile.tiktok_followers);
+    else if (p === "instagram" && profile?.instagram_followers) setFollowers(profile.instagram_followers);
+    else if (p === "youtube" && profile?.youtube_followers) setFollowers(profile.youtube_followers);
+  }
+
+  async function getAiSuggestion() {
+    setAiLoading(true);
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "rate_suggestion",
+          context: { platform, followers: String(followers), engagement: String(engagementRate), niche: profile?.primary_niche || "lifestyle", content_type: contentTypeLabels[contentType] },
+        }),
+      });
+      const data = await res.json();
+      setAiSuggestion(data.result);
+      toast("success", "AI rate suggestion generated");
+    } catch { toast("error", "Could not generate suggestion"); }
+    setAiLoading(false);
+  }
 
   const result = calculateRate(platform, contentType, followers, engagementRate, usageRights, exclusivity);
 
@@ -111,7 +144,7 @@ export default function RateCalculatorPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Platform</label>
-                  <select className={selectClass} value={platform} onChange={(e) => setPlatform(e.target.value as Platform)}>
+                  <select className={selectClass} value={platform} onChange={(e) => handlePlatformChange(e.target.value as Platform)}>
                     {Object.entries(platformLabels).map(([k, v]) => (
                       <option key={k} value={k}>{v}</option>
                     ))}
@@ -163,12 +196,31 @@ export default function RateCalculatorPage() {
                 </div>
               </div>
 
-              <button
-                className="w-full bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] transition-colors"
-                onClick={() => setCalculated(true)}
-              >
-                Calculate Rate
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  className="bg-[#1E3F52] text-white font-sans font-medium text-[13px] py-2.5 rounded-[8px] hover:bg-[#2a5269] transition-colors"
+                  onClick={() => setCalculated(true)}
+                >
+                  Calculate Rate
+                </button>
+                <button
+                  className="flex items-center justify-center gap-1.5 border-[1.5px] border-[#D8E8EE] text-[#7BAFC8] font-sans font-medium text-[13px] py-2.5 rounded-[8px] hover:bg-[#F2F8FB] transition-colors"
+                  onClick={getAiSuggestion}
+                  disabled={aiLoading || !followers}
+                >
+                  {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  AI Suggestion
+                </button>
+              </div>
+              {aiSuggestion && (
+                <div className="mt-4 bg-[#F2F8FB] border-[1.5px] border-[#D8E8EE] rounded-[10px] p-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Sparkles className="h-3.5 w-3.5 text-[#7BAFC8]" />
+                    <span className="text-[10px] font-sans uppercase tracking-[3px] text-[#7BAFC8]" style={{ fontWeight: 600 }}>AI SUGGESTION</span>
+                  </div>
+                  <p className="text-[13px] font-sans text-[#1A2C38] leading-relaxed whitespace-pre-wrap">{aiSuggestion}</p>
+                </div>
+              )}
             </div>
           </div>
 

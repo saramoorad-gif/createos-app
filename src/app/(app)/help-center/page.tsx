@@ -140,7 +140,7 @@ export default function HelpCenterPage() {
           {/* Search */}
           <div className="relative mb-6">
             <Search className="absolute left-3 top-3 h-4 w-4 text-[#8AAABB]" />
-            <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search for help..." className={`${inputClass} pl-10`} />
+            <input type="text" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setOpenFaq(null); }} placeholder="Search for help..." className={`${inputClass} pl-10`} />
           </div>
 
           {/* FAQ sections */}

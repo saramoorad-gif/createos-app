@@ -14,8 +14,8 @@ const creatorLinks = [
   { name: "Invoices", href: "/invoices" },
   { name: "Income", href: "/income" },
   { name: "Inbox", href: "/inbox" },
-  { name: "Media Kit", href: "/media-kit" },
-  { name: "Rate Calculator", href: "/rate-calculator" },
+  { name: "Calendar", href: "/content-calendar" },
+  { name: "Tools", href: "/rate-calculator" },
 ];
 
 const agencyLinks = [
