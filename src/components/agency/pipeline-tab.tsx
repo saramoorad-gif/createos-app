@@ -15,6 +15,10 @@ import {
 } from "lucide-react";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { useToast } from "@/components/global/toast";
+import { TableSkeleton } from "@/components/global/skeleton";
+import { ContextMenu } from "@/components/global/context-menu";
+import { InlineSelect } from "@/components/global/inline-edit";
 
 // ─── Types (formerly from placeholder-data) ────────────────────────
 type DealStage = "lead" | "pitched" | "negotiating" | "contracted" | "in_progress" | "delivered" | "paid";
@@ -90,6 +94,7 @@ function QuickAddModal({
   const [value, setValue] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const { insert: insertDeal, loading: inserting } = useSupabaseMutation("deals");
+  const { toast } = useToast();
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -117,6 +122,7 @@ function QuickAddModal({
       });
       if (newDeal) {
         onCreated(newDeal);
+        toast("success", "Deal created");
       }
       onClose();
     } catch (err) {
@@ -396,6 +402,7 @@ export function PipelineTab() {
   const deals = rawDeals as any[];
   const [openStageDropdown, setOpenStageDropdown] = useState<string | null>(null);
   const { update: updateDeal } = useSupabaseMutation("deals");
+  const { toast } = useToast();
 
   const sortRef = useRef<HTMLDivElement>(null);
 
@@ -542,6 +549,7 @@ export function PipelineTab() {
     setOpenStageDropdown(null);
     try {
       await updateDeal(id, { stage });
+      toast("success", "Stage updated");
     } catch (err) {
       console.error("Failed to change stage:", err);
       if (oldDeal) {
@@ -587,6 +595,7 @@ export function PipelineTab() {
     setEditingDeal(null);
     try {
       await updateDeal(updated.id, updateData);
+      toast("success", "Deal updated");
     } catch (err) {
       console.error("Failed to save deal:", err);
     }
@@ -595,7 +604,15 @@ export function PipelineTab() {
   // ─── Table row renderer ───────────────────────────────────────────
   function renderRow(deal: (typeof deals)[0]) {
     return (
-      <tr key={deal.id} className="border-b border-[#D8E8EE] hover:bg-[#FDFBF9]">
+      <ContextMenu
+        key={deal.id}
+        items={[
+          { label: "Edit", onClick: () => openEdit(deal) },
+          { label: "Change stage", onClick: () => setOpenStageDropdown(openStageDropdown === deal.id ? null : deal.id) },
+          { label: "Create invoice", onClick: () => toast("info", "Invoice creation coming soon") },
+        ]}
+      >
+      <tr className="border-b border-[#D8E8EE] hover:bg-[#FDFBF9]">
         {/* Checkbox */}
         <td className="py-3 pl-4 pr-2">
           <span
@@ -649,35 +666,15 @@ export function PipelineTab() {
 
         {/* Stage pill */}
         <td className="relative px-3 py-3">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpenStageDropdown(openStageDropdown === deal.id ? null : deal.id);
-            }}
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${stageColorMap[deal.stage]}`}
-          >
-            {dealStageLabels[deal.stage]}
-            <ChevronDown size={10} />
-          </button>
-          {openStageDropdown === deal.id && (
-            <div
-              className="absolute left-3 top-full z-30 mt-1 min-w-[140px] rounded-[8px] border border-[#D8E8EE] bg-white py-1 shadow-lg"
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              {stages.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => changeStage(deal.id, s)}
-                  className={`flex w-full items-center px-3 py-1.5 text-left text-[12px] hover:bg-[#FAF8F4] ${
-                    deal.stage === s ? "font-medium text-[#7BAFC8]" : "text-[#1A2C38]"
-                  }`}
-                >
-                  {dealStageLabels[s]}
-                  {deal.stage === s && <Check size={10} className="ml-auto" />}
-                </button>
-              ))}
-            </div>
-          )}
+          <InlineSelect
+            value={deal.stage}
+            options={stages.map((s) => ({
+              value: s,
+              label: dealStageLabels[s],
+              color: stageColorMap[s],
+            }))}
+            onSave={(newStage) => changeStage(deal.id, newStage as DealStage)}
+          />
         </td>
 
         {/* Due */}
@@ -701,6 +698,7 @@ export function PipelineTab() {
           </button>
         </td>
       </tr>
+      </ContextMenu>
     );
   }
 
@@ -738,11 +736,7 @@ export function PipelineTab() {
 
   // ─── Render ───────────────────────────────────────────────────────
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
-      </div>
-    );
+    return <TableSkeleton rows={8} cols={7} />;
   }
 
   if (!loading && deals.length === 0) {
@@ -881,6 +875,7 @@ export function PipelineTab() {
                     setSelectedIds(new Set());
                     try {
                       await Promise.all(ids.map((id) => updateDeal(id, { stage: s })));
+                      toast("success", ids.length + " deals moved");
                     } catch (err) {
                       console.error("Failed to bulk move deals:", err);
                     }

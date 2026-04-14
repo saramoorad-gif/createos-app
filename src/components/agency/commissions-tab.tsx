@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
 import { Download, CheckCircle2 } from "lucide-react";
+import { useToast } from "@/components/global/toast";
+import { TableSkeleton } from "@/components/global/skeleton";
 
 const statusStyles: Record<string, { bg: string; text: string; label: string }> = {
   paid: { bg: "bg-[#E8F4EE]", text: "text-[#3D7A58]", label: "Paid" },
@@ -16,13 +18,10 @@ export function CommissionsTab() {
   const { data: agencyRoster, setData: setRoster } = useSupabaseQuery<any>("agency_creator_links");
   const { update: updatePayout } = useSupabaseMutation("commission_payouts");
   const { update: updateCreatorLink } = useSupabaseMutation("agency_creator_links");
+  const { toast } = useToast();
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
-      </div>
-    );
+    return <TableSkeleton rows={8} cols={7} />;
   }
 
   if (!loading && commissionPayouts.length === 0) {
@@ -106,6 +105,7 @@ export function CommissionsTab() {
                             setPayouts((prev: any[]) =>
                               prev.map((item) => item.id === p.id ? { ...item, status: "paid", paid_at: new Date().toISOString() } : item)
                             );
+                            toast("success", "Commission marked as paid");
                           } catch (err) {
                             console.error("Failed to mark as paid:", err);
                           }
@@ -161,6 +161,7 @@ export function CommissionsTab() {
                         setRoster((prev: any[]) =>
                           prev.map((item) => item.id === c.id ? { ...item, commissionRate: newRate } : item)
                         );
+                        toast("success", "Commission rate updated");
                       } catch (err) {
                         console.error("Failed to update commission rate:", err);
                         e.target.value = String(c.commissionRate);

@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { formatCurrency, formatDate, timeAgo } from "@/lib/utils";
 import Link from "next/link";
 import { AlertTriangle, Clock, FileText, Users, TrendingUp, CheckCircle2, ArrowRight } from "lucide-react";
+import { DashboardSkeleton } from "@/components/global/skeleton";
 
 interface Deal {
   id: string;
@@ -108,7 +109,7 @@ export function AgencyHome({ onNavigate }: { onNavigate: (tab: string) => void }
   });
 
   if (dealsLoading) {
-    return <div className="pt-20 text-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8] mx-auto" /></div>;
+    return <DashboardSkeleton />;
   }
 
   return (

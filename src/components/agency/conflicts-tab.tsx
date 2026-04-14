@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatDate, timeAgo } from "@/lib/utils";
 import { CheckCircle2, Search, X, AlertTriangle } from "lucide-react";
+import { useToast } from "@/components/global/toast";
+import { TableSkeleton } from "@/components/global/skeleton";
 
 const severityStyles: Record<string, { bg: string; text: string; dot: string }> = {
   high: { bg: "bg-[#F4EAEA]", text: "text-[#A03D3D]", dot: "bg-[#A03D3D]" },
@@ -49,6 +51,7 @@ function ConflictScanModal({
   const [endDate, setEndDate] = useState("");
   const [scanResult, setScanResult] = useState<null | { conflict: boolean; message: string }>(null);
   const [scanned, setScanned] = useState(false);
+  const { toast: scanToast } = useToast();
 
   const handleScan = () => {
     if (!selectedCreator || !brandName.trim() || !category.trim() || !startDate || !endDate) return;
@@ -78,6 +81,7 @@ function ConflictScanModal({
       setScanResult({ conflict: false, message: "No conflicts found" });
     }
     setScanned(true);
+    scanToast("info", "Scan complete");
   };
 
   return (
@@ -210,13 +214,10 @@ export function ConflictsTab() {
   const { data: exclusivityMap } = useSupabaseQuery<any>("exclusivity_map");
   const { data: agencyRoster } = useSupabaseQuery<any>("agency_creator_links");
   const { update: updateConflict } = useSupabaseMutation("conflict_log");
+  const { toast } = useToast();
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
-      </div>
-    );
+    return <TableSkeleton rows={6} cols={5} />;
   }
 
   if (!loading && conflicts.length === 0) {
@@ -324,6 +325,7 @@ export function ConflictsTab() {
                             prev.map((c) => c.id === conflict.id ? { ...c, status: "resolved", resolved_at: new Date().toISOString() } : c)
                           );
                           setExpandedId(null);
+                          toast("success", "Conflict resolved");
                         } catch (err) {
                           console.error("Failed to mark as resolved:", err);
                         }

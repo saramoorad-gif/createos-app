@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { useAuth } from "@/contexts/auth-context";
 import { timeAgo } from "@/lib/utils";
+import { useToast } from "@/components/global/toast";
+import { TableSkeleton } from "@/components/global/skeleton";
 import { Send, Paperclip, Flag, CheckCircle2, Megaphone, FileText } from "lucide-react";
 
 interface MessageThread {
@@ -63,9 +65,10 @@ export default function CreatorInboxPage() {
   const [newMessage, setNewMessage] = useState("");
   const [view, setView] = useState<"messages" | "tasks" | "announcements">("messages");
 
+  const { toast } = useToast();
   const loading = threadsLoading || messagesLoading;
 
-  if (loading) return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading...</p></div>;
+  if (loading) return <TableSkeleton rows={5} cols={3} />;
 
   // Filter to creator-facing threads
   const myThreads = allThreads.filter(
@@ -103,6 +106,7 @@ export default function CreatorInboxPage() {
         is_internal: false,
       });
       setNewMessage("");
+      toast("success", "Message sent");
     } catch (e) {
       console.error("Failed to send message:", e);
     }
@@ -214,7 +218,7 @@ export default function CreatorInboxPage() {
 
                   <div className="border-t border-[#D8E8EE] p-3">
                     <div className="flex items-center gap-2">
-                      <button className="text-[#8AAABB] hover:text-[#1A2C38]" onClick={() => alert("File attachments coming soon")}><Paperclip className="h-4 w-4" /></button>
+                      <button className="text-[#8AAABB] hover:text-[#1A2C38]" onClick={() => toast("info", "File attachments coming soon")}><Paperclip className="h-4 w-4" /></button>
                       <input
                         type="text"
                         value={newMessage}

@@ -5,6 +5,8 @@ import { AgencyDashboard } from "@/components/agency/agency-dashboard";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { useToast } from "@/components/global/toast";
+import { DashboardSkeleton } from "@/components/global/skeleton";
 import Link from "next/link";
 import { ArrowRight, Plus, TrendingUp, FileText, Briefcase, Star } from "lucide-react";
 
@@ -37,7 +39,7 @@ export default function DashboardPage() {
   const { profile, loading: authLoading } = useAuth();
 
   if (authLoading) {
-    return <div className="pt-20 text-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8] mx-auto" /></div>;
+    return <DashboardSkeleton />;
   }
 
   if (!profile) {
@@ -53,6 +55,7 @@ export default function DashboardPage() {
 
 function CreatorDashboard() {
   const { profile } = useAuth();
+  const { toast } = useToast();
   const displayName = profile?.full_name?.split(" ")[0] || "there";
 
   const { data: deals, loading: dealsLoading } = useSupabaseQuery<Deal>("deals", { order: { column: "created_at", ascending: false } });
@@ -72,7 +75,7 @@ function CreatorDashboard() {
     .slice(0, 5);
 
   if (dealsLoading) {
-    return <div className="pt-20 text-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8] mx-auto" /></div>;
+    return <DashboardSkeleton />;
   }
 
   // New user — no deals yet
@@ -198,7 +201,7 @@ function CreatorDashboard() {
                 { label: "Browse brands", href: "/brand-radar" },
                 { label: "Edit media kit", href: "/media-kit" },
               ].map(a => (
-                <Link key={a.label} href={a.href} className="block bg-white border-[1.5px] border-[#D8E8EE] rounded-card px-4 py-3 text-[13px] font-sans text-[#1A2C38] hover:border-[#7BAFC8] hover:shadow-card transition-all" style={{ fontWeight: 500 }}>
+                <Link key={a.label} href={a.href} onClick={() => toast("info", `Navigating to ${a.label.replace("+ ", "")}`)} className="block bg-white border-[1.5px] border-[#D8E8EE] rounded-card px-4 py-3 text-[13px] font-sans text-[#1A2C38] hover:border-[#7BAFC8] hover:shadow-card transition-all" style={{ fontWeight: 500 }}>
                   {a.label}
                 </Link>
               ))}

@@ -4,6 +4,10 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { useToast } from "@/components/global/toast";
+import { TableSkeleton } from "@/components/global/skeleton";
+import { ContextMenu } from "@/components/global/context-menu";
+import { InlineEdit, InlineSelect } from "@/components/global/inline-edit";
 import { X, ChevronRight, FileText, Eye, Plus } from "lucide-react";
 
 interface Deal {
@@ -33,7 +37,7 @@ const stageLabels: Record<string, string> = { lead: "Lead", pitched: "Pitched", 
 const stageProgress: Record<string, number> = { lead: 5, pitched: 15, negotiating: 30, contracted: 45, in_progress: 65, delivered: 85, paid: 100 };
 const stageOrder = ["lead", "pitched", "negotiating", "contracted", "in_progress", "delivered", "paid"];
 
-function DealPanel({ deal, onClose, onMoveStage, onCreateInvoice }: { deal: Deal; onClose: () => void; onMoveStage: (dealId: string, newStage: string) => void; onCreateInvoice: (deal: Deal) => void }) {
+function DealPanel({ deal, onClose, onMoveStage, onCreateInvoice, onUpdateValue }: { deal: Deal; onClose: () => void; onMoveStage: (dealId: string, newStage: string) => void; onCreateInvoice: (deal: Deal) => void; onUpdateValue: (dealId: string, value: string) => void }) {
   const currentIdx = stageOrder.indexOf(deal.stage);
   const nextStage = currentIdx < stageOrder.length - 1 ? stageOrder[currentIdx + 1] : null;
   return (
@@ -46,13 +50,14 @@ function DealPanel({ deal, onClose, onMoveStage, onCreateInvoice }: { deal: Deal
         </div>
         <div className="p-6 space-y-6">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[9px] font-sans uppercase tracking-[4px] px-2 py-0.5 rounded bg-[#F2F8FB] text-[#3D6E8A]" style={{ fontWeight: 700 }}>{stageLabels[deal.stage]}</span>
+            <InlineSelect value={deal.stage} options={stageOrder.map(s => ({ value: s, label: stageLabels[s] }))} onSave={(newStage) => { onMoveStage(deal.id, newStage); }} className="text-[9px] font-sans uppercase tracking-[4px] px-2 py-0.5 rounded bg-[#F2F8FB] text-[#3D6E8A]" />
             {deal.deal_type && <span className="text-[9px] font-sans uppercase tracking-[4px] px-2 py-0.5 rounded bg-[#F2F8FB] text-[#7BAFC8]" style={{ fontWeight: 700 }}>{deal.deal_type}</span>}
             {deal.created_by_agency && <span className="text-[10px] font-sans px-2 py-0.5 rounded bg-[#F0EAE0] text-[#8AAABB]">Added by agency</span>}
           </div>
           <div className="h-[3px] w-full bg-[#D8E8EE] rounded-full overflow-hidden"><div className="h-full bg-[#7BAFC8] rounded-full" style={{ width: `${stageProgress[deal.stage] || 0}%` }} /></div>
           <div className="space-y-3 divide-y divide-[#D8E8EE]">
-            {([["Amount", deal.value > 0 ? formatCurrency(deal.value) : "TBD"], ["Deliverables", deal.deliverables || "—"], ["Platform", deal.platform || "—"], ["Due Date", deal.due_date ? formatDate(deal.due_date) : "—"], ["Exclusivity", deal.exclusivity_days ? `${deal.exclusivity_days}d — ${deal.exclusivity_category}` : "None"]] as [string, string][]).map(([l, v]) => (
+            <div className="flex justify-between pt-3 first:pt-0"><span className="text-[12px] font-sans text-[#8AAABB]">Amount</span><InlineEdit value={deal.value > 0 ? formatCurrency(deal.value) : "TBD"} onSave={(v) => onUpdateValue(deal.id, v)} className="text-[13px] font-sans text-[#1A2C38] text-right max-w-[220px]" /></div>
+            {([["Deliverables", deal.deliverables || "—"], ["Platform", deal.platform || "—"], ["Due Date", deal.due_date ? formatDate(deal.due_date) : "—"], ["Exclusivity", deal.exclusivity_days ? `${deal.exclusivity_days}d — ${deal.exclusivity_category}` : "None"]] as [string, string][]).map(([l, v]) => (
               <div key={l} className="flex justify-between pt-3 first:pt-0"><span className="text-[12px] font-sans text-[#8AAABB]">{l}</span><span className="text-[13px] font-sans text-[#1A2C38] text-right max-w-[220px]" style={{ fontWeight: 500 }}>{v}</span></div>
             ))}
           </div>
@@ -77,6 +82,7 @@ export default function DealsPage() {
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [brand, setBrand] = useState(""); const [val, setVal] = useState(""); const [deliv, setDeliv] = useState(""); const [plat, setPlat] = useState("tiktok"); const [dtype, setDtype] = useState("ugc"); const [due, setDue] = useState(""); const [notes, setNotes] = useState("");
+  const { toast } = useToast();
 
   const { data: deals, loading, setData: setDeals } = useSupabaseQuery<Deal>("deals", { order: { column: "created_at", ascending: false } });
   const { insert, update } = useSupabaseMutation("deals");
@@ -86,7 +92,8 @@ export default function DealsPage() {
     try {
       await update(dealId, { stage: newStage });
       setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: newStage } : d));
-    } catch (e) { console.error("Failed to move stage:", e); }
+      toast("success", "Moved to " + stageLabels[newStage]);
+    } catch (e) { console.error("Failed to move stage:", e); toast("error", "Failed to move stage"); }
   }
 
   async function handleCreateInvoice(deal: Deal) {
@@ -98,8 +105,8 @@ export default function DealsPage() {
         due_date: deal.due_date || new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
         deal_id: deal.id,
       });
-      alert(`Invoice created for ${deal.brand_name} — $${deal.value}`);
-    } catch (e) { console.error("Failed to create invoice:", e); }
+      toast("success", "Invoice created for " + deal.brand_name);
+    } catch (e) { console.error("Failed to create invoice:", e); toast("error", "Failed to create invoice"); }
   }
 
   const filtered = deals.filter(filterMap[filter]);
@@ -109,9 +116,18 @@ export default function DealsPage() {
   const inputClass = "w-full rounded-btn border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]";
   const labelClass = "text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5";
 
-  async function handleCreate() { try { const d = await insert({ brand_name: brand, deal_type: dtype, platform: plat, value: Number(val) || 0, deliverables: deliv, due_date: due || null, notes, stage: "lead" }); if (d) setDeals(prev => [d as Deal, ...prev]); setShowNew(false); setBrand(""); setVal(""); setDeliv(""); setNotes(""); } catch (e) { console.error(e); } }
+  async function handleUpdateValue(dealId: string, value: string) {
+    try {
+      const numValue = Number(value.replace(/[^0-9.]/g, "")) || 0;
+      await update(dealId, { value: numValue });
+      setDeals(prev => prev.map(d => d.id === dealId ? { ...d, value: numValue } : d));
+      toast("success", "Deal value updated");
+    } catch (e) { console.error("Failed to update value:", e); toast("error", "Failed to update value"); }
+  }
 
-  if (loading) return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading deals...</p></div>;
+  async function handleCreate() { try { const d = await insert({ brand_name: brand, deal_type: dtype, platform: plat, value: Number(val) || 0, deliverables: deliv, due_date: due || null, notes, stage: "lead" }); if (d) { setDeals(prev => [d as Deal, ...prev]); toast("success", "Deal created — " + brand); } setShowNew(false); setBrand(""); setVal(""); setDeliv(""); setNotes(""); } catch (e) { console.error(e); toast("error", "Failed to create deal"); } }
+
+  if (loading) return <TableSkeleton rows={6} cols={5} />;
 
   return (
     <div>
@@ -125,16 +141,22 @@ export default function DealsPage() {
       {deals.length === 0 ? (
         <div className="text-center py-16"><p className="text-[22px] font-serif italic text-[#8AAABB] mb-3">No deals yet</p><p className="text-[14px] font-sans text-[#4A6070] mb-6">Create your first deal to start tracking your pipeline.</p><button onClick={() => setShowNew(true)} className="bg-[#1E3F52] text-white rounded-btn px-6 py-3 text-[14px] font-sans" style={{ fontWeight: 600 }}>Create your first deal →</button></div>
       ) : (
-        <div className="space-y-3">{filtered.map(deal => (
-          <button key={deal.id} onClick={() => setSelectedDeal(deal)} className="w-full text-left bg-white border-[1.5px] border-[#D8E8EE] rounded-card p-5 hover:border-[#7BAFC8] hover:shadow-card transition-all">
+        <div className="space-y-3">{filtered.map(deal => {
+          const currentIdx = stageOrder.indexOf(deal.stage);
+          const nextStage = currentIdx < stageOrder.length - 1 ? stageOrder[currentIdx + 1] : null;
+          return (
+          <ContextMenu key={deal.id} items={[{ label: "Edit", onClick: () => setSelectedDeal(deal) }, ...(nextStage ? [{ label: "Move to " + stageLabels[nextStage], onClick: () => handleMoveStage(deal.id, nextStage) }] : []), { label: "Create invoice", onClick: () => handleCreateInvoice(deal) }]}>
+          <button onClick={() => setSelectedDeal(deal)} className="w-full text-left bg-white border-[1.5px] border-[#D8E8EE] rounded-card p-5 hover:border-[#7BAFC8] hover:shadow-card transition-all">
             <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-2"><p className="text-[15px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>{deal.brand_name}</p>{deal.deal_type && <span className="text-[9px] font-sans uppercase tracking-[4px] px-2 py-0.5 rounded bg-[#F2F8FB] text-[#7BAFC8]" style={{ fontWeight: 700 }}>{deal.deal_type}</span>}{deal.created_by_agency && <span className="text-[10px] font-sans px-2 py-0.5 rounded bg-[#F0EAE0] text-[#8AAABB]">Added by agency</span>}</div><p className="text-[20px] font-serif text-[#3D6E8A]">{deal.value > 0 ? formatCurrency(deal.value) : "TBD"}</p></div>
             <div className="h-[3px] w-full bg-[#D8E8EE] rounded-full overflow-hidden mb-2"><div className="h-full bg-[#7BAFC8] rounded-full" style={{ width: `${stageProgress[deal.stage] || 0}%` }} /></div>
             <div className="flex items-center justify-between"><div className="flex items-center gap-4"><span className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB]" style={{ fontWeight: 500 }}>{stageLabels[deal.stage]}</span><span className="text-[12px] font-sans text-[#8AAABB]">{deal.deliverables}</span></div>{deal.due_date && <span className="text-[11px] font-mono text-[#8AAABB]">Due {formatDate(deal.due_date)}</span>}</div>
           </button>
-        ))}</div>
+          </ContextMenu>
+          );
+        })}</div>
       )}
 
-      {selectedDeal && <DealPanel deal={selectedDeal} onClose={() => setSelectedDeal(null)} onMoveStage={handleMoveStage} onCreateInvoice={handleCreateInvoice} />}
+      {selectedDeal && <DealPanel deal={selectedDeal} onClose={() => setSelectedDeal(null)} onMoveStage={handleMoveStage} onCreateInvoice={handleCreateInvoice} onUpdateValue={handleUpdateValue} />}
 
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(26,44,56,.4)", backdropFilter: "blur(4px)" }}>

@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
+import { useToast } from "@/components/global/toast";
+import { TableSkeleton } from "@/components/global/skeleton";
 import {
   Plus,
   DollarSign,
@@ -184,6 +186,7 @@ const inputClass =
 /* ------------------------------------------------------------------ */
 
 function AffiliateTab() {
+  const { toast } = useToast();
   const {
     data: links,
     loading: linksLoading,
@@ -289,13 +292,7 @@ function AffiliateTab() {
   const activeLinks = links.filter((l) => !l.archived);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-[13px] font-sans text-[#8AAABB]">
-          Loading affiliate links...
-        </div>
-      </div>
-    );
+    return <TableSkeleton rows={5} cols={7} />;
   }
 
   return (

@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useSupabaseMutation, useSupabaseQuery } from "@/lib/hooks";
 import { Shield, Check, Lock, CreditCard, Users, Bell, Settings as SettingsIcon, FileText, Star } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/components/global/toast";
 
 export default function SettingsPage() {
   const { profile, loading: authLoading } = useAuth();
@@ -63,6 +64,7 @@ export default function SettingsPage() {
 
 function AccountSection({ profile, isAgency, inputClass, labelClass, labelStyle, sectionClass }) {
   const { refreshProfile } = useAuth();
+  const { toast } = useToast();
   const mutation = useSupabaseMutation("profiles");
   const [form, setForm] = useState({
     bio: profile?.bio || "", location: profile?.location || "", website: profile?.website || "",
@@ -76,7 +78,7 @@ function AccountSection({ profile, isAgency, inputClass, labelClass, labelStyle,
 
   async function save() {
     setSaving(true);
-    try { await mutation.update(profile.id, form); await refreshProfile(); alert("Saved!"); } catch (e) { console.error(e); }
+    try { await mutation.update(profile.id, form); await refreshProfile(); toast("success", "Settings saved"); } catch (e) { console.error(e); toast("error", "Failed to save — try again"); }
     setSaving(false);
   }
 

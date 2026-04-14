@@ -4,6 +4,8 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { timeAgo } from "@/lib/utils";
+import { useToast } from "@/components/global/toast";
+import { TableSkeleton } from "@/components/global/skeleton";
 
 // Type formerly from placeholder-data
 interface MessageThread {
@@ -38,14 +40,11 @@ export function InboxTab() {
   const { insert: insertThread } = useSupabaseMutation("message_threads");
   const { insert: insertAnnouncement } = useSupabaseMutation("announcements");
 
+  const { toast } = useToast();
   const loading = threadsLoading || messagesLoading;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
-      </div>
-    );
+    return <TableSkeleton rows={8} cols={4} />;
   }
 
   if (!loading && messageThreads.length === 0) {
@@ -119,6 +118,7 @@ export function InboxTab() {
                   });
                   setShowAnnouncement(false);
                   setAnnouncementText("");
+                  toast("success", "Announcement sent");
                 } catch (err) {
                   console.error("Failed to send announcement:", err);
                 }
@@ -210,6 +210,7 @@ export function InboxTab() {
                     if (newThread) {
                       setThreads((prev) => [newThread as MessageThread, ...prev]);
                       setActiveThread((newThread as MessageThread).id);
+                      toast("success", "Thread created");
                     }
                   } catch (err) {
                     console.error("Failed to create thread:", err);
@@ -316,6 +317,7 @@ export function InboxTab() {
                           const newMsg = await insertMessage(msgData);
                           if (newMsg) {
                             setMessages((prev: any[]) => [...prev, newMsg]);
+                            toast("success", "Message sent");
                           }
                           setNewMessage("");
                         } catch (err) {

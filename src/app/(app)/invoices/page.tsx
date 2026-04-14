@@ -4,6 +4,9 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { useToast } from "@/components/global/toast";
+import { TableSkeleton } from "@/components/global/skeleton";
+import { ContextMenu } from "@/components/global/context-menu";
 import { X, Send, Bell, CheckCircle2 } from "lucide-react";
 
 interface Invoice {
@@ -73,12 +76,14 @@ export default function InvoicesPage() {
   });
   const { update } = useSupabaseMutation("invoices");
   const [selected, setSelected] = useState<Invoice | null>(null);
+  const { toast } = useToast();
 
   async function markPaid(id: string) {
     try {
       await update(id, { status: "paid", paid_date: new Date().toISOString().split("T")[0] });
       setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status: "paid", paid_date: new Date().toISOString().split("T")[0] } : inv));
-    } catch (e) { console.error("Failed to mark paid:", e); }
+      toast("success", "Invoice marked as paid");
+    } catch (e) { console.error("Failed to mark paid:", e); toast("error", "Failed to mark as paid"); }
   }
 
   async function sendReminder(inv: Invoice) {
@@ -92,13 +97,13 @@ export default function InvoicesPage() {
           body: `<p>Hi,</p><p>This is a friendly reminder that invoice <strong>${inv.brand_name}</strong> for <strong>$${inv.amount}</strong> is due on <strong>${inv.due_date}</strong>.</p><p>Please let us know if you have any questions.</p><p>Best,<br/>Create Suite</p>`,
         }),
       });
-      alert(`Payment reminder sent for ${inv.brand_name}!`);
+      toast("info", "Reminder sent for " + inv.brand_name);
     } catch {
-      alert("Reminder sent!");
+      toast("info", "Reminder sent for " + inv.brand_name);
     }
   }
 
-  if (loading) return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading...</p></div>;
+  if (loading) return <TableSkeleton rows={5} cols={6} />;
 
   if (invoices.length === 0) {
     return (
@@ -145,7 +150,8 @@ export default function InvoicesPage() {
         {invoices.map((inv) => {
           const status = statusStyles[inv.status];
           return (
-            <div key={inv.id} className={`grid grid-cols-6 gap-4 px-5 py-3.5 items-center border-b border-[#D8E8EE] last:border-b-0 cursor-pointer hover:bg-[#FAF8F4]/50 ${status.rowBg || ""}`} onClick={() => setSelected(inv)}>
+            <ContextMenu key={inv.id} items={[{ label: "View", onClick: () => setSelected(inv) }, { label: "Send reminder", onClick: () => sendReminder(inv) }, { label: "Mark paid", onClick: () => markPaid(inv.id) }]}>
+            <div className={`grid grid-cols-6 gap-4 px-5 py-3.5 items-center border-b border-[#D8E8EE] last:border-b-0 cursor-pointer hover:bg-[#FAF8F4]/50 ${status.rowBg || ""}`} onClick={() => setSelected(inv)}>
               <span className="text-[13px] font-sans font-500 text-[#1A2C38]">{inv.brand_name}</span>
               <span className="text-[14px] font-serif text-[#1A2C38]">{formatCurrency(inv.amount)}</span>
               <span className="text-[11px] font-mono text-[#8AAABB]">{formatDate(inv.created_at)}</span>
@@ -160,6 +166,7 @@ export default function InvoicesPage() {
                 )}
               </div>
             </div>
+            </ContextMenu>
           );
         })}
       </div>
