@@ -35,10 +35,10 @@ export function MarketingNav() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <a href="https://app.createsuite.co/login" className="text-[14px] font-sans font-500 text-[#4A6070] hover:text-[#1A2C38] transition-colors">
+            <a href="/login" className="text-[14px] font-sans font-500 text-[#4A6070] hover:text-[#1A2C38] transition-colors">
               Log in
             </a>
-            <a href="https://app.createsuite.co/signup" className="bg-[#1E3F52] text-white text-[14px] font-sans font-500 px-5 py-2.5 rounded-[10px] hover:bg-[#2a5269] transition-colors">
+            <a href="/signup" className="bg-[#1E3F52] text-white text-[14px] font-sans font-500 px-5 py-2.5 rounded-[10px] hover:bg-[#2a5269] transition-colors">
               Get started free
             </a>
           </div>
@@ -60,10 +60,10 @@ export function MarketingNav() {
               </Link>
             ))}
             <div className="pt-4 space-y-3">
-              <a href="https://app.createsuite.co/login" className="block text-center text-[16px] font-sans font-500 text-[#4A6070] py-3 border border-[#D8E8EE] rounded-[10px]">
+              <a href="/login" className="block text-center text-[16px] font-sans font-500 text-[#4A6070] py-3 border border-[#D8E8EE] rounded-[10px]">
                 Log in
               </a>
-              <a href="https://app.createsuite.co/signup" className="block text-center text-[16px] font-sans font-500 text-white bg-[#1E3F52] py-3 rounded-[10px]">
+              <a href="/signup" className="block text-center text-[16px] font-sans font-500 text-white bg-[#1E3F52] py-3 rounded-[10px]">
                 Get started free
               </a>
             </div>

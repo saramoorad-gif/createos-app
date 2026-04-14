@@ -423,7 +423,7 @@ export default function ForCreatorsPage() {
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <a
-              href="https://app.createsuite.co/signup"
+              href="/signup"
               className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors"
             >
               Get started free
@@ -576,7 +576,7 @@ export default function ForCreatorsPage() {
                   ))}
                 </div>
                 <a
-                  href="https://app.createsuite.co/signup"
+                  href="/signup"
                   className={`text-center text-[15px] font-sans font-500 px-6 py-3 rounded-[10px] transition-colors ${
                     tier.featured
                       ? "bg-[#1E3F52] text-white hover:bg-[#2a5269]"
@@ -614,7 +614,7 @@ export default function ForCreatorsPage() {
             Join 2,400+ creators already using Create Suite. Free to start, no credit card required.
           </p>
           <a
-            href="https://app.createsuite.co/signup"
+            href="/signup"
             className="inline-block bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-8 py-4 rounded-[10px] hover:bg-[#2a5269] transition-colors"
           >
             Get started free

@@ -461,7 +461,7 @@ export default function ForAgenciesPage() {
               Book a demo
             </Link>
             <a
-              href="https://app.createsuite.co/signup"
+              href="/signup"
               className="border border-[#D8E8EE] text-[#3D6E8A] text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#F2F8FB] transition-colors"
             >
               Start free trial
@@ -613,7 +613,7 @@ export default function ForAgenciesPage() {
                   ))}
                 </div>
                 <a
-                  href={tier.featured ? "https://app.createsuite.co/signup" : "https://app.createsuite.co/signup"}
+                  href={tier.featured ? "/signup" : "/signup"}
                   className={`text-center text-[15px] font-sans font-500 px-6 py-3 rounded-[10px] transition-colors ${
                     tier.featured
                       ? "bg-[#1E3F52] text-white hover:bg-[#2a5269]"
@@ -658,7 +658,7 @@ export default function ForAgenciesPage() {
               Book a demo
             </Link>
             <a
-              href="https://app.createsuite.co/signup"
+              href="/signup"
               className="border border-[#D8E8EE] text-[#3D6E8A] text-[15px] font-sans font-500 px-8 py-4 rounded-[10px] hover:bg-white transition-colors"
             >
               Start free trial

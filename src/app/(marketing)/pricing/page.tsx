@@ -374,7 +374,7 @@ export default function PricingPage() {
                 </div>
 
                 <a
-                  href="https://app.createsuite.co/signup"
+                  href="/signup"
                   className={`block text-center rounded-[10px] px-4 py-3 text-[14px] font-sans font-500 transition-colors ${
                     tier.featured
                       ? "bg-[#1E3F52] text-white hover:bg-[#2a5269]"
@@ -457,7 +457,7 @@ export default function PricingPage() {
                 </div>
 
                 <a
-                  href="https://app.createsuite.co/signup"
+                  href="/signup"
                   className={`block text-center rounded-[10px] px-4 py-3 text-[14px] font-sans font-500 transition-colors ${
                     tier.featured
                       ? "bg-[#1E3F52] text-white hover:bg-[#2a5269]"
@@ -608,7 +608,7 @@ export default function PricingPage() {
           </p>
           <div className="flex items-center justify-center gap-3">
             <a
-              href="https://app.createsuite.co/signup"
+              href="/signup"
               className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors"
             >
               Get started free

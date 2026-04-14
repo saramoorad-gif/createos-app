@@ -81,7 +81,7 @@ export default function HomePage() {
             Deals, contracts, invoices, rate benchmarking, and AI-powered insights — for solo creators and the agencies that manage them.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <a href="https://app.createsuite.co/signup" className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors">
+            <a href="/signup" className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors">
               Get started free
             </a>
             <Link href="/for-agencies" className="border border-[#D8E8EE] text-[#3D6E8A] text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#F2F8FB] transition-colors">
@@ -324,7 +324,7 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-                <a href="https://app.createsuite.co/signup" className={`block text-center rounded-[10px] px-4 py-2.5 text-[14px] font-sans font-500 transition-colors ${
+                <a href="/signup" className={`block text-center rounded-[10px] px-4 py-2.5 text-[14px] font-sans font-500 transition-colors ${
                   t.featured ? "bg-white text-[#1E3F52] hover:bg-[#F2F8FB]" : "border border-[#D8E8EE] text-[#3D6E8A] hover:bg-[#F2F8FB]"
                 }`}>
                   {t.cta}
@@ -347,7 +347,7 @@ export default function HomePage() {
           <p className="text-[15px] font-sans text-[#4A6070] mb-8">
             Join 2,400+ creators and 180+ agencies already using Create Suite.
           </p>
-          <a href="https://app.createsuite.co/signup" className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-8 py-4 rounded-[10px] hover:bg-[#2a5269] transition-colors inline-block">
+          <a href="/signup" className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-8 py-4 rounded-[10px] hover:bg-[#2a5269] transition-colors inline-block">
             Get started free →
           </a>
         </div>
