@@ -27,6 +27,7 @@ type PnLRange = "this_month" | "last_month" | "this_quarter" | "this_year";
 
 function AgencyPnLReport({ agencyRoster, agencyPipeline, commissionPayouts }: { agencyRoster: any[]; agencyPipeline: any[]; commissionPayouts: any[] }) {
   const [range, setRange] = useState<PnLRange>("this_month");
+  const { toast } = useToast();
 
   const now = new Date();
   const filterByRange = (dateStr: string) => {
@@ -93,7 +94,7 @@ function AgencyPnLReport({ agencyRoster, agencyPipeline, commissionPayouts }: { 
               </button>
             ))}
           </div>
-          <button onClick={() => window.print()} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
+          <button onClick={() => { window.print(); toast("info", "Report exported"); }} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
         </div>
       </div>
 
@@ -141,6 +142,7 @@ function AgencyPnLReport({ agencyRoster, agencyPipeline, commissionPayouts }: { 
 // ---------------------------------------------------------------------------
 function CreatorComparisonReport({ agencyRoster }: { agencyRoster: any[] }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { toast } = useToast();
 
   const toggleCreator = (id: string) => {
     setSelectedIds(prev => {
@@ -163,6 +165,7 @@ function CreatorComparisonReport({ agencyRoster }: { agencyRoster: any[] }) {
     a.download = "creator-comparison.csv";
     a.click();
     URL.revokeObjectURL(url);
+    toast("info", "Report exported");
   };
 
   return (
@@ -234,6 +237,7 @@ function CreatorComparisonReport({ agencyRoster }: { agencyRoster: any[] }) {
 // Annual Summary Report
 // ---------------------------------------------------------------------------
 function AnnualSummaryReport({ agencyRoster, agencyPipeline, commissionPayouts }: { agencyRoster: any[]; agencyPipeline: any[]; commissionPayouts: any[] }) {
+  const { toast } = useToast();
   const now = new Date();
   const year = now.getFullYear();
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -274,7 +278,7 @@ function AnnualSummaryReport({ agencyRoster, agencyPipeline, commissionPayouts }
     <div>
       <div className="flex items-center justify-between mb-4">
         <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">ANNUAL SUMMARY — {year}</p>
-        <button onClick={() => window.print()} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
+        <button onClick={() => { window.print(); toast("info", "Report exported"); }} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
       </div>
 
       {/* Top-line stats */}
@@ -360,14 +364,11 @@ export function ReportsTab() {
   const { data: commissionPayouts, loading: commissionsLoading } = useSupabaseQuery<any>("commission_payouts");
   const { data: campaigns, loading: campaignsLoading } = useSupabaseQuery<any>("campaigns");
 
+  const { toast } = useToast();
   const loading = rosterLoading || pipelineLoading || commissionsLoading || campaignsLoading;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
-      </div>
-    );
+    return <TableSkeleton rows={6} cols={5} />;
   }
 
   const totalPipeline = agencyPipeline.reduce((s: number, d: any) => s + (d.value || 0), 0);
@@ -420,7 +421,7 @@ export function ReportsTab() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">AGENCY OVERVIEW</p>
-                <button onClick={() => window.print()} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
+                <button onClick={() => { window.print(); toast("info", "Report exported"); }} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
               </div>
               <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-6">
                 <h3 className="text-[20px] font-serif text-[#1A2C38] mb-4">Bright Talent Mgmt — <em className="italic text-[#7BAFC8]">Q2 2026</em></h3>
@@ -512,7 +513,7 @@ export function ReportsTab() {
                   <div key={c.id} className="bg-white border border-[#D8E8EE] rounded-[10px] p-5">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-[15px] font-sans font-600 text-[#1A2C38]">{c.name}</h4>
-                      <button onClick={() => window.print()} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export</button>
+                      <button onClick={() => { window.print(); toast("info", "Report exported"); }} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export</button>
                     </div>
                     <p className="text-[12px] font-sans text-[#8AAABB] mb-3">{c.brand} · {c.creators.length} creators · {formatCurrency(c.budget)} budget</p>
                     <div className="grid grid-cols-4 gap-3">
@@ -537,7 +538,7 @@ export function ReportsTab() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">COMMISSION SUMMARY — APRIL 2026</p>
-                <button onClick={() => window.print()} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
+                <button onClick={() => { window.print(); toast("info", "Report exported"); }} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
               </div>
               <div className="bg-white border border-[#D8E8EE] rounded-[10px] overflow-hidden">
                 <div className="grid grid-cols-5 gap-4 px-5 py-3 text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] border-b border-[#D8E8EE]">

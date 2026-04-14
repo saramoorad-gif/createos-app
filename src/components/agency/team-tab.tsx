@@ -128,11 +128,7 @@ const statusStyle: Record<string, string> = {
 /* ─── Shared pieces ──────────────────────────────────────────── */
 
 function Spinner() {
-  return (
-    <div className="flex items-center justify-center py-24">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
-    </div>
-  );
+  return <TableSkeleton rows={6} cols={4} />;
 }
 
 function EmptyState({ text }: { text: string }) {
@@ -298,6 +294,7 @@ function TeamInbox({ userId, role }: { userId: string; role: string }) {
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [isInternal, setIsInternal] = useState(false);
+  const { toast } = useToast();
 
   const { data: threads, loading: threadsLoading, setData: setThreads } =
     useSupabaseQuery<InboxThread>("agency_inbox_threads");
@@ -325,6 +322,7 @@ function TeamInbox({ userId, role }: { userId: string; role: string }) {
     });
     if (msg) {
       setMessages((prev) => [...prev, msg as InboxMessage]);
+      toast("success", "Message sent");
     }
     setNewMessage("");
     setIsInternal(false);
@@ -474,6 +472,7 @@ type TaskFilter = "mine" | "all" | "overdue";
 function TasksView({ userId, role }: { userId: string; role: string }) {
   const [filter, setFilter] = useState<TaskFilter>("mine");
   const [showAddModal, setShowAddModal] = useState(false);
+  const { toast } = useToast();
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
@@ -507,6 +506,7 @@ function TasksView({ userId, role }: { userId: string; role: string }) {
     });
     if (result) {
       setTasks((prev) => [...prev, result as Task]);
+      toast("success", "Task created");
     }
     setNewTask({
       title: "",
@@ -528,6 +528,7 @@ function TasksView({ userId, role }: { userId: string; role: string }) {
     setTasks((prev) =>
       prev.map((t) => (t.id === task.id ? { ...t, status: newStatus as Task["status"] } : t))
     );
+    toast("success", `Task moved to ${statusLabel[newStatus] || newStatus}`);
   }
 
   if (loading) return <Spinner />;
@@ -712,6 +713,7 @@ function ChannelsView({ role }: { role: string }) {
   const [pinToggle, setPinToggle] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newChannel, setNewChannel] = useState({ name: "", description: "", visibility: "all" as Channel["visibility"] });
+  const { toast } = useToast();
 
   const { data: channels, loading: channelsLoading, setData: setChannels } =
     useSupabaseQuery<Channel>("agency_channels");
@@ -770,6 +772,7 @@ function ChannelsView({ role }: { role: string }) {
     });
     if (msg) {
       setMessages((prev) => [...prev, msg as ChannelMessage]);
+      toast("success", "Message sent");
     }
     setNewMessage("");
     setPinToggle(false);
@@ -784,6 +787,7 @@ function ChannelsView({ role }: { role: string }) {
     });
     if (result) {
       setChannels((prev) => [...prev, result as Channel]);
+      toast("success", "Channel created");
     }
     setNewChannel({ name: "", description: "", visibility: "all" });
     setShowCreateModal(false);

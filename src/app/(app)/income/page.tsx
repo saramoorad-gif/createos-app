@@ -259,7 +259,7 @@ function AffiliateTab() {
         category,
         archived: false,
       });
-      if (created) setLinks([created as AffiliateLink, ...links]);
+      if (created) { setLinks([created as AffiliateLink, ...links]); toast("success", "Affiliate link created"); }
     }
     setShowAddLink(false);
     resetLinkForm();
@@ -273,7 +273,7 @@ function AffiliateTab() {
       amount: parseFloat(earningAmount),
       notes: earningNotes,
     });
-    if (created) setEarnings([...earnings, created as AffiliateEarning]);
+    if (created) { setEarnings([...earnings, created as AffiliateEarning]); toast("success", "Earnings logged"); }
     setShowLogEarning(null);
     setEarningAmount("");
     setEarningNotes("");
@@ -600,13 +600,7 @@ function StanTab() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-[13px] font-sans text-[#8AAABB]">
-          Loading Stan Store data...
-        </div>
-      </div>
-    );
+    return <TableSkeleton rows={5} cols={4} />;
   }
 
   const hasData = earnings.length > 0 || connected;
@@ -888,13 +882,7 @@ function SummaryTab() {
   const taxSetAside = grandTotal * (taxRate / 100);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-[13px] font-sans text-[#8AAABB]">
-          Calculating income summary...
-        </div>
-      </div>
-    );
+    return <TableSkeleton rows={4} cols={4} />;
   }
 
   const hasAnyData = invoices.length > 0 || affiliateEarnings.length > 0 || stanEarnings.length > 0;

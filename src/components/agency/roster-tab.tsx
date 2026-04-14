@@ -114,8 +114,15 @@ function RosterList({
       {creators.map((c) => {
         const hc = healthColor(c.healthScore);
         return (
-          <button
+          <ContextMenu
             key={c.id}
+            items={[
+              { label: "View profile", onClick: () => onSelect(c) },
+              { label: "Message", onClick: () => {} },
+              { label: "Remove", onClick: () => {}, danger: true },
+            ]}
+          >
+          <button
             onClick={() => onSelect(c)}
             className="w-full bg-white border border-[#D8E8EE] rounded-[10px] px-4 py-3 md:grid md:grid-cols-[1fr_120px_140px_80px_80px_100px_80px_60px] md:gap-3 md:items-center flex flex-col gap-2 text-left hover:border-[#7BAFC8]/40 transition-colors group"
           >
@@ -166,6 +173,7 @@ function RosterList({
               <ChevronRight className="w-4 h-4 text-[#8AAABB] group-hover:text-[#7BAFC8] transition-colors" />
             </div>
           </button>
+          </ContextMenu>
         );
       })}
     </div>
@@ -720,11 +728,7 @@ export function RosterTab() {
   }, [search, agencyRoster]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
-      </div>
-    );
+    return <TableSkeleton rows={6} cols={8} />;
   }
 
   if (!loading && agencyRoster.length === 0) {

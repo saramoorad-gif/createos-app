@@ -120,6 +120,7 @@ function getNextStage(current: ContractStage): ContractStage | null {
 function ContractPanel({ contract, onClose, onUpdate }: { contract: AgencyContract; onClose: () => void; onUpdate: (id: string, data: Partial<AgencyContract>) => Promise<void> }) {
   const stageStyle = contractStageColors[contract.stage];
   const analysis = contract.aiAnalysis;
+  const { toast } = useToast();
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -369,9 +370,9 @@ function ContractPanel({ contract, onClose, onUpdate }: { contract: AgencyContra
                   try {
                     const res = await fetch("/api/upload", { method: "POST", body: formData });
                     const data = await res.json();
-                    if (data.url) alert("Contract uploaded: " + file.name);
-                    else alert("Upload failed — please try again");
-                  } catch { alert("Upload failed — please try again"); }
+                    if (data.url) toast("success", "Contract uploaded: " + file.name);
+                    else toast("error", "Upload failed — please try again");
+                  } catch { toast("error", "Upload failed — please try again"); }
                 };
                 input.click();
               }}
@@ -492,6 +493,7 @@ export function ContractsTab() {
   const contractTemplates = dbTemplates.length > 0 ? dbTemplates : defaultTemplates;
   const { data: exclusivityMap } = useSupabaseQuery<any>("exclusivity_map");
   const { update: updateContract, insert: insertContract } = useSupabaseMutation("contracts");
+  const { toast } = useToast();
 
   async function handleContractUpdate(id: string, data: Partial<AgencyContract>) {
     try {
@@ -499,6 +501,9 @@ export function ContractsTab() {
       setContracts((prev) =>
         prev.map((c) => (c.id === id ? { ...c, ...data } : c))
       );
+      if (data.stage) {
+        toast("success", "Contract stage updated");
+      }
     } catch (err) {
       console.error("Failed to update contract:", err);
       throw err;
@@ -518,11 +523,7 @@ export function ContractsTab() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
-      </div>
-    );
+    return <TableSkeleton rows={6} cols={8} />;
   }
 
   if (!loading && agencyContracts.length === 0) {
@@ -546,8 +547,8 @@ export function ContractsTab() {
               try {
                 const res = await fetch("/api/upload", { method: "POST", body: formData });
                 const data = await res.json();
-                if (data.url) alert("Contract uploaded: " + file.name);
-              } catch { alert("Upload failed"); }
+                if (data.url) toast("success", "Contract uploaded: " + file.name);
+              } catch { toast("error", "Upload failed"); }
             };
             input.click();
           }} className="rounded-[8px] border-[1.5px] border-[#D8E8EE] px-5 py-2.5 text-[13px] font-medium text-[#1A2C38] hover:bg-[#F2F8FB]">
@@ -671,7 +672,15 @@ export function ContractsTab() {
                 const signed = c.signatures.filter(s => s.status === "signed").length;
                 const total = c.signatures.length;
                 return (
-                  <div key={c.id} className={`grid grid-cols-8 gap-3 px-5 py-3.5 items-center border-b border-[#D8E8EE] last:border-b-0 hover:bg-[#FAF8F4]/50 ${c.status === "expired" ? "opacity-60" : ""}`}>
+                  <ContextMenu
+                    key={c.id}
+                    items={[
+                      { label: "View", onClick: () => setSelected(c) },
+                      { label: "Send for signature", onClick: () => handleContractUpdate(c.id, { stage: "sent_to_brand" }) },
+                      { label: "Move stage", onClick: () => { const next = getNextStage(c.stage); if (next) handleContractUpdate(c.id, { stage: next }); } },
+                    ]}
+                  >
+                  <div className={`grid grid-cols-8 gap-3 px-5 py-3.5 items-center border-b border-[#D8E8EE] last:border-b-0 hover:bg-[#FAF8F4]/50 ${c.status === "expired" ? "opacity-60" : ""}`}>
                     <span className="text-[13px] font-sans font-500 text-[#1A2C38] truncate">{c.creator}</span>
                     <span className="text-[13px] font-sans text-[#1A2C38] truncate">{c.brand}</span>
                     <span className="text-[12px] font-sans text-[#8AAABB]">{c.type}</span>
@@ -694,6 +703,7 @@ export function ContractsTab() {
                       </button>
                     </div>
                   </div>
+                  </ContextMenu>
                 );
               })
             )}

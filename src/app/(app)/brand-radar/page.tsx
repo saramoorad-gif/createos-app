@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
+import { CardGridSkeleton } from "@/components/global/skeleton";
 import { Star, Clock, Sparkles, X, Loader2, Plus } from "lucide-react";
 
 interface BrandRadar {
@@ -76,7 +77,7 @@ export default function BrandsPage() {
   const filtered = category === "All" ? brands : brands.filter(b => b.category === category);
 
   if (loading) {
-    return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading brands...</p></div>;
+    return <CardGridSkeleton count={6} />;
   }
 
   return (

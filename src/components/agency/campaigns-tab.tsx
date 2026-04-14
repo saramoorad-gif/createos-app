@@ -150,6 +150,7 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
   const [endDate, setEndDate] = useState("");
   const { data: agencyRoster } = useSupabaseQuery<any>("agency_creator_links");
   const { insert: insertCampaign, loading: inserting } = useSupabaseMutation("campaigns");
+  const { toast } = useToast();
 
   function toggleCreator(id: string) {
     setSelectedCreators((prev) =>
@@ -310,6 +311,7 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
                 });
                 if (newCampaign) {
                   onCreated?.(newCampaign);
+                  toast("success", "Campaign created");
                 }
                 onClose();
               } catch (err) {
@@ -996,13 +998,10 @@ export function CampaignsTab() {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { data: campaigns, loading, setData: setCampaigns } = useSupabaseQuery<Campaign>("campaigns");
+  const { toast } = useToast();
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
-      </div>
-    );
+    return <CardGridSkeleton count={4} />;
   }
 
   if (!loading && campaigns.length === 0) {
@@ -1073,7 +1072,15 @@ export function CampaignsTab() {
         {campaigns.map((camp) => {
           const creatorCount = camp.creators.length;
           return (
-            <div key={camp.id}>
+            <ContextMenu
+              key={camp.id}
+              items={[
+                { label: "View details", onClick: () => setSelectedCampaign(camp) },
+                { label: "Duplicate", onClick: () => toast("info", "Duplicate coming soon") },
+                { label: "Archive", onClick: () => {}, danger: true },
+              ]}
+            >
+            <div>
             <button
               onClick={() => setSelectedCampaign(camp)}
               className="w-full text-left bg-white rounded-[10px] border border-[#D8E8EE] p-5 hover:border-[#7BAFC8]/40 transition-colors group"
@@ -1145,7 +1152,7 @@ export function CampaignsTab() {
                   const existing = JSON.parse(localStorage.getItem("campaign_templates") || "[]");
                   existing.push(template);
                   localStorage.setItem("campaign_templates", JSON.stringify(existing));
-                  alert(`Template saved: "${camp.name}"`);
+                  toast("success", `Template saved: "${camp.name}"`);
                 }}
                 className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-sans font-500 text-[#8AAABB] hover:text-[#7BAFC8] hover:bg-[#F2F8FB] rounded-lg transition-colors"
               >
@@ -1154,6 +1161,7 @@ export function CampaignsTab() {
               </button>
             </div>
             </div>
+            </ContextMenu>
           );
         })}
       </div>

@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/components/global/toast";
 import { Copy, Check, ExternalLink, Edit3 } from "lucide-react";
 
 export default function MediaKitPage() {
   const { profile, loading } = useAuth();
+  const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [bio, setBio] = useState("");
   const [niche, setNiche] = useState("");
@@ -78,7 +80,7 @@ export default function MediaKitPage() {
             <input type="text" placeholder="@yourchannel" className={inputClass} />
           </div>
 
-          <button onClick={() => alert("Media kit saved! Changes will be visible on your public media kit page.")} className="w-full bg-[#1E3F52] text-white rounded-btn px-4 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
+          <button onClick={() => toast("success", "Media kit saved")} className="w-full bg-[#1E3F52] text-white rounded-btn px-4 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
             Save changes
           </button>
         </div>

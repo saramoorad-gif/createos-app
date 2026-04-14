@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { useToast } from "@/components/global/toast";
 import { Zap } from "lucide-react";
 
 interface Automation {
@@ -34,12 +35,16 @@ function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () =>
 
 export default function AutomationsPage() {
   const [items, setItems] = useState<Automation[]>(systemAutomations);
+  const { toast } = useToast();
 
   const active = items.filter(a => a.enabled);
   const available = items.filter(a => !a.enabled);
 
   function toggle(id: string) {
+    const item = items.find(a => a.id === id);
+    const newEnabled = item ? !item.enabled : false;
     setItems(prev => prev.map(a => a.id === id ? { ...a, enabled: !a.enabled } : a));
+    toast("success", newEnabled ? "Automation enabled" : "Automation disabled");
   }
 
   return (

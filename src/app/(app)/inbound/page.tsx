@@ -2,6 +2,7 @@
 
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery } from "@/lib/hooks";
+import { CardGridSkeleton } from "@/components/global/skeleton";
 
 interface InboundInquiry {
   id: string;
@@ -45,7 +46,7 @@ export default function InboundPage() {
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
 
-  if (loading) return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading...</p></div>;
+  if (loading) return <CardGridSkeleton count={4} />;
 
   if (inboundInquiries.length === 0) {
     return (

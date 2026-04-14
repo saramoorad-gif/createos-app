@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/components/global/toast";
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Download } from "lucide-react";
 
 type ImportType = "deals" | "invoices";
@@ -19,6 +20,7 @@ export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; count?: number; error?: string } | null>(null);
+  const { toast } = useToast();
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -45,11 +47,14 @@ export default function ImportPage() {
         setResult({ success: true, count: data.imported });
         setCsvText("");
         setFile(null);
+        toast("success", `Successfully imported ${data.imported} ${importType}`);
       } else {
         setResult({ success: false, error: data.error });
+        toast("error", data.error || "Import failed");
       }
     } catch {
       setResult({ success: false, error: "Import failed. Please check your file format." });
+      toast("error", "Import failed. Please check your file format.");
     }
     setLoading(false);
   }
