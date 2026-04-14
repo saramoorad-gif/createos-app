@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+  );
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
         else if (priceKey.startsWith("ugc")) accountType = "ugc";
         else if (priceKey.startsWith("agency")) accountType = "agency";
 
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from("profiles")
           .update({
             account_type: accountType,
@@ -53,12 +55,12 @@ export async function POST(req: NextRequest) {
 
       // Find user by Stripe customer ID and update status
       if (subscription.status === "active") {
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from("profiles")
           .update({ subscription_status: "active" })
           .eq("stripe_customer_id", customerId);
       } else if (subscription.status === "past_due") {
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from("profiles")
           .update({ subscription_status: "past_due" })
           .eq("stripe_customer_id", customerId);
@@ -70,7 +72,7 @@ export async function POST(req: NextRequest) {
       const subscription = event.data.object;
       const customerId = subscription.customer as string;
 
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from("profiles")
         .update({
           account_type: "free",
