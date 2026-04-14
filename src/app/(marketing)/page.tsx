@@ -19,14 +19,14 @@ const stats = [
 ];
 
 const creatorFeatures = [
-  { title: "Deal Pipeline", desc: "Track every brand deal from first DM to final payment with inline editing and stage management" },
-  { title: "AI Contract Analysis", desc: "Upload any contract — get red flags, fair terms, counter-clauses, and an overall deal score" },
-  { title: "Income Tracking", desc: "Track all revenue streams — brand deals, affiliate links, Stan Store, and passive income in one place" },
-  { title: "Rate Calculator", desc: "Know your worth with market-benchmarked rate recommendations based on your platform and engagement" },
-  { title: "Media Kit Builder", desc: "Auto-generated media kit with shareable link, bio, rates, and platform stats" },
-  { title: "Invoicing & Payments", desc: "Create, send, and track invoices with automatic reminders and Stripe integration" },
-  { title: "Help Center & Support", desc: "Searchable FAQs, step-by-step troubleshooter, and direct support at hello@createsuite.co" },
-  { title: "CSV Import", desc: "Import existing deals and invoices from Google Sheets or Excel with smart column mapping" },
+  { title: "Deal Pipeline", desc: "Track every brand deal from first DM to final payment with inline editing, context menus, and stage management" },
+  { title: "AI Deal Negotiator", desc: "Paste any brand offer — get AI-powered counter-offer advice, copy-paste scripts, and leverage analysis using Claude AI" },
+  { title: "Income Tracking", desc: "Track all revenue streams — brand deals, affiliate links, Stan Store, and passive income in one dashboard" },
+  { title: "AI Rate Calculator", desc: "Auto-fills from your profile stats. AI suggests rates based on your niche, followers, and engagement" },
+  { title: "Revenue Forecasting", desc: "See projected monthly and annual income, track whether you're on pace, and set income goals" },
+  { title: "Content Calendar", desc: "Plan sponsored vs organic content, track sponsor tolerance, and avoid audience fatigue" },
+  { title: "Tax Prep Export", desc: "One-click export of all income and expenses for tax season. 1099-ready CSV and PDF" },
+  { title: "Content Briefs", desc: "Receive creative briefs from brands, submit drafts for review, and track approval workflows" },
 ];
 
 const agencyFeatures = [
@@ -41,17 +41,21 @@ const agencyFeatures = [
 ];
 
 const features = [
-  { title: "Deal Pipeline", desc: "Track every deal from pitch to payment with inline editing" },
+  { title: "Deal Pipeline", desc: "Inline editing, context menus, stage management" },
+  { title: "AI Negotiator", desc: "Paste offers, get counter-advice from Claude AI" },
   { title: "AI Contracts", desc: "Upload contracts, get red flags and counter-clauses" },
   { title: "Income Tracking", desc: "Brand deals, affiliate links, Stan Store — all in one" },
-  { title: "Rate Calculator", desc: "Market-benchmarked rate recommendations" },
-  { title: "Media Kit", desc: "Shareable profile with stats and rates" },
-  { title: "Invoicing", desc: "Create, send, track — with Stripe payments" },
+  { title: "Revenue Forecast", desc: "Projected income, goal tracking, pipeline analysis" },
+  { title: "AI Rate Card", desc: "Auto-filled rates with AI suggestions" },
+  { title: "Content Calendar", desc: "Plan posts, track sponsor tolerance" },
+  { title: "Tax Prep Export", desc: "1099-ready CSV/PDF with expense tracking" },
+  { title: "Content Briefs", desc: "Receive briefs, submit drafts, approval workflow" },
   { title: "Team Channels", desc: "Internal chat, tasks, and @mentions" },
   { title: "Campaign Calendar", desc: "Gantt-style timeline for deliverables" },
+  { title: "Deal Marketplace", desc: "Browse brand campaigns and apply (coming soon)" },
   { title: "Conflict Scanner", desc: "Pre-deal exclusivity checks" },
   { title: "Help Center", desc: "FAQs, troubleshooter, and live support" },
-  { title: "Keyboard Shortcuts", desc: "⌘K command palette and navigation" },
+  { title: "⌘K Command Palette", desc: "Search and navigate everything instantly" },
   { title: "CSV Import", desc: "Migrate from spreadsheets in seconds" },
 ];
 
@@ -85,7 +89,7 @@ export default function HomePage() {
             like a <em className="italic text-[#3D6E8A]">real business</em>
           </h1>
           <p className="text-[18px] font-sans text-[#4A6070] max-w-[600px] mx-auto mb-8 leading-relaxed">
-            Deals, contracts, invoices, income tracking, team collaboration, and AI-powered insights — for solo creators and the agencies that manage them.
+            AI deal negotiation, revenue forecasting, contract analysis, income tracking, content calendar, team collaboration, and tax prep — for solo creators and the agencies that manage them.
           </p>
           <div className="flex items-center justify-center gap-3">
             <a href="/signup" className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors">
@@ -263,7 +267,7 @@ export default function HomePage() {
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-12">
             <p className="text-[12px] font-sans font-600 uppercase tracking-[3px] text-[#7BAFC8] mb-3">FEATURES</p>
-            <h2 className="text-[36px] font-serif text-[#1A2C38]">Everything you need to <em className="italic text-[#3D6E8A]">grow</em></h2>
+            <h2 className="text-[36px] font-serif text-[#1A2C38]">40+ features to <em className="italic text-[#3D6E8A]">run your business</em></h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {features.map((f) => (
