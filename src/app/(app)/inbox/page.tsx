@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { useSupabaseQuery } from "@/lib/hooks";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
+import { useAuth } from "@/contexts/auth-context";
 import { timeAgo } from "@/lib/utils";
 import { Send, Paperclip, Flag, CheckCircle2, Megaphone, FileText } from "lucide-react";
 
@@ -54,6 +55,8 @@ interface Announcement {
 }
 
 export default function CreatorInboxPage() {
+  const { user } = useAuth();
+  const { insert: insertMessage } = useSupabaseMutation("messages");
   const { data: allThreads, loading: threadsLoading } = useSupabaseQuery<MessageThread>("message_threads");
   const { data: allMessages, loading: messagesLoading } = useSupabaseQuery<Message>("messages");
   const [activeThread, setActiveThread] = useState<string | null>(null);
@@ -88,6 +91,22 @@ export default function CreatorInboxPage() {
   const threadMessages = activeThread
     ? allMessages.filter((m) => m.threadId === activeThread && !m.isInternal)
     : [];
+
+  async function handleSendMessage() {
+    if (!newMessage.trim() || !activeThread || !user) return;
+    try {
+      await insertMessage({
+        thread_id: activeThread,
+        sender_id: user.id,
+        sender_type: "creator",
+        body: newMessage.trim(),
+        is_internal: false,
+      });
+      setNewMessage("");
+    } catch (e) {
+      console.error("Failed to send message:", e);
+    }
+  }
 
   return (
     <div>
@@ -195,15 +214,20 @@ export default function CreatorInboxPage() {
 
                   <div className="border-t border-[#D8E8EE] p-3">
                     <div className="flex items-center gap-2">
-                      <button className="text-[#8AAABB] hover:text-[#1A2C38]"><Paperclip className="h-4 w-4" /></button>
+                      <button className="text-[#8AAABB] hover:text-[#1A2C38]" onClick={() => alert("File attachments coming soon")}><Paperclip className="h-4 w-4" /></button>
                       <input
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Reply..."
-                        className="flex-1 rounded-lg border border-[#D8E8EE] px-3 py-2 text-[13px] font-sans focus:outline-none focus:border-[#7BAFC8]"
+                        className="flex-1 rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2 text-[13px] font-sans focus:outline-none focus:border-[#7BAFC8]"
+                        onKeyDown={(e) => { if (e.key === "Enter" && newMessage.trim()) { handleSendMessage(); } }}
                       />
-                      <button className="bg-[#7BAFC8] text-white rounded-lg p-2 hover:bg-[#6AA0BB]">
+                      <button
+                        onClick={handleSendMessage}
+                        disabled={!newMessage.trim()}
+                        className="bg-[#1E3F52] text-white rounded-[8px] p-2 hover:bg-[#2a5269] disabled:opacity-50"
+                      >
                         <Send className="h-4 w-4" />
                       </button>
                     </div>

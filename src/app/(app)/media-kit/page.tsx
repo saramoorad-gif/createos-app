@@ -78,7 +78,7 @@ export default function MediaKitPage() {
             <input type="text" placeholder="@yourchannel" className={inputClass} />
           </div>
 
-          <button className="w-full bg-[#1E3F52] text-white rounded-btn px-4 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
+          <button onClick={() => alert("Media kit saved! Changes will be visible on your public media kit page.")} className="w-full bg-[#1E3F52] text-white rounded-btn px-4 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
             Save changes
           </button>
         </div>

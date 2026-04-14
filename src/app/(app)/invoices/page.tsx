@@ -23,7 +23,7 @@ const statusStyles: Record<string, { bg: string; text: string; label: string; ro
   overdue: { bg: "bg-[#F4EAEA]", text: "text-[#A03D3D]", label: "Overdue", rowBg: "bg-[#F4EAEA]/40" },
 };
 
-function InvoicePanel({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
+function InvoicePanel({ invoice, onClose, onSendReminder, onMarkPaid }: { invoice: Invoice; onClose: () => void; onSendReminder: (inv: Invoice) => void; onMarkPaid: (id: string) => void }) {
   const status = statusStyles[invoice.status];
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -47,13 +47,18 @@ function InvoicePanel({ invoice, onClose }: { invoice: Invoice; onClose: () => v
             </div>
           </div>
           {invoice.status === "sent" && (
-            <button className="w-full flex items-center justify-center gap-2 bg-[#7BAFC8] text-white rounded-[10px] px-4 py-2.5 text-[13px] font-sans font-500">
+            <button onClick={() => { onSendReminder(invoice); onClose(); }} className="w-full flex items-center justify-center gap-2 bg-[#1E3F52] text-white rounded-[8px] px-4 py-2.5 text-[13px] font-sans" style={{ fontWeight: 600 }}>
               <Send className="h-4 w-4" /> Send reminder
             </button>
           )}
           {invoice.status === "overdue" && (
-            <button className="w-full flex items-center justify-center gap-2 bg-[#A03D3D] text-white rounded-[10px] px-4 py-2.5 text-[13px] font-sans font-500">
+            <button onClick={() => { onSendReminder(invoice); onClose(); }} className="w-full flex items-center justify-center gap-2 bg-[#A03D3D] text-white rounded-[8px] px-4 py-2.5 text-[13px] font-sans" style={{ fontWeight: 600 }}>
               <Bell className="h-4 w-4" /> Send final reminder
+            </button>
+          )}
+          {(invoice.status === "sent" || invoice.status === "overdue") && (
+            <button onClick={() => { onMarkPaid(invoice.id); onClose(); }} className="w-full flex items-center justify-center gap-2 border-[1.5px] border-[#D8E8EE] rounded-[8px] px-4 py-2.5 text-[13px] font-sans text-[#3D7A58] hover:bg-[#E8F4EE]" style={{ fontWeight: 500 }}>
+              <CheckCircle2 className="h-4 w-4" /> Mark as paid
             </button>
           )}
         </div>
@@ -159,7 +164,7 @@ export default function InvoicesPage() {
         })}
       </div>
 
-      {selected && <InvoicePanel invoice={selected} onClose={() => setSelected(null)} />}
+      {selected && <InvoicePanel invoice={selected} onClose={() => setSelected(null)} onSendReminder={sendReminder} onMarkPaid={markPaid} />}
     </div>
   );
 }
