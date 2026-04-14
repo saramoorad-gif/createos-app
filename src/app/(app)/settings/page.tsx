@@ -47,7 +47,7 @@ export default function SettingsPage() {
           })}
         </div>
         <div className="flex-1 min-w-0">
-          {activeTab === "account" && <AccountSection profile={profile} inputClass={inputClass} labelClass={labelClass} labelStyle={labelStyle} sectionClass={sectionClass} />}
+          {activeTab === "account" && <AccountSection profile={profile} isAgency={isAgency} inputClass={inputClass} labelClass={labelClass} labelStyle={labelStyle} sectionClass={sectionClass} />}
           {activeTab === "billing" && <BillingSection profile={profile} />}
           {activeTab === "notifications" && <NotificationsSection />}
           {activeTab === "team" && isAgency && <TeamSection />}
@@ -58,7 +58,7 @@ export default function SettingsPage() {
   );
 }
 
-function AccountSection({ profile, inputClass, labelClass, labelStyle, sectionClass }) {
+function AccountSection({ profile, isAgency, inputClass, labelClass, labelStyle, sectionClass }) {
   const mutation = useSupabaseMutation("profiles");
   const [form, setForm] = useState({
     bio: profile?.bio || "", location: profile?.location || "", website: profile?.website || "",
@@ -94,7 +94,7 @@ function AccountSection({ profile, inputClass, labelClass, labelStyle, sectionCl
         </div>
       </div>
 
-      <p className={sectionClass} style={{ fontWeight: 600 }}>SOCIAL HANDLES</p>
+      {!isAgency && <><p className={sectionClass} style={{ fontWeight: 600 }}>SOCIAL HANDLES</p>
       <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6 space-y-4">
         {[["TikTok", "tiktok_handle", "tiktok_followers"], ["Instagram", "instagram_handle", "instagram_followers"], ["YouTube", "youtube_handle", "youtube_followers"]].map(([label, hk, fk]) => (
           <div key={label} className="grid grid-cols-2 gap-4">
@@ -121,6 +121,18 @@ function AccountSection({ profile, inputClass, labelClass, labelStyle, sectionCl
           ))}
         </div>
       </div>
+      </>}
+
+      {isAgency && <>
+      <p className={sectionClass} style={{ fontWeight: 600 }}>AGENCY INFO</p>
+      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6 space-y-4">
+        <div><label className={labelClass} style={labelStyle}>Agency Name</label><input type="text" value={profile?.agency_name || ""} disabled className={`${inputClass} bg-[#F7F4F0] text-[#8AAABB]`} /></div>
+        <div className="grid grid-cols-2 gap-4">
+          <div><label className={labelClass} style={labelStyle}>Plan</label><input type="text" value={profile?.agency_plan || "Starter"} disabled className={`${inputClass} bg-[#F7F4F0] text-[#8AAABB]`} /></div>
+          <div><label className={labelClass} style={labelStyle}>Account Type</label><input type="text" value="Agency" disabled className={`${inputClass} bg-[#F7F4F0] text-[#8AAABB]`} /></div>
+        </div>
+      </div>
+      </>}
 
       <button onClick={save} disabled={saving} className="bg-[#1E3F52] text-white rounded-[8px] px-6 py-3 text-[14px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{saving ? "Saving..." : "Save changes"}</button>
     </div>
