@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
-import { LogOut, Settings, Search } from "lucide-react";
+import { LogOut, Settings, Search, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { NotificationBell } from "@/components/global/notification-panel";
 
@@ -120,6 +120,9 @@ export function NavBar() {
         <div className="h-8 w-8 rounded-full bg-[#F2F8FB] border border-[#D8E8EE] flex items-center justify-center text-[11px] font-sans font-500 text-[#7BAFC8]">
           {initials}
         </div>
+        <Link href="/help-center" className="text-[#8AAABB] hover:text-[#3D6E8A] transition-colors" title="Help">
+          <HelpCircle className="h-4 w-4" />
+        </Link>
         <Link href="/settings" className="text-[#8AAABB] hover:text-[#3D6E8A] transition-colors" title="Settings">
           <Settings className="h-4 w-4" />
         </Link>
