@@ -58,7 +58,7 @@ export default function SignUpPage() {
   const [error, setError] = useState("");
 
   const inputClass =
-    "w-full rounded-[10px] border border-[#E5E0D8] px-3 py-2.5 text-[13px] font-sans text-[#1C1714] bg-white focus:outline-none focus:ring-2 focus:ring-[#C4714A]/20 focus:border-[#C4714A]";
+    "w-full rounded-[10px] border border-[#D8E8EE] px-3 py-2.5 text-[13px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:ring-2 focus:ring-[#7BAFC8]/20 focus:border-[#7BAFC8]";
 
   function handleCredentialsNext(e: React.FormEvent) {
     e.preventDefault();
@@ -102,14 +102,14 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F4EF] flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-[#FAF8F4] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-2xl">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-[28px] font-serif text-[#1C1714]">
-            create<em className="italic text-[#C4714A]">OS</em>
+          <h1 className="text-[28px] font-serif text-[#1A2C38]">
+            create<em className="italic text-[#7BAFC8]">OS</em>
           </h1>
-          <p className="text-[13px] font-sans text-[#9A9088] mt-1">
+          <p className="text-[13px] font-sans text-[#8AAABB] mt-1">
             {step === "credentials" ? "Create your account" : "Choose your plan"}
           </p>
         </div>
@@ -117,7 +117,7 @@ export default function SignUpPage() {
         {/* Step 1 — Credentials */}
         {step === "credentials" && (
           <div className="max-w-md mx-auto">
-            <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-6">
+            <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-6">
               <form onSubmit={handleCredentialsNext} className="space-y-4">
                 {error && (
                   <div className="flex items-center gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5">
@@ -126,22 +126,22 @@ export default function SignUpPage() {
                   </div>
                 )}
                 <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Full name</label>
+                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Full name</label>
                   <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Brianna Cole" required className={inputClass} />
                 </div>
                 <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Email</label>
+                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Email</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="brianna@example.com" required className={inputClass} />
                 </div>
                 <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Password</label>
+                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Password</label>
                   <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 6 characters" required className={inputClass} />
                 </div>
                 <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Confirm password</label>
+                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Confirm password</label>
                   <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Confirm your password" required className={inputClass} />
                 </div>
-                <button className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E] transition-colors" type="submit">
+                <button className="w-full bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] transition-colors" type="submit">
                   Continue &rarr;
                 </button>
               </form>
@@ -166,25 +166,25 @@ export default function SignUpPage() {
                   onClick={() => setAccountType(tier.key)}
                   className={`text-left bg-white border rounded-[10px] p-5 transition-colors ${
                     accountType === tier.key
-                      ? "border-[#C4714A] ring-1 ring-[#C4714A]/20"
-                      : "border-[#E5E0D8] hover:border-[#1C1714]/20"
+                      ? "border-[#7BAFC8] ring-1 ring-[#7BAFC8]/20"
+                      : "border-[#D8E8EE] hover:border-[#1A2C38]/20"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[14px] font-sans font-600 text-[#1C1714]">{tier.name}</span>
-                    <span className="text-[18px] font-serif text-[#C4714A]">{tier.price}</span>
+                    <span className="text-[14px] font-sans font-600 text-[#1A2C38]">{tier.name}</span>
+                    <span className="text-[18px] font-serif text-[#7BAFC8]">{tier.price}</span>
                   </div>
-                  <p className="text-[12px] font-sans text-[#9A9088] mb-3">{tier.tagline}</p>
+                  <p className="text-[12px] font-sans text-[#8AAABB] mb-3">{tier.tagline}</p>
                   <div className="space-y-1.5">
                     {tier.features.map((f) => (
                       <div key={f} className="flex items-start gap-2">
-                        <span className="text-[#4A9060] text-xs mt-0.5">&#10003;</span>
-                        <span className="text-[11px] font-sans text-[#1C1714]">{f}</span>
+                        <span className="text-[#3D7A58] text-xs mt-0.5">&#10003;</span>
+                        <span className="text-[11px] font-sans text-[#1A2C38]">{f}</span>
                       </div>
                     ))}
                   </div>
                   {accountType === tier.key && (
-                    <div className="mt-3 text-[#C4714A] text-sm">&#10003; Selected</div>
+                    <div className="mt-3 text-[#7BAFC8] text-sm">&#10003; Selected</div>
                   )}
                 </button>
               ))}
@@ -193,19 +193,19 @@ export default function SignUpPage() {
             {/* Agency name — conditional */}
             {accountType === "agency" && (
               <div className="max-w-md mx-auto mt-4">
-                <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Agency / Company name</label>
+                <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Agency / Company name</label>
                 <input type="text" value={agencyName} onChange={e => setAgencyName(e.target.value)} placeholder="Bright Talent Mgmt" className={inputClass} />
               </div>
             )}
 
             <div className="max-w-md mx-auto mt-5 flex gap-2">
-              <button onClick={() => setStep("credentials")} className="flex-1 border border-[#E5E0D8] rounded-[10px] px-4 py-2.5 text-[13px] font-sans font-500 hover:bg-[#F7F4EF]">
+              <button onClick={() => setStep("credentials")} className="flex-1 border border-[#D8E8EE] rounded-[10px] px-4 py-2.5 text-[13px] font-sans font-500 hover:bg-[#FAF8F4]">
                 &larr; Back
               </button>
               <button
                 onClick={handleSignUp}
                 disabled={!accountType || loading}
-                className="flex-1 bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E] transition-colors disabled:opacity-50"
+                className="flex-1 bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] transition-colors disabled:opacity-50"
               >
                 {loading ? "Creating account..." : "Create account"}
               </button>
@@ -213,8 +213,8 @@ export default function SignUpPage() {
           </div>
         )}
 
-        <p className="text-[13px] text-center font-sans text-[#9A9088] mt-4">
-          Already have an account? <Link href="/login" className="text-[#C4714A] hover:underline font-medium">Sign in</Link>
+        <p className="text-[13px] text-center font-sans text-[#8AAABB] mt-4">
+          Already have an account? <Link href="/login" className="text-[#7BAFC8] hover:underline font-medium">Sign in</Link>
         </p>
       </div>
     </div>

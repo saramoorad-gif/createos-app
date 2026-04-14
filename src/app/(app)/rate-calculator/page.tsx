@@ -88,29 +88,29 @@ export default function RateCalculatorPage() {
   });
 
   const selectClass =
-    "w-full rounded-[10px] border border-[#E5E0D8] bg-white px-3 py-2.5 text-[13px] font-sans text-[#1C1714] focus:outline-none focus:ring-2 focus:ring-[#C4714A]/20 focus:border-[#C4714A]";
+    "w-full rounded-[10px] border border-[#D8E8EE] bg-white px-3 py-2.5 text-[13px] font-sans text-[#1A2C38] focus:outline-none focus:ring-2 focus:ring-[#7BAFC8]/20 focus:border-[#7BAFC8]";
   const inputClass =
-    "w-full rounded-[10px] border border-[#E5E0D8] bg-white px-3 py-2.5 text-[13px] font-sans text-[#1C1714] focus:outline-none focus:ring-2 focus:ring-[#C4714A]/20 focus:border-[#C4714A]";
+    "w-full rounded-[10px] border border-[#D8E8EE] bg-white px-3 py-2.5 text-[13px] font-sans text-[#1A2C38] focus:outline-none focus:ring-2 focus:ring-[#7BAFC8]/20 focus:border-[#7BAFC8]";
 
   return (
     <div>
       <PageHeader
-        headline={<>Rate <em className="italic text-[#C4714A]">calculator</em></>}
+        headline={<>Rate <em className="italic text-[#7BAFC8]">calculator</em></>}
         subheading="Calculate your rates based on platform, content type, and market data."
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Left — Calculator Form */}
         <div className="space-y-6">
-          <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-6">
-            <p className="text-[10px] uppercase tracking-[3px] text-[#9A9088] font-sans font-semibold mb-5">
+          <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-6">
+            <p className="text-[10px] uppercase tracking-[3px] text-[#8AAABB] font-sans font-semibold mb-5">
               Calculate Your Rate
             </p>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Platform</label>
+                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Platform</label>
                   <select className={selectClass} value={platform} onChange={(e) => setPlatform(e.target.value as Platform)}>
                     {Object.entries(platformLabels).map(([k, v]) => (
                       <option key={k} value={k}>{v}</option>
@@ -118,7 +118,7 @@ export default function RateCalculatorPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Content Type</label>
+                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Content Type</label>
                   <select className={selectClass} value={contentType} onChange={(e) => setContentType(e.target.value as ContentType)}>
                     {Object.entries(contentTypeLabels).map(([k, v]) => (
                       <option key={k} value={k}>{v}</option>
@@ -129,17 +129,17 @@ export default function RateCalculatorPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Follower Count</label>
+                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Follower Count</label>
                   <input type="number" className={inputClass} value={followers} onChange={(e) => setFollowers(Number(e.target.value))} />
                 </div>
                 <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Engagement Rate (%)</label>
+                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Engagement Rate (%)</label>
                   <input type="number" step="0.1" className={inputClass} value={engagementRate} onChange={(e) => setEngagementRate(Number(e.target.value))} />
                 </div>
               </div>
 
               <div>
-                <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Usage Rights</label>
+                <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Usage Rights</label>
                 <select className={selectClass} value={usageRights} onChange={(e) => setUsageRights(e.target.value as UsageRights)}>
                   <option value="none">None — organic only</option>
                   <option value="paid_ads">Paid ads (+25%)</option>
@@ -149,7 +149,7 @@ export default function RateCalculatorPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Exclusivity</label>
+                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Exclusivity</label>
                   <select className={selectClass} value={exclusivity} onChange={(e) => setExclusivity(Number(e.target.value) as ExclusivityDays)}>
                     <option value={0}>None</option>
                     <option value={30}>30 days (+10%)</option>
@@ -158,13 +158,13 @@ export default function RateCalculatorPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1C1714] block mb-1.5">Category</label>
+                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Category</label>
                   <input type="text" placeholder="e.g., Beauty" className={inputClass} />
                 </div>
               </div>
 
               <button
-                className="w-full bg-[#C4714A] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#B5633E] transition-colors"
+                className="w-full bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] transition-colors"
                 onClick={() => setCalculated(true)}
               >
                 Calculate Rate
@@ -174,52 +174,52 @@ export default function RateCalculatorPage() {
 
           {/* Results */}
           {calculated && (
-            <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-6">
+            <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-6">
               <div className="text-center mb-4">
-                <p className="text-[10px] uppercase tracking-[3px] text-[#9A9088] font-sans font-semibold mb-2">Your Rate</p>
-                <p className="text-[36px] font-serif text-[#C4714A]">{fmt(result.yourRate)}</p>
+                <p className="text-[10px] uppercase tracking-[3px] text-[#8AAABB] font-sans font-semibold mb-2">Your Rate</p>
+                <p className="text-[36px] font-serif text-[#7BAFC8]">{fmt(result.yourRate)}</p>
               </div>
 
               {/* Market range bar */}
               <div className="relative pt-6 pb-3 mb-4">
-                <div className="h-2 rounded-full bg-gradient-to-r from-[#E5E0D8] via-[#C4714A]/30 to-[#C4714A]/50 relative">
+                <div className="h-2 rounded-full bg-gradient-to-r from-[#D8E8EE] via-[#7BAFC8]/30 to-[#7BAFC8]/50 relative">
                   {(() => {
                     const range = result.marketHigh - result.marketLow;
                     const pos = range > 0 ? ((result.yourRate - result.marketLow) / range) * 100 : 50;
                     const clamped = Math.max(5, Math.min(95, pos));
                     return (
-                      <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#C4714A] border-2 border-white shadow" style={{ left: `${clamped}%` }} />
+                      <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#7BAFC8] border-2 border-white shadow" style={{ left: `${clamped}%` }} />
                     );
                   })()}
                 </div>
                 <div className="flex justify-between mt-2">
-                  <span className="text-[11px] font-mono text-[#9A9088]">{fmt(result.marketLow)}</span>
-                  <span className="text-[11px] font-mono text-[#9A9088]">{fmt(result.marketHigh)}</span>
+                  <span className="text-[11px] font-mono text-[#8AAABB]">{fmt(result.marketLow)}</span>
+                  <span className="text-[11px] font-mono text-[#8AAABB]">{fmt(result.marketHigh)}</span>
                 </div>
               </div>
 
-              <div className="border-t border-[#E5E0D8] pt-4">
-                <p className="text-[10px] uppercase tracking-[3px] text-[#9A9088] font-sans font-semibold mb-3">Breakdown</p>
+              <div className="border-t border-[#D8E8EE] pt-4">
+                <p className="text-[10px] uppercase tracking-[3px] text-[#8AAABB] font-sans font-semibold mb-3">Breakdown</p>
                 <div className="space-y-2">
                   <div className="flex justify-between text-[13px] font-sans">
-                    <span className="text-[#9A9088]">Base rate</span>
-                    <span className="text-[#1C1714] font-medium">{fmt(result.breakdown.base)}</span>
+                    <span className="text-[#8AAABB]">Base rate</span>
+                    <span className="text-[#1A2C38] font-medium">{fmt(result.breakdown.base)}</span>
                   </div>
                   {result.breakdown.engagementEffect !== 0 && (
                     <div className="flex justify-between text-[13px] font-sans">
-                      <span className="text-[#9A9088]">Engagement bonus</span>
+                      <span className="text-[#8AAABB]">Engagement bonus</span>
                       <span className="text-emerald-600 font-medium">+{fmt(result.breakdown.engagementEffect)}</span>
                     </div>
                   )}
                   {result.breakdown.usageEffect !== 0 && (
                     <div className="flex justify-between text-[13px] font-sans">
-                      <span className="text-[#9A9088]">Usage rights premium</span>
+                      <span className="text-[#8AAABB]">Usage rights premium</span>
                       <span className="text-amber-600 font-medium">+{fmt(result.breakdown.usageEffect)}</span>
                     </div>
                   )}
                   {result.breakdown.exclusivityEffect !== 0 && (
                     <div className="flex justify-between text-[13px] font-sans">
-                      <span className="text-[#9A9088]">Exclusivity premium</span>
+                      <span className="text-[#8AAABB]">Exclusivity premium</span>
                       <span className="text-purple-600 font-medium">+{fmt(result.breakdown.exclusivityEffect)}</span>
                     </div>
                   )}
@@ -230,8 +230,8 @@ export default function RateCalculatorPage() {
         </div>
 
         {/* Right — Rate Card */}
-        <div className="bg-white border border-[#E5E0D8] rounded-[10px] overflow-hidden h-fit">
-          <div className="bg-gradient-to-r from-[#C4714A] to-[#D4956F] px-5 py-4">
+        <div className="bg-white border border-[#D8E8EE] rounded-[10px] overflow-hidden h-fit">
+          <div className="bg-gradient-to-r from-[#7BAFC8] to-[#D4956F] px-5 py-4">
             <p className="text-[15px] font-serif font-medium text-white">
               Brianna Cole — {platformLabels[platform]}
             </p>
@@ -245,16 +245,16 @@ export default function RateCalculatorPage() {
               <div
                 key={item.type}
                 className={`flex items-center justify-between px-5 py-3.5 ${
-                  i < rateCard.length - 1 ? "border-b border-[#E5E0D8]" : ""
+                  i < rateCard.length - 1 ? "border-b border-[#D8E8EE]" : ""
                 }`}
               >
-                <span className="text-[13px] font-sans text-[#1C1714]">{item.label}</span>
-                <span className="text-[15px] font-serif font-medium text-[#C4714A]">{fmt(item.rate)}</span>
+                <span className="text-[13px] font-sans text-[#1A2C38]">{item.label}</span>
+                <span className="text-[15px] font-serif font-medium text-[#7BAFC8]">{fmt(item.rate)}</span>
               </div>
             ))}
           </div>
 
-          <div className="bg-[#F7F4EF] px-5 py-3 text-[11px] font-sans text-[#9A9088] space-y-0.5">
+          <div className="bg-[#FAF8F4] px-5 py-3 text-[11px] font-sans text-[#8AAABB] space-y-0.5">
             {usageRights !== "none" && (
               <p>* Includes {usageRights === "paid_ads" ? "paid ads" : "extended/whitelisting"} rights</p>
             )}

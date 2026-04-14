@@ -8,9 +8,9 @@ export default function AppLayout({
 }) {
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-[#F7F4EF]">
+      <div className="min-h-screen bg-[#FAF8F4]">
         <NavBar />
-        <main className="max-w-[1200px] mx-auto px-6 pb-16">
+        <main className="max-w-[1200px] mx-auto px-12 pb-16">
           {children}
         </main>
       </div>

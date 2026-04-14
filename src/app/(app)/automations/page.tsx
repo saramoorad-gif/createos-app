@@ -25,32 +25,32 @@ export default function AutomationsPage() {
   return (
     <div>
       <PageHeader
-        headline={<>Your <em className="italic text-[#C4714A]">automations</em></>}
+        headline={<>Your <em className="italic text-[#7BAFC8]">automations</em></>}
         subheading="Set up workflows that run automatically so you can focus on creating."
       />
 
       {/* Active Automations */}
       <section className="mb-10">
-        <p className="text-[10px] uppercase tracking-[3px] text-[#9A9088] font-sans font-semibold mb-4">
+        <p className="text-[10px] uppercase tracking-[3px] text-[#8AAABB] font-sans font-semibold mb-4">
           Active
         </p>
         <div className="space-y-3">
           {active.map((a) => (
             <div
               key={a.id}
-              className="bg-white border border-[#E5E0D8] rounded-[10px] px-5 py-4 flex items-start justify-between gap-4"
+              className="bg-white border border-[#D8E8EE] rounded-[10px] px-5 py-4 flex items-start justify-between gap-4"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-sans font-medium text-[#1C1714]">{a.title}</p>
-                <p className="text-[13px] font-sans text-[#9A9088] mt-1 leading-relaxed">{a.description}</p>
-                <p className="text-[11px] font-mono text-[#9A9088] mt-2">
+                <p className="text-[14px] font-sans font-medium text-[#1A2C38]">{a.title}</p>
+                <p className="text-[13px] font-sans text-[#8AAABB] mt-1 leading-relaxed">{a.description}</p>
+                <p className="text-[11px] font-mono text-[#8AAABB] mt-2">
                   Last fired: {formatLastFired(a.last_fired)}
                 </p>
               </div>
               <button
                 onClick={() => toggle(a.id)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 mt-1 ${
-                  a.enabled ? "bg-[#C4714A]" : "bg-[#E5E0D8]"
+                  a.enabled ? "bg-[#7BAFC8]" : "bg-[#D8E8EE]"
                 }`}
               >
                 <span
@@ -66,23 +66,23 @@ export default function AutomationsPage() {
 
       {/* Available Automations */}
       <section>
-        <p className="text-[10px] uppercase tracking-[3px] text-[#9A9088] font-sans font-semibold mb-4">
+        <p className="text-[10px] uppercase tracking-[3px] text-[#8AAABB] font-sans font-semibold mb-4">
           Available
         </p>
         <div className="space-y-3">
           {available.map((a) => (
             <div
               key={a.id}
-              className="bg-white border border-[#E5E0D8] rounded-[10px] px-5 py-4 flex items-start justify-between gap-4"
+              className="bg-white border border-[#D8E8EE] rounded-[10px] px-5 py-4 flex items-start justify-between gap-4"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-sans font-medium text-[#1C1714]">{a.title}</p>
-                <p className="text-[13px] font-sans text-[#9A9088] mt-1 leading-relaxed">{a.description}</p>
+                <p className="text-[14px] font-sans font-medium text-[#1A2C38]">{a.title}</p>
+                <p className="text-[13px] font-sans text-[#8AAABB] mt-1 leading-relaxed">{a.description}</p>
               </div>
               <button
                 onClick={() => toggle(a.id)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 mt-1 ${
-                  a.enabled ? "bg-[#C4714A]" : "bg-[#E5E0D8]"
+                  a.enabled ? "bg-[#7BAFC8]" : "bg-[#D8E8EE]"
                 }`}
               >
                 <span

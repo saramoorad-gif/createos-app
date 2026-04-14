@@ -6,9 +6,9 @@ import { formatCurrency } from "@/lib/utils";
 import { Download, CheckCircle2 } from "lucide-react";
 
 const statusStyles: Record<string, { bg: string; text: string; label: string }> = {
-  paid: { bg: "bg-[#EBF5EB]", text: "text-[#4A9060]", label: "Paid" },
-  pending: { bg: "bg-[#FBF5EC]", text: "text-[#D4A030]", label: "Pending" },
-  processing: { bg: "bg-[#F2EEE8]", text: "text-[#9A9088]", label: "Processing" },
+  paid: { bg: "bg-[#E8F4EE]", text: "text-[#3D7A58]", label: "Paid" },
+  pending: { bg: "bg-[#F4EEE0]", text: "text-[#A07830]", label: "Pending" },
+  processing: { bg: "bg-[#F2F8FB]", text: "text-[#8AAABB]", label: "Processing" },
 };
 
 export function CommissionsTab() {
@@ -27,7 +27,7 @@ export function CommissionsTab() {
   return (
     <div>
       <PageHeader
-        headline={<>Commission <em className="italic text-[#C4714A]">tracker</em></>}
+        headline={<>Commission <em className="italic text-[#7BAFC8]">tracker</em></>}
         subheading="Track earnings, payouts, and commission rates across your roster."
         stats={[
           { value: formatCurrency(earned), label: "Earned (paid)" },
@@ -40,38 +40,38 @@ export function CommissionsTab() {
         {/* Main — Payout table */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088]">ALL PAYOUTS</p>
-            <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#C4714A] hover:underline">
+            <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">ALL PAYOUTS</p>
+            <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline">
               <Download className="h-3.5 w-3.5" /> Export CSV
             </button>
           </div>
 
-          <div className="bg-white border border-[#E5E0D8] rounded-[10px] overflow-hidden">
-            <div className="grid grid-cols-7 gap-4 px-5 py-3 text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#9A9088] border-b border-[#E5E0D8]">
+          <div className="bg-white border border-[#D8E8EE] rounded-[10px] overflow-hidden">
+            <div className="grid grid-cols-7 gap-4 px-5 py-3 text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] border-b border-[#D8E8EE]">
               <span>Creator</span><span>Deal</span><span>Deal Value</span><span>Rate</span><span>Commission</span><span>Period</span><span>Status</span>
             </div>
             {commissionPayouts.map(p => {
               const s = statusStyles[p.status];
               return (
-                <div key={p.id} className="grid grid-cols-7 gap-4 px-5 py-3.5 items-center border-b border-[#E5E0D8] last:border-b-0">
-                  <span className="text-[13px] font-sans font-500 text-[#1C1714]">{p.creator}</span>
-                  <span className="text-[12px] font-sans text-[#9A9088]">{p.deal}</span>
-                  <span className="text-[13px] font-serif text-[#1C1714]">{formatCurrency(p.dealValue)}</span>
-                  <span className="text-[12px] font-sans text-[#9A9088]">{p.rate}%</span>
-                  <span className="text-[14px] font-serif text-[#4A9060]">{formatCurrency(p.amount)}</span>
-                  <span className="text-[11px] font-mono text-[#9A9088]">{p.period}</span>
+                <div key={p.id} className="grid grid-cols-7 gap-4 px-5 py-3.5 items-center border-b border-[#D8E8EE] last:border-b-0">
+                  <span className="text-[13px] font-sans font-500 text-[#1A2C38]">{p.creator}</span>
+                  <span className="text-[12px] font-sans text-[#8AAABB]">{p.deal}</span>
+                  <span className="text-[13px] font-serif text-[#1A2C38]">{formatCurrency(p.dealValue)}</span>
+                  <span className="text-[12px] font-sans text-[#8AAABB]">{p.rate}%</span>
+                  <span className="text-[14px] font-serif text-[#3D7A58]">{formatCurrency(p.amount)}</span>
+                  <span className="text-[11px] font-mono text-[#8AAABB]">{p.period}</span>
                   <div className="flex items-center gap-1.5">
                     <span className={`text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full ${s.bg} ${s.text}`}>{s.label}</span>
                     {p.status === "pending" && (
-                      <button className="text-[#4A9060] hover:text-[#3a7a4a]" title="Mark paid"><CheckCircle2 className="h-3.5 w-3.5" /></button>
+                      <button className="text-[#3D7A58] hover:text-[#3a7a4a]" title="Mark paid"><CheckCircle2 className="h-3.5 w-3.5" /></button>
                     )}
                   </div>
                 </div>
               );
             })}
-            <div className="grid grid-cols-7 gap-4 px-5 py-3 bg-[#F7F4EF] border-t border-[#E5E0D8]">
-              <span className="text-[12px] font-sans font-600 text-[#1C1714] col-span-4">Total</span>
-              <span className="text-[16px] font-serif text-[#4A9060]">{formatCurrency(ytd)}</span>
+            <div className="grid grid-cols-7 gap-4 px-5 py-3 bg-[#FAF8F4] border-t border-[#D8E8EE]">
+              <span className="text-[12px] font-sans font-600 text-[#1A2C38] col-span-4">Total</span>
+              <span className="text-[16px] font-serif text-[#3D7A58]">{formatCurrency(ytd)}</span>
               <span className="col-span-2" />
             </div>
           </div>
@@ -79,30 +79,30 @@ export function CommissionsTab() {
 
         {/* Sidebar — Per-creator breakdown */}
         <div>
-          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088] mb-4">BY CREATOR</p>
-          <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-5 space-y-4">
+          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-4">BY CREATOR</p>
+          <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-5 space-y-4">
             {creatorTotals.map(c => (
               <div key={c.name}>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[13px] font-sans font-500 text-[#1C1714]">{c.name}</span>
-                  <span className="text-[13px] font-serif text-[#4A9060]">{formatCurrency(c.total)}</span>
+                  <span className="text-[13px] font-sans font-500 text-[#1A2C38]">{c.name}</span>
+                  <span className="text-[13px] font-serif text-[#3D7A58]">{formatCurrency(c.total)}</span>
                 </div>
-                <div className="h-[6px] bg-[#F2EEE8] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#C4714A] rounded-full" style={{ width: `${(c.total / maxCreatorTotal) * 100}%` }} />
+                <div className="h-[6px] bg-[#F2F8FB] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#7BAFC8] rounded-full" style={{ width: `${(c.total / maxCreatorTotal) * 100}%` }} />
                 </div>
-                <p className="text-[11px] font-sans text-[#9A9088] mt-1">{c.rate}% rate</p>
+                <p className="text-[11px] font-sans text-[#8AAABB] mt-1">{c.rate}% rate</p>
               </div>
             ))}
           </div>
 
-          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088] mt-6 mb-4">RATE MANAGEMENT</p>
-          <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-5 space-y-3">
+          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mt-6 mb-4">RATE MANAGEMENT</p>
+          <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-5 space-y-3">
             {agencyRoster.slice(0, 4).map(c => (
               <div key={c.id} className="flex items-center justify-between">
-                <span className="text-[13px] font-sans text-[#1C1714]">{c.name}</span>
+                <span className="text-[13px] font-sans text-[#1A2C38]">{c.name}</span>
                 <div className="flex items-center gap-1">
-                  <input type="number" defaultValue={c.commissionRate} className="w-14 text-right rounded-lg border border-[#E5E0D8] px-2 py-1 text-[13px] font-sans text-[#1C1714] focus:outline-none focus:border-[#C4714A]" />
-                  <span className="text-[12px] font-sans text-[#9A9088]">%</span>
+                  <input type="number" defaultValue={c.commissionRate} className="w-14 text-right rounded-lg border border-[#D8E8EE] px-2 py-1 text-[13px] font-sans text-[#1A2C38] focus:outline-none focus:border-[#7BAFC8]" />
+                  <span className="text-[12px] font-sans text-[#8AAABB]">%</span>
                 </div>
               </div>
             ))}

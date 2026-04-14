@@ -14,15 +14,15 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import Link from "next/link";
 
 const priorityColors: Record<string, string> = {
-  high: "bg-[#E05C3A]",
-  medium: "bg-[#D4A030]",
-  low: "bg-[#4A9060]",
+  high: "bg-[#A03D3D]",
+  medium: "bg-[#A07830]",
+  low: "bg-[#3D7A58]",
 };
 
 const tagStyles: Record<string, string> = {
-  Contract: "bg-[#F2EEE8] text-[#9A9088]",
-  Deliverable: "bg-[#FBF0EA] text-[#C4714A]",
-  Invoice: "bg-[#FEF0EB] text-[#E05C3A]",
+  Contract: "bg-[#F2F8FB] text-[#8AAABB]",
+  Deliverable: "bg-[#F2F8FB] text-[#7BAFC8]",
+  Invoice: "bg-[#F4EAEA] text-[#A03D3D]",
   Exclusivity: "bg-[#F5ECD4] text-[#A87C3A]",
 };
 
@@ -53,13 +53,13 @@ const stageProgress: Record<string, number> = {
 
 function DealCard({ deal }: { deal: Deal }) {
   return (
-    <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-5">
+    <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-5">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <p className="text-[14px] font-sans font-600 text-[#1C1714]">{deal.brand_name}</p>
-          <p className="text-[12px] font-sans text-[#9A9088] mt-0.5">{deal.deliverables}</p>
+          <p className="text-[14px] font-sans font-600 text-[#1A2C38]">{deal.brand_name}</p>
+          <p className="text-[12px] font-sans text-[#8AAABB] mt-0.5">{deal.deliverables}</p>
         </div>
-        <p className="text-[20px] font-serif text-[#1C1714]">
+        <p className="text-[20px] font-serif text-[#1A2C38]">
           {deal.value > 0 ? formatCurrency(deal.value) : "TBD"}
         </p>
       </div>
@@ -68,17 +68,17 @@ function DealCard({ deal }: { deal: Deal }) {
         {["Contract", "Brief", "Creation", "Review", "Paid"].map((stage, i) => (
           <div key={stage} className="flex-1 flex flex-col items-center">
             <div className={`h-[3px] w-full ${i === 0 ? "rounded-l-full" : ""} ${i === 4 ? "rounded-r-full" : ""} ${
-              i <= Math.floor((stageProgress[deal.stage] || 0) / 25) ? "bg-[#C4714A]" : "bg-[#E5E0D8]"
+              i <= Math.floor((stageProgress[deal.stage] || 0) / 25) ? "bg-[#7BAFC8]" : "bg-[#D8E8EE]"
             }`} />
           </div>
         ))}
       </div>
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#9A9088]">
+        <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB]">
           {dealStageLabels[deal.stage]}
         </p>
         {deal.due_date && (
-          <p className="text-[11px] font-mono text-[#9A9088]">{formatDate(deal.due_date)}</p>
+          <p className="text-[11px] font-mono text-[#8AAABB]">{formatDate(deal.due_date)}</p>
         )}
       </div>
     </div>
@@ -102,7 +102,7 @@ export default function TodayPage() {
       <PageHeader
         headline={
           <>
-            {actionItems.length} items need your <em className="italic text-[#C4714A]">attention</em> today.
+            {actionItems.length} items need your <em className="italic text-[#7BAFC8]">attention</em> today.
           </>
         }
         subheading="Your creator business at a glance — focus on what matters."
@@ -118,22 +118,22 @@ export default function TodayPage() {
         {/* Main content */}
         <div>
           {/* Action items */}
-          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088] mb-4">
+          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-4">
             ACTION ITEMS
           </p>
-          <div className="divide-y divide-[#E5E0D8]">
+          <div className="divide-y divide-[#D8E8EE]">
             {actionItems.map((item, i) => (
               <div key={i} className="flex items-center gap-4 py-4 first:pt-0">
                 <div className={`w-[3px] h-10 rounded-full ${priorityColors[item.priority]}`} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-sans font-500 text-[#1C1714]">
+                  <p className="text-[13px] font-sans font-500 text-[#1A2C38]">
                     {item.task}
                   </p>
-                  <p className="text-[12px] font-sans text-[#9A9088] mt-0.5 truncate">
+                  <p className="text-[12px] font-sans text-[#8AAABB] mt-0.5 truncate">
                     {item.detail}
                   </p>
                 </div>
-                <p className="text-[11px] font-mono text-[#9A9088] flex-shrink-0">
+                <p className="text-[11px] font-mono text-[#8AAABB] flex-shrink-0">
                   {item.due}
                 </p>
                 <span className={`text-[10px] font-sans font-500 uppercase tracking-[1px] px-2 py-0.5 rounded-full ${tagStyles[item.tag]}`}>
@@ -144,7 +144,7 @@ export default function TodayPage() {
           </div>
 
           {/* Active deals */}
-          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088] mt-10 mb-4">
+          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mt-10 mb-4">
             ACTIVE DEALS
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -155,7 +155,7 @@ export default function TodayPage() {
           {activeDeals.length > 4 && (
             <Link
               href="/deals"
-              className="text-[13px] font-sans font-500 text-[#C4714A] hover:underline mt-4 inline-block"
+              className="text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline mt-4 inline-block"
             >
               View all {activeDeals.length} deals →
             </Link>
@@ -164,18 +164,18 @@ export default function TodayPage() {
 
         {/* Aside — Calendar */}
         <aside>
-          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088] mb-4">
+          <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-4">
             THIS WEEK
           </p>
           <div className="space-y-5">
             {calendarDays.map((day) => (
               <div key={day.day}>
-                <p className="text-[12px] font-sans font-600 text-[#1C1714] mb-1.5">
+                <p className="text-[12px] font-sans font-600 text-[#1A2C38] mb-1.5">
                   {day.day}
                 </p>
                 <div className="space-y-1">
                   {day.items.map((item, i) => (
-                    <p key={i} className="text-[12px] font-sans text-[#9A9088] pl-3 relative before:content-[''] before:absolute before:left-0 before:top-[7px] before:h-[4px] before:w-[4px] before:rounded-full before:bg-[#E5E0D8]">
+                    <p key={i} className="text-[12px] font-sans text-[#8AAABB] pl-3 relative before:content-[''] before:absolute before:left-0 before:top-[7px] before:h-[4px] before:w-[4px] before:rounded-full before:bg-[#D8E8EE]">
                       {item}
                     </p>
                   ))}

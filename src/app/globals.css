@@ -4,54 +4,48 @@
 
 @layer base {
   :root {
-    --background: #F7F4EF;
-    --foreground: #1C1714;
+    --background: #FAF8F4;
+    --foreground: #1A2C38;
     --card: #FFFFFF;
-    --card-foreground: #1C1714;
-    --border: #E5E0D8;
-    --muted: #F2EEE8;
-    --muted-foreground: #9A9088;
-    --primary: #C4714A;
+    --card-foreground: #1A2C38;
+    --border: #D8E8EE;
+    --border-beige: #DDD6C8;
+    --muted: #F0EAE0;
+    --muted-foreground: #8AAABB;
+    --primary: #1E3F52;
     --primary-foreground: #FFFFFF;
-    --success: #4A9060;
-    --warning: #D4A030;
-    --urgent: #E05C3A;
-    --nav: #1C1714;
-    --nav-text: #F7F4EF;
-    --nav-muted: rgba(247, 244, 239, 0.4);
+    --accent: #7BAFC8;
+    --accent-mid: #6AA0BB;
+    --accent-dark: #3D6E8A;
+    --secondary: #4A6070;
+    --success: #3D7A58;
+    --success-bg: #E8F4EE;
+    --warning: #A07830;
+    --warning-bg: #F4EEE0;
+    --danger: #A03D3D;
+    --danger-bg: #F4EAEA;
+    --pale-blue: #F2F8FB;
+    --beige: #F0EAE0;
   }
 }
 
 @layer base {
   * {
-    @apply border-[#E5E0D8];
+    @apply border-[#D8E8EE];
   }
   body {
-    @apply bg-[#F7F4EF] text-[#1C1714] font-sans;
+    @apply bg-[#FAF8F4] text-[#1A2C38] font-sans;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
   }
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #E5E0D8;
-  border-radius: 3px;
-}
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D8E8EE; border-radius: 3px; }
 
-/* Section labels */
 .section-label {
-  @apply text-[10px] uppercase tracking-[3px] text-[#9A9088] font-sans font-600;
-}
-
-/* Editorial stat divider */
-.stat-divider {
-  @apply w-px bg-[#E5E0D8] self-stretch;
+  @apply text-[10px] uppercase tracking-[3px] text-[#8AAABB] font-sans;
+  font-weight: 600;
 }

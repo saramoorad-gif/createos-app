@@ -27,33 +27,33 @@ function DealPanel({ deal, onClose }: { deal: Deal; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <div className="relative w-full max-w-[440px] bg-white border-l border-[#E5E0D8] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-[#E5E0D8] px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-[20px] font-serif text-[#1C1714]">{deal.brand_name}</h2>
-          <button onClick={onClose} className="text-[#9A9088] hover:text-[#1C1714]">
+      <div className="relative w-full max-w-[440px] bg-white border-l border-[#D8E8EE] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-[#D8E8EE] px-6 py-4 flex items-center justify-between z-10">
+          <h2 className="text-[20px] font-serif text-[#1A2C38]">{deal.brand_name}</h2>
+          <button onClick={onClose} className="text-[#8AAABB] hover:text-[#1A2C38]">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="p-6 space-y-6">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full bg-[#F2EEE8] text-[#9A9088]">
+            <span className="text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full bg-[#F2F8FB] text-[#8AAABB]">
               {dealStageLabels[deal.stage]}
             </span>
-            <span className="text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full bg-[#FBF0EA] text-[#C4714A]">
+            <span className="text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full bg-[#F2F8FB] text-[#7BAFC8]">
               {deal.deal_type === "ugc" ? "UGC" : "Influencer"}
             </span>
             {deal.created_by_agency && deal.agency_name && (
-              <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-[#F2EEE8] text-[#9A9088]">
+              <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-[#F2F8FB] text-[#8AAABB]">
                 Added by {deal.agency_name}
               </span>
             )}
           </div>
 
-          <div className="h-[3px] w-full bg-[#E5E0D8] rounded-full overflow-hidden">
-            <div className="h-full bg-[#C4714A] rounded-full" style={{ width: `${stageProgress[deal.stage]}%` }} />
+          <div className="h-[3px] w-full bg-[#D8E8EE] rounded-full overflow-hidden">
+            <div className="h-full bg-[#7BAFC8] rounded-full" style={{ width: `${stageProgress[deal.stage]}%` }} />
           </div>
 
-          <div className="space-y-3 divide-y divide-[#E5E0D8]">
+          <div className="space-y-3 divide-y divide-[#D8E8EE]">
             {([
               ["Amount", deal.value > 0 ? formatCurrency(deal.value) : "TBD"],
               ["Deliverables", deal.deliverables],
@@ -62,28 +62,28 @@ function DealPanel({ deal, onClose }: { deal: Deal; onClose: () => void }) {
               ["Exclusivity", deal.exclusivity_days ? `${deal.exclusivity_days}d — ${deal.exclusivity_category}` : "None"],
             ] as [string, string][]).map(([label, value]) => (
               <div key={label} className="flex justify-between pt-3 first:pt-0">
-                <span className="text-[12px] font-sans text-[#9A9088]">{label}</span>
-                <span className="text-[13px] font-sans font-500 text-[#1C1714] text-right max-w-[220px]">{value}</span>
+                <span className="text-[12px] font-sans text-[#8AAABB]">{label}</span>
+                <span className="text-[13px] font-sans font-500 text-[#1A2C38] text-right max-w-[220px]">{value}</span>
               </div>
             ))}
           </div>
 
           {deal.notes && (
-            <div className="bg-[#F7F4EF] rounded-[10px] p-4">
-              <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#9A9088] mb-2">Notes</p>
-              <p className="text-[13px] font-sans text-[#1C1714] leading-relaxed">{deal.notes}</p>
+            <div className="bg-[#FAF8F4] rounded-[10px] p-4">
+              <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] mb-2">Notes</p>
+              <p className="text-[13px] font-sans text-[#1A2C38] leading-relaxed">{deal.notes}</p>
             </div>
           )}
 
           <div className="space-y-2 pt-2">
-            <button className="w-full flex items-center justify-center gap-2 bg-[#C4714A] text-white rounded-[10px] px-4 py-2.5 text-[13px] font-sans font-500 hover:bg-[#B05C38] transition-colors">
+            <button className="w-full flex items-center justify-center gap-2 bg-[#7BAFC8] text-white rounded-[10px] px-4 py-2.5 text-[13px] font-sans font-500 hover:bg-[#6AA0BB] transition-colors">
               <ChevronRight className="h-4 w-4" /> Move to next stage
             </button>
             <div className="grid grid-cols-2 gap-2">
-              <button className="flex items-center justify-center gap-1.5 border border-[#E5E0D8] rounded-[10px] px-3 py-2 text-[12px] font-sans font-500 text-[#1C1714] hover:bg-[#F7F4EF]">
+              <button className="flex items-center justify-center gap-1.5 border border-[#D8E8EE] rounded-[10px] px-3 py-2 text-[12px] font-sans font-500 text-[#1A2C38] hover:bg-[#FAF8F4]">
                 <FileText className="h-3.5 w-3.5" /> Invoice
               </button>
-              <button className="flex items-center justify-center gap-1.5 border border-[#E5E0D8] rounded-[10px] px-3 py-2 text-[12px] font-sans font-500 text-[#1C1714] hover:bg-[#F7F4EF]">
+              <button className="flex items-center justify-center gap-1.5 border border-[#D8E8EE] rounded-[10px] px-3 py-2 text-[12px] font-sans font-500 text-[#1A2C38] hover:bg-[#FAF8F4]">
                 <Eye className="h-3.5 w-3.5" /> Contract
               </button>
             </div>
@@ -112,7 +112,7 @@ export default function DealsPage() {
   return (
     <div>
       <PageHeader
-        headline={<>Your deal <em className="italic text-[#C4714A]">pipeline</em></>}
+        headline={<>Your deal <em className="italic text-[#7BAFC8]">pipeline</em></>}
         subheading="Track every brand partnership from pitch to payment."
         stats={[
           { value: String(deals.length), label: "Total deals" },
@@ -129,8 +129,8 @@ export default function DealsPage() {
             onClick={() => setFilter(f.key)}
             className={`px-3 py-1 text-[10px] font-sans font-500 uppercase tracking-[1.5px] rounded-full transition-colors ${
               filter === f.key
-                ? "bg-[#1C1714] text-[#F7F4EF]"
-                : "text-[#9A9088] hover:text-[#1C1714] hover:bg-[#F2EEE8]"
+                ? "bg-[#1A2C38] text-[#FAF8F4]"
+                : "text-[#8AAABB] hover:text-[#1A2C38] hover:bg-[#F2F8FB]"
             }`}
           >
             {f.label}
@@ -144,36 +144,36 @@ export default function DealsPage() {
           <button
             key={deal.id}
             onClick={() => setSelectedDeal(deal)}
-            className="w-full text-left bg-white border border-[#E5E0D8] rounded-[10px] p-5 hover:border-[#C4714A]/30 transition-colors"
+            className="w-full text-left bg-white border border-[#D8E8EE] rounded-[10px] p-5 hover:border-[#7BAFC8]/30 transition-colors"
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <p className="text-[15px] font-sans font-600 text-[#1C1714]">{deal.brand_name}</p>
-                <span className="text-[10px] font-sans font-500 uppercase tracking-[1px] px-2 py-0.5 rounded-full bg-[#FBF0EA] text-[#C4714A]">
+                <p className="text-[15px] font-sans font-600 text-[#1A2C38]">{deal.brand_name}</p>
+                <span className="text-[10px] font-sans font-500 uppercase tracking-[1px] px-2 py-0.5 rounded-full bg-[#F2F8FB] text-[#7BAFC8]">
                   {deal.deal_type === "ugc" ? "UGC" : "Influencer"}
                 </span>
                 {deal.created_by_agency && deal.agency_name && (
-                  <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-[#F2EEE8] text-[#9A9088]">
+                  <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-[#F2F8FB] text-[#8AAABB]">
                     Added by {deal.agency_name}
                   </span>
                 )}
               </div>
-              <p className="text-[20px] font-serif text-[#1C1714]">
+              <p className="text-[20px] font-serif text-[#1A2C38]">
                 {deal.value > 0 ? formatCurrency(deal.value) : "TBD"}
               </p>
             </div>
-            <div className="h-[3px] w-full bg-[#E5E0D8] rounded-full overflow-hidden mb-2">
-              <div className="h-full bg-[#C4714A] rounded-full" style={{ width: `${stageProgress[deal.stage]}%` }} />
+            <div className="h-[3px] w-full bg-[#D8E8EE] rounded-full overflow-hidden mb-2">
+              <div className="h-full bg-[#7BAFC8] rounded-full" style={{ width: `${stageProgress[deal.stage]}%` }} />
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <span className="text-[10px] font-sans font-500 uppercase tracking-[1.5px] text-[#9A9088]">
+                <span className="text-[10px] font-sans font-500 uppercase tracking-[1.5px] text-[#8AAABB]">
                   {dealStageLabels[deal.stage]}
                 </span>
-                <span className="text-[12px] font-sans text-[#9A9088]">{deal.deliverables}</span>
+                <span className="text-[12px] font-sans text-[#8AAABB]">{deal.deliverables}</span>
               </div>
               {deal.due_date && (
-                <span className="text-[11px] font-mono text-[#9A9088]">Due {formatDate(deal.due_date)}</span>
+                <span className="text-[11px] font-mono text-[#8AAABB]">Due {formatDate(deal.due_date)}</span>
               )}
             </div>
           </button>
@@ -182,8 +182,8 @@ export default function DealsPage() {
 
       {filtered.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-[20px] font-serif italic text-[#9A9088]">No deals found</p>
-          <button className="mt-4 text-[13px] font-sans font-500 text-[#C4714A] hover:underline">Create your first deal →</button>
+          <p className="text-[20px] font-serif italic text-[#8AAABB]">No deals found</p>
+          <button className="mt-4 text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline">Create your first deal →</button>
         </div>
       )}
 

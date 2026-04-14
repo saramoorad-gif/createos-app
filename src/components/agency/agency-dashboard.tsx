@@ -46,8 +46,8 @@ export function AgencyDashboard() {
             onClick={() => setActiveTab(t.key)}
             className={`px-3 py-1.5 text-[10px] font-sans font-500 uppercase tracking-[1.5px] rounded-full whitespace-nowrap transition-colors ${
               activeTab === t.key
-                ? "bg-[#1C1714] text-[#F7F4EF]"
-                : "text-[#9A9088] hover:text-[#1C1714] hover:bg-[#F2EEE8]"
+                ? "bg-[#1A2C38] text-[#FAF8F4]"
+                : "text-[#8AAABB] hover:text-[#1A2C38] hover:bg-[#F2F8FB]"
             }`}
           >
             {t.label}

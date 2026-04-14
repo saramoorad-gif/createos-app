@@ -8,44 +8,49 @@ import { LogOut, Settings, Bell, Search } from "lucide-react";
 import { useState } from "react";
 
 const creatorLinks = [
-  { name: "TODAY", href: "/dashboard" },
-  { name: "DEALS", href: "/deals" },
-  { name: "INVOICES", href: "/invoices" },
-  { name: "INBOX", href: "/inbox" },
-  { name: "BRANDS", href: "/brand-radar" },
-  { name: "MEDIA KIT", href: "/media-kit" },
+  { name: "Today", href: "/dashboard" },
+  { name: "Deals", href: "/deals" },
+  { name: "Invoices", href: "/invoices" },
+  { name: "Inbox", href: "/inbox" },
+  { name: "Brands", href: "/brand-radar" },
+  { name: "Media Kit", href: "/media-kit" },
+  { name: "Rate Calculator", href: "/rate-calculator" },
 ];
 
 const agencyLinks = [
-  { name: "PIPELINE", href: "/dashboard", param: "pipeline" },
-  { name: "ROSTER", href: "/dashboard", param: "roster" },
-  { name: "CAMPAIGNS", href: "/dashboard", param: "campaigns" },
-  { name: "CONTRACTS", href: "/dashboard", param: "contracts" },
-  { name: "COMMISSIONS", href: "/dashboard", param: "commissions" },
-  { name: "INBOX", href: "/dashboard", param: "inbox" },
-  { name: "CONFLICTS", href: "/dashboard", param: "conflicts" },
-  { name: "REPORTS", href: "/dashboard", param: "reports" },
+  { name: "Pipeline", param: "pipeline" },
+  { name: "Roster", param: "roster" },
+  { name: "Campaigns", param: "campaigns" },
+  { name: "Contracts", param: "contracts" },
+  { name: "Commissions", param: "commissions" },
+  { name: "Inbox", param: "inbox" },
+  { name: "Conflicts", param: "conflicts" },
+  { name: "Reports", param: "reports" },
 ];
 
 export function NavBar() {
   const pathname = usePathname();
   const { profile, signOut } = useAuth();
   const [showSearch, setShowSearch] = useState(false);
+  const [activeAgencyTab, setActiveAgencyTab] = useState("pipeline");
 
   const isAgency = profile?.account_type === "agency";
   const displayName = profile?.full_name || "Creator";
   const initials = displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <header className="sticky top-0 z-50 w-full h-[52px] bg-[#1C1714] flex items-center px-6">
+    <header
+      className="sticky top-0 z-50 w-full h-[60px] flex items-center px-6 border-b border-[#D8E8EE]"
+      style={{ background: "rgba(250,248,244,.95)", backdropFilter: "blur(12px)" }}
+    >
       {/* Left — Logo */}
       <Link href="/dashboard" className="flex-shrink-0 mr-6">
-        <span className="text-[22px] font-serif italic text-[#F7F4EF]">
-          CreateOS
+        <span className="text-[20px] font-serif text-[#1A2C38]">
+          Create<em className="italic text-[#7BAFC8]">OS</em>
         </span>
       </Link>
 
-      {/* Search (agency only) */}
+      {/* Search (agency) */}
       {isAgency && (
         <div className="flex-shrink-0 mr-4">
           {showSearch ? (
@@ -53,40 +58,40 @@ export function NavBar() {
               autoFocus
               type="text"
               placeholder="Search creators, deals, brands..."
-              className="w-56 bg-[rgba(247,244,239,0.08)] border border-[rgba(247,244,239,0.15)] rounded-lg px-3 py-1.5 text-[12px] font-sans text-[#F7F4EF] placeholder-[rgba(247,244,239,0.3)] focus:outline-none focus:border-[#C4714A]"
+              className="w-56 bg-white border border-[#D8E8EE] rounded-btn px-3 py-1.5 text-[12px] font-sans text-[#1A2C38] placeholder-[#8AAABB] focus:outline-none focus:border-[#7BAFC8]"
               onBlur={() => setShowSearch(false)}
             />
           ) : (
-            <button
-              onClick={() => setShowSearch(true)}
-              className="text-[rgba(247,244,239,0.3)] hover:text-[rgba(247,244,239,0.7)] transition-colors"
-            >
+            <button onClick={() => setShowSearch(true)} className="text-[#8AAABB] hover:text-[#3D6E8A] transition-colors">
               <Search className="h-4 w-4" />
             </button>
           )}
         </div>
       )}
 
-      {/* Center — Nav links */}
+      {/* Center — Nav tabs */}
       <nav className="flex-1 flex items-center justify-center gap-0.5 overflow-x-auto">
         {isAgency
-          ? agencyLinks.map((link) => (
-              <button
-                key={link.name}
-                onClick={() => {
-                  // Dispatch custom event for agency tab switching
-                  window.dispatchEvent(
-                    new CustomEvent("agency-tab", { detail: link.param })
-                  );
-                }}
-                className="px-2.5 py-1.5 text-[11px] font-sans font-500 uppercase tracking-[1.5px] transition-colors relative text-[rgba(247,244,239,0.4)] hover:text-[rgba(247,244,239,0.7)] whitespace-nowrap"
-              >
-                {link.name}
-                {link.name === "INBOX" && (
-                  <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#C4714A]" />
-                )}
-              </button>
-            ))
+          ? agencyLinks.map((link) => {
+              const isActive = activeAgencyTab === link.param;
+              return (
+                <button
+                  key={link.name}
+                  onClick={() => {
+                    setActiveAgencyTab(link.param);
+                    window.dispatchEvent(new CustomEvent("agency-tab", { detail: link.param }));
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 text-[13px] font-sans font-500 transition-colors relative whitespace-nowrap",
+                    isActive ? "text-[#1A2C38]" : "text-[#8AAABB] hover:text-[#4A6070]"
+                  )}
+                >
+                  {link.name}
+                  {isActive && <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-[#7BAFC8]" />}
+                  {link.name === "Inbox" && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#7BAFC8]" />}
+                </button>
+              );
+            })
           : creatorLinks.map((link) => {
               const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
               return (
@@ -94,38 +99,34 @@ export function NavBar() {
                   key={link.name}
                   href={link.href}
                   className={cn(
-                    "px-3 py-1.5 text-[12px] font-sans font-500 uppercase tracking-[1.5px] transition-colors relative whitespace-nowrap",
-                    isActive ? "text-[#F7F4EF]" : "text-[rgba(247,244,239,0.4)] hover:text-[rgba(247,244,239,0.7)]"
+                    "px-3 py-1.5 text-[13px] font-sans font-500 transition-colors relative whitespace-nowrap",
+                    isActive ? "text-[#1A2C38]" : "text-[#8AAABB] hover:text-[#4A6070]"
                   )}
                 >
                   {link.name}
-                  {isActive && <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#C4714A]" />}
-                  {link.name === "INBOX" && (
-                    <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#C4714A]" />
-                  )}
+                  {isActive && <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-[#7BAFC8]" />}
+                  {link.name === "Inbox" && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#7BAFC8]" />}
                 </Link>
               );
             })}
       </nav>
 
-      {/* Right — Notifications + User */}
+      {/* Right */}
       <div className="flex-shrink-0 flex items-center gap-3">
         {isAgency && (
-          <button className="relative text-[rgba(247,244,239,0.3)] hover:text-[rgba(247,244,239,0.7)] transition-colors" title="Notifications">
+          <button className="relative text-[#8AAABB] hover:text-[#3D6E8A] transition-colors" title="Notifications">
             <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#C4714A]" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#7BAFC8]" />
           </button>
         )}
-        <span className="text-[13px] font-sans text-[rgba(247,244,239,0.6)]">
-          {displayName}
-        </span>
-        <div className="h-8 w-8 rounded-full bg-[rgba(247,244,239,0.12)] flex items-center justify-center text-[11px] font-sans font-500 text-[rgba(247,244,239,0.7)]">
+        <span className="text-[13px] font-sans text-[#4A6070] hidden sm:block">{displayName}</span>
+        <div className="h-8 w-8 rounded-full bg-[#F2F8FB] border border-[#D8E8EE] flex items-center justify-center text-[11px] font-sans font-500 text-[#7BAFC8]">
           {initials}
         </div>
-        <Link href="/settings" className="text-[rgba(247,244,239,0.3)] hover:text-[rgba(247,244,239,0.7)] transition-colors" title="Settings">
+        <Link href="/settings" className="text-[#8AAABB] hover:text-[#3D6E8A] transition-colors" title="Settings">
           <Settings className="h-4 w-4" />
         </Link>
-        <button onClick={signOut} className="text-[rgba(247,244,239,0.3)] hover:text-[rgba(247,244,239,0.7)] transition-colors" title="Sign out">
+        <button onClick={signOut} className="text-[#8AAABB] hover:text-[#A03D3D] transition-colors" title="Sign out">
           <LogOut className="h-4 w-4" />
         </button>
       </div>

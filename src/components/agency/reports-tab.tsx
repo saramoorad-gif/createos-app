@@ -25,7 +25,7 @@ export function ReportsTab() {
   return (
     <div>
       <PageHeader
-        headline={<>Agency <em className="italic text-[#C4714A]">reports</em></>}
+        headline={<>Agency <em className="italic text-[#7BAFC8]">reports</em></>}
         subheading="Generate and export reports across your entire operation."
       />
 
@@ -35,32 +35,32 @@ export function ReportsTab() {
             <button
               key={r.key}
               onClick={() => setActiveReport(r.key)}
-              className="text-left bg-white border border-[#E5E0D8] rounded-[10px] p-5 hover:border-[#C4714A]/30 transition-colors"
+              className="text-left bg-white border border-[#D8E8EE] rounded-[10px] p-5 hover:border-[#7BAFC8]/30 transition-colors"
             >
               <div className="flex items-center gap-3 mb-2">
-                <div className="h-9 w-9 rounded-lg bg-[#F7F4EF] flex items-center justify-center">
-                  <r.icon className="h-4 w-4 text-[#C4714A]" />
+                <div className="h-9 w-9 rounded-lg bg-[#FAF8F4] flex items-center justify-center">
+                  <r.icon className="h-4 w-4 text-[#7BAFC8]" />
                 </div>
-                <span className="text-[15px] font-sans font-600 text-[#1C1714]">{r.label}</span>
+                <span className="text-[15px] font-sans font-600 text-[#1A2C38]">{r.label}</span>
               </div>
-              <p className="text-[12px] font-sans text-[#9A9088]">{r.desc}</p>
+              <p className="text-[12px] font-sans text-[#8AAABB]">{r.desc}</p>
             </button>
           ))}
         </div>
       ) : (
         <div>
-          <button onClick={() => setActiveReport(null)} className="text-[13px] font-sans font-500 text-[#C4714A] hover:underline mb-6">
+          <button onClick={() => setActiveReport(null)} className="text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline mb-6">
             ← Back to reports
           </button>
 
           {activeReport === "overview" && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088]">AGENCY OVERVIEW</p>
-                <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#C4714A] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
+                <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">AGENCY OVERVIEW</p>
+                <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
               </div>
-              <div className="bg-white border border-[#E5E0D8] rounded-[10px] p-6">
-                <h3 className="text-[20px] font-serif text-[#1C1714] mb-4">Bright Talent Mgmt — <em className="italic text-[#C4714A]">Q2 2026</em></h3>
+              <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-6">
+                <h3 className="text-[20px] font-serif text-[#1A2C38] mb-4">Bright Talent Mgmt — <em className="italic text-[#7BAFC8]">Q2 2026</em></h3>
                 <div className="grid grid-cols-4 gap-4 mb-6">
                   {[
                     { label: "Pipeline Value", value: formatCurrency(totalPipeline) },
@@ -68,21 +68,21 @@ export function ReportsTab() {
                     { label: "Active Creators", value: String(agencyRoster.length) },
                     { label: "Active Deals", value: String(agencyPipeline.length) },
                   ].map(s => (
-                    <div key={s.label} className="bg-[#F7F4EF] rounded-lg p-3">
-                      <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#9A9088] mb-1">{s.label}</p>
-                      <p className="text-[22px] font-serif text-[#1C1714]">{s.value}</p>
+                    <div key={s.label} className="bg-[#FAF8F4] rounded-lg p-3">
+                      <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-1">{s.label}</p>
+                      <p className="text-[22px] font-serif text-[#1A2C38]">{s.value}</p>
                     </div>
                   ))}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#9A9088] mb-2">TOP PERFORMER</p>
-                    <p className="text-[15px] font-sans font-600 text-[#1C1714]">{topCreator.name}</p>
-                    <p className="text-[13px] font-serif text-[#C4714A]">{formatCurrency(topCreator.totalEarned)} lifetime</p>
+                    <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] mb-2">TOP PERFORMER</p>
+                    <p className="text-[15px] font-sans font-600 text-[#1A2C38]">{topCreator.name}</p>
+                    <p className="text-[13px] font-serif text-[#7BAFC8]">{formatCurrency(topCreator.totalEarned)} lifetime</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#9A9088] mb-2">AVG DEAL SIZE</p>
-                    <p className="text-[22px] font-serif text-[#1C1714]">{formatCurrency(totalPipeline / agencyPipeline.length)}</p>
+                    <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] mb-2">AVG DEAL SIZE</p>
+                    <p className="text-[22px] font-serif text-[#1A2C38]">{formatCurrency(totalPipeline / agencyPipeline.length)}</p>
                   </div>
                 </div>
               </div>
@@ -91,46 +91,46 @@ export function ReportsTab() {
 
           {activeReport === "creator" && (
             <div>
-              <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088] mb-4">CREATOR COMPARISON</p>
-              <div className="bg-white border border-[#E5E0D8] rounded-[10px] overflow-hidden">
-                <div className="grid grid-cols-7 gap-4 px-5 py-3 text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#9A9088] border-b border-[#E5E0D8]">
+              <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-4">CREATOR COMPARISON</p>
+              <div className="bg-white border border-[#D8E8EE] rounded-[10px] overflow-hidden">
+                <div className="grid grid-cols-7 gap-4 px-5 py-3 text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] border-b border-[#D8E8EE]">
                   <span>Creator</span><span>Total Earned</span><span>Avg Deal</span><span>Completed</span><span>Active</span><span>Health</span><span>Repeat %</span>
                 </div>
                 {agencyRoster.map(c => (
-                  <div key={c.id} className="grid grid-cols-7 gap-4 px-5 py-3.5 items-center border-b border-[#E5E0D8] last:border-b-0">
-                    <span className="text-[13px] font-sans font-500 text-[#1C1714]">{c.name}</span>
-                    <span className="text-[14px] font-serif text-[#1C1714]">{formatCurrency(c.totalEarned)}</span>
-                    <span className="text-[13px] font-serif text-[#9A9088]">{formatCurrency(c.avgDealValue)}</span>
-                    <span className="text-[13px] font-sans text-[#1C1714]">{c.dealsCompleted}</span>
-                    <span className="text-[13px] font-sans text-[#1C1714]">{c.dealsActive}</span>
+                  <div key={c.id} className="grid grid-cols-7 gap-4 px-5 py-3.5 items-center border-b border-[#D8E8EE] last:border-b-0">
+                    <span className="text-[13px] font-sans font-500 text-[#1A2C38]">{c.name}</span>
+                    <span className="text-[14px] font-serif text-[#1A2C38]">{formatCurrency(c.totalEarned)}</span>
+                    <span className="text-[13px] font-serif text-[#8AAABB]">{formatCurrency(c.avgDealValue)}</span>
+                    <span className="text-[13px] font-sans text-[#1A2C38]">{c.dealsCompleted}</span>
+                    <span className="text-[13px] font-sans text-[#1A2C38]">{c.dealsActive}</span>
                     <div className="flex items-center gap-1.5">
-                      <div className={`h-2 w-2 rounded-full ${c.healthScore >= 80 ? "bg-[#4A9060]" : c.healthScore >= 60 ? "bg-[#D4A030]" : "bg-[#E05C3A]"}`} />
-                      <span className="text-[12px] font-sans text-[#9A9088]">{c.healthScore}</span>
+                      <div className={`h-2 w-2 rounded-full ${c.healthScore >= 80 ? "bg-[#3D7A58]" : c.healthScore >= 60 ? "bg-[#A07830]" : "bg-[#A03D3D]"}`} />
+                      <span className="text-[12px] font-sans text-[#8AAABB]">{c.healthScore}</span>
                     </div>
-                    <span className="text-[13px] font-sans text-[#9A9088]">{c.repeatBrandRate}%</span>
+                    <span className="text-[13px] font-sans text-[#8AAABB]">{c.repeatBrandRate}%</span>
                   </div>
                 ))}
               </div>
-              <button className="mt-4 flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#C4714A] hover:underline"><Download className="h-3.5 w-3.5" /> Export CSV</button>
+              <button className="mt-4 flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export CSV</button>
             </div>
           )}
 
           {activeReport === "brand" && (
             <div>
-              <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088] mb-4">BRAND REPORT — SELECT A CAMPAIGN</p>
+              <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-4">BRAND REPORT — SELECT A CAMPAIGN</p>
               <div className="space-y-3">
                 {campaigns.map(c => (
-                  <div key={c.id} className="bg-white border border-[#E5E0D8] rounded-[10px] p-5">
+                  <div key={c.id} className="bg-white border border-[#D8E8EE] rounded-[10px] p-5">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-[15px] font-sans font-600 text-[#1C1714]">{c.name}</h4>
-                      <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#C4714A] hover:underline"><Download className="h-3.5 w-3.5" /> Export</button>
+                      <h4 className="text-[15px] font-sans font-600 text-[#1A2C38]">{c.name}</h4>
+                      <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export</button>
                     </div>
-                    <p className="text-[12px] font-sans text-[#9A9088] mb-3">{c.brand} · {c.creators.length} creators · {formatCurrency(c.budget)} budget</p>
+                    <p className="text-[12px] font-sans text-[#8AAABB] mb-3">{c.brand} · {c.creators.length} creators · {formatCurrency(c.budget)} budget</p>
                     <div className="grid grid-cols-4 gap-3">
-                      <div className="bg-[#F7F4EF] rounded-lg p-2.5"><p className="text-[10px] font-sans uppercase tracking-[1px] text-[#9A9088]">Budget</p><p className="text-[14px] font-serif text-[#1C1714]">{formatCurrency(c.budget)}</p></div>
-                      <div className="bg-[#F7F4EF] rounded-lg p-2.5"><p className="text-[10px] font-sans uppercase tracking-[1px] text-[#9A9088]">Creators</p><p className="text-[14px] font-serif text-[#1C1714]">{c.creators.length}</p></div>
-                      <div className="bg-[#F7F4EF] rounded-lg p-2.5"><p className="text-[10px] font-sans uppercase tracking-[1px] text-[#9A9088]">Completion</p><p className="text-[14px] font-serif text-[#1C1714]">{c.completionPct}%</p></div>
-                      <div className="bg-[#F7F4EF] rounded-lg p-2.5"><p className="text-[10px] font-sans uppercase tracking-[1px] text-[#9A9088]">Commission</p><p className="text-[14px] font-serif text-[#4A9060]">{formatCurrency(c.agencyCommission)}</p></div>
+                      <div className="bg-[#FAF8F4] rounded-lg p-2.5"><p className="text-[10px] font-sans uppercase tracking-[1px] text-[#8AAABB]">Budget</p><p className="text-[14px] font-serif text-[#1A2C38]">{formatCurrency(c.budget)}</p></div>
+                      <div className="bg-[#FAF8F4] rounded-lg p-2.5"><p className="text-[10px] font-sans uppercase tracking-[1px] text-[#8AAABB]">Creators</p><p className="text-[14px] font-serif text-[#1A2C38]">{c.creators.length}</p></div>
+                      <div className="bg-[#FAF8F4] rounded-lg p-2.5"><p className="text-[10px] font-sans uppercase tracking-[1px] text-[#8AAABB]">Completion</p><p className="text-[14px] font-serif text-[#1A2C38]">{c.completionPct}%</p></div>
+                      <div className="bg-[#FAF8F4] rounded-lg p-2.5"><p className="text-[10px] font-sans uppercase tracking-[1px] text-[#8AAABB]">Commission</p><p className="text-[14px] font-serif text-[#3D7A58]">{formatCurrency(c.agencyCommission)}</p></div>
                     </div>
                   </div>
                 ))}
@@ -141,25 +141,25 @@ export function ReportsTab() {
           {activeReport === "commission" && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#9A9088]">COMMISSION SUMMARY — APRIL 2026</p>
-                <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#C4714A] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
+                <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">COMMISSION SUMMARY — APRIL 2026</p>
+                <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
               </div>
-              <div className="bg-white border border-[#E5E0D8] rounded-[10px] overflow-hidden">
-                <div className="grid grid-cols-5 gap-4 px-5 py-3 text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#9A9088] border-b border-[#E5E0D8]">
+              <div className="bg-white border border-[#D8E8EE] rounded-[10px] overflow-hidden">
+                <div className="grid grid-cols-5 gap-4 px-5 py-3 text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] border-b border-[#D8E8EE]">
                   <span>Creator</span><span>Deal</span><span>Deal Value</span><span>Rate</span><span className="text-right">Commission</span>
                 </div>
                 {commissionPayouts.map(p => (
-                  <div key={p.id} className="grid grid-cols-5 gap-4 px-5 py-3.5 items-center border-b border-[#E5E0D8] last:border-b-0">
-                    <span className="text-[13px] font-sans font-500 text-[#1C1714]">{p.creator}</span>
-                    <span className="text-[12px] font-sans text-[#9A9088]">{p.deal}</span>
-                    <span className="text-[14px] font-serif text-[#1C1714]">{formatCurrency(p.dealValue)}</span>
-                    <span className="text-[12px] font-sans text-[#9A9088]">{p.rate}%</span>
-                    <span className="text-[14px] font-serif text-[#4A9060] text-right">{formatCurrency(p.amount)}</span>
+                  <div key={p.id} className="grid grid-cols-5 gap-4 px-5 py-3.5 items-center border-b border-[#D8E8EE] last:border-b-0">
+                    <span className="text-[13px] font-sans font-500 text-[#1A2C38]">{p.creator}</span>
+                    <span className="text-[12px] font-sans text-[#8AAABB]">{p.deal}</span>
+                    <span className="text-[14px] font-serif text-[#1A2C38]">{formatCurrency(p.dealValue)}</span>
+                    <span className="text-[12px] font-sans text-[#8AAABB]">{p.rate}%</span>
+                    <span className="text-[14px] font-serif text-[#3D7A58] text-right">{formatCurrency(p.amount)}</span>
                   </div>
                 ))}
-                <div className="grid grid-cols-5 gap-4 px-5 py-3 bg-[#F7F4EF] border-t border-[#E5E0D8]">
-                  <span className="text-[12px] font-sans font-600 text-[#1C1714] col-span-4">Total</span>
-                  <span className="text-[16px] font-serif text-[#4A9060] text-right">{formatCurrency(commissionPayouts.reduce((s, p) => s + p.amount, 0))}</span>
+                <div className="grid grid-cols-5 gap-4 px-5 py-3 bg-[#FAF8F4] border-t border-[#D8E8EE]">
+                  <span className="text-[12px] font-sans font-600 text-[#1A2C38] col-span-4">Total</span>
+                  <span className="text-[16px] font-serif text-[#3D7A58] text-right">{formatCurrency(commissionPayouts.reduce((s, p) => s + p.amount, 0))}</span>
                 </div>
               </div>
             </div>
