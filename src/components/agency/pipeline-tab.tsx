@@ -13,7 +13,7 @@ import {
   Download,
   ArrowRight,
 } from "lucide-react";
-import { useSupabaseQuery } from "@/lib/hooks";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 // ─── Types (formerly from placeholder-data) ────────────────────────
@@ -77,14 +77,19 @@ const activityLog = [
 // ─── Quick-Add Modal ────────────────────────────────────────────────
 function QuickAddModal({
   creator,
+  creatorId,
   onClose,
+  onCreated,
 }: {
   creator: string;
+  creatorId: string;
   onClose: () => void;
+  onCreated: (newDeal: any) => void;
 }) {
   const [brand, setBrand] = useState("");
   const [value, setValue] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const { insert: insertDeal, loading: inserting } = useSupabaseMutation("deals");
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -93,6 +98,31 @@ function QuickAddModal({
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [onClose]);
+
+  async function handleCreate() {
+    if (!brand.trim()) return;
+    try {
+      const newDeal = await insertDeal({
+        brand: brand.trim(),
+        value: Number(value) || 0,
+        stage: "lead",
+        creator,
+        creatorId,
+        type: "ugc",
+        commission: 0,
+        deliverables: [],
+        notes: "",
+        due: null,
+        priority: false,
+      });
+      if (newDeal) {
+        onCreated(newDeal);
+      }
+      onClose();
+    } catch (err) {
+      console.error("Failed to create deal:", err);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
@@ -132,10 +162,11 @@ function QuickAddModal({
         />
 
         <button
-          onClick={onClose}
-          className="w-full rounded-[8px] bg-[#7BAFC8] px-4 py-2.5 text-[13px] font-medium text-white hover:bg-[#B5623D]"
+          onClick={handleCreate}
+          disabled={inserting}
+          className="w-full rounded-[8px] bg-[#7BAFC8] px-4 py-2.5 text-[13px] font-medium text-white hover:bg-[#B5623D] disabled:opacity-50"
         >
-          Add deal for {creator}
+          {inserting ? "Adding..." : `Add deal for ${creator}`}
         </button>
       </div>
     </div>
@@ -364,6 +395,7 @@ export function PipelineTab() {
   const { data: rawDeals, loading, setData: setDeals } = useSupabaseQuery<any>("deals");
   const deals = rawDeals as any[];
   const [openStageDropdown, setOpenStageDropdown] = useState<string | null>(null);
+  const { update: updateDeal } = useSupabaseMutation("deals");
 
   const sortRef = useRef<HTMLDivElement>(null);
 
@@ -485,17 +517,39 @@ export function PipelineTab() {
     }
   }
 
-  function togglePriority(id: string) {
+  async function togglePriority(id: string) {
+    const deal = deals.find((d) => d.id === id);
+    if (!deal) return;
+    const newPriority = !deal.priority;
     setDeals((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, priority: !d.priority } : d))
+      prev.map((d) => (d.id === id ? { ...d, priority: newPriority } : d))
     );
+    try {
+      await updateDeal(id, { priority: newPriority });
+    } catch (err) {
+      console.error("Failed to toggle priority:", err);
+      setDeals((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, priority: !newPriority } : d))
+      );
+    }
   }
 
-  function changeStage(id: string, stage: DealStage) {
+  async function changeStage(id: string, stage: DealStage) {
+    const oldDeal = deals.find((d) => d.id === id);
     setDeals((prev) =>
       prev.map((d) => (d.id === id ? { ...d, stage } : d))
     );
     setOpenStageDropdown(null);
+    try {
+      await updateDeal(id, { stage });
+    } catch (err) {
+      console.error("Failed to change stage:", err);
+      if (oldDeal) {
+        setDeals((prev) =>
+          prev.map((d) => (d.id === id ? { ...d, stage: oldDeal.stage } : d))
+        );
+      }
+    }
   }
 
   function openEdit(deal: (typeof deals)[0]) {
@@ -513,24 +567,29 @@ export function PipelineTab() {
     });
   }
 
-  function handleSave(updated: EditingDeal) {
+  async function handleSave(updated: EditingDeal) {
+    const updateData = {
+      brand: updated.brand,
+      type: updated.type,
+      value: updated.value,
+      stage: updated.stage,
+      due: updated.due || null,
+      deliverables: updated.deliverables.map((dl) => dl.text),
+      notes: updated.notes,
+    };
     setDeals((prev) =>
       prev.map((d) =>
         d.id === updated.id
-          ? {
-              ...d,
-              brand: updated.brand,
-              type: updated.type as typeof d.type,
-              value: updated.value,
-              stage: updated.stage,
-              due: updated.due || null,
-              deliverables: updated.deliverables.map((dl) => dl.text),
-              notes: updated.notes,
-            }
+          ? { ...d, ...updateData }
           : d
       )
     );
     setEditingDeal(null);
+    try {
+      await updateDeal(updated.id, updateData);
+    } catch (err) {
+      console.error("Failed to save deal:", err);
+    }
   }
 
   // ─── Table row renderer ───────────────────────────────────────────
@@ -801,10 +860,35 @@ export function PipelineTab() {
             {selectedIds.size} selected
           </span>
           <div className="h-4 w-px bg-[#D8E8EE]" />
-          <button className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#D8E8EE] px-3 py-1 text-[11px] text-[#8AAABB] hover:border-[#1A2C38] hover:text-[#1A2C38]">
-            <ArrowRight size={10} />
-            Move to stage
-          </button>
+          <div className="relative group">
+            <button className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#D8E8EE] px-3 py-1 text-[11px] text-[#8AAABB] hover:border-[#1A2C38] hover:text-[#1A2C38]">
+              <ArrowRight size={10} />
+              Move to stage
+              <ChevronDown size={10} />
+            </button>
+            <div className="hidden group-hover:block absolute left-0 top-full z-30 mt-1 min-w-[140px] rounded-[8px] border border-[#D8E8EE] bg-white py-1 shadow-lg">
+              {stages.map((s) => (
+                <button
+                  key={s}
+                  onClick={async () => {
+                    const ids = Array.from(selectedIds);
+                    setDeals((prev) =>
+                      prev.map((d) => (ids.includes(d.id) ? { ...d, stage: s } : d))
+                    );
+                    setSelectedIds(new Set());
+                    try {
+                      await Promise.all(ids.map((id) => updateDeal(id, { stage: s })));
+                    } catch (err) {
+                      console.error("Failed to bulk move deals:", err);
+                    }
+                  }}
+                  className="flex w-full items-center px-3 py-1.5 text-left text-[12px] hover:bg-[#FAF8F4] text-[#1A2C38]"
+                >
+                  {dealStageLabels[s]}
+                </button>
+              ))}
+            </div>
+          </div>
           <button className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#D8E8EE] px-3 py-1 text-[11px] text-[#8AAABB] hover:border-[#1A2C38] hover:text-[#1A2C38]">
             <Download size={10} />
             Export
@@ -854,7 +938,11 @@ export function PipelineTab() {
       {quickAddCreator && (
         <QuickAddModal
           creator={quickAddCreator.name}
+          creatorId={quickAddCreator.id}
           onClose={() => setQuickAddCreator(null)}
+          onCreated={(newDeal) => {
+            setDeals((prev) => [...prev, newDeal]);
+          }}
         />
       )}
     </div>

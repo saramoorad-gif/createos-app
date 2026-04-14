@@ -17,7 +17,7 @@ import {
   Eye,
   Download,
 } from "lucide-react";
-import { useSupabaseQuery } from "@/lib/hooks";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 // Type formerly from placeholder-data
@@ -133,9 +133,17 @@ const columnMeta: Record<string, { label: string; icon: React.ReactNode }> = {
 // ---------------------------------------------------------------------------
 // Create Campaign Modal
 // ---------------------------------------------------------------------------
-function CreateCampaignModal({ onClose }: { onClose: () => void }) {
+function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreated?: (campaign: any) => void }) {
   const [selectedCreators, setSelectedCreators] = useState<string[]>([]);
+  const [campaignName, setCampaignName] = useState("");
+  const [brandName, setBrandName] = useState("");
+  const [brief, setBrief] = useState("");
+  const [budget, setBudget] = useState("");
+  const [commissionPct, setCommissionPct] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const { data: agencyRoster } = useSupabaseQuery<any>("agency_creator_links");
+  const { insert: insertCampaign, loading: inserting } = useSupabaseMutation("campaigns");
 
   function toggleCreator(id: string) {
     setSelectedCreators((prev) =>
@@ -159,6 +167,8 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
             <input
               type="text"
               placeholder="e.g. Summer Glow Launch"
+              value={campaignName}
+              onChange={(e) => setCampaignName(e.target.value)}
               className="w-full px-3 py-2 text-sm font-sans text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8] placeholder:text-[#8AAABB]"
             />
           </div>
@@ -168,6 +178,8 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
             <input
               type="text"
               placeholder="e.g. Glossier"
+              value={brandName}
+              onChange={(e) => setBrandName(e.target.value)}
               className="w-full px-3 py-2 text-sm font-sans text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8] placeholder:text-[#8AAABB]"
             />
           </div>
@@ -177,6 +189,8 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
             <textarea
               rows={3}
               placeholder="Describe the campaign objectives..."
+              value={brief}
+              onChange={(e) => setBrief(e.target.value)}
               className="w-full px-3 py-2 text-sm font-sans text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8] placeholder:text-[#8AAABB] resize-none"
             />
           </div>
@@ -187,6 +201,8 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
               <input
                 type="number"
                 placeholder="10000"
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
                 className="w-full px-3 py-2 text-sm font-sans text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8] placeholder:text-[#8AAABB]"
               />
             </div>
@@ -195,6 +211,8 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
               <input
                 type="number"
                 placeholder="15"
+                value={commissionPct}
+                onChange={(e) => setCommissionPct(e.target.value)}
                 className="w-full px-3 py-2 text-sm font-sans text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8] placeholder:text-[#8AAABB]"
               />
             </div>
@@ -205,6 +223,8 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
               <SectionLabel>Start date</SectionLabel>
               <input
                 type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="w-full px-3 py-2 text-sm font-mono text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8]"
               />
             </div>
@@ -212,6 +232,8 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
               <SectionLabel>End date</SectionLabel>
               <input
                 type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
                 className="w-full px-3 py-2 text-sm font-mono text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8]"
               />
             </div>
@@ -252,10 +274,46 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
             Cancel
           </button>
           <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-sans font-600 bg-[#1A2C38] text-[#FAF8F4] rounded-lg hover:bg-[#2a2420] transition-colors"
+            onClick={async () => {
+              if (!campaignName.trim()) return;
+              try {
+                const budgetNum = Number(budget) || 0;
+                const commPct = Number(commissionPct) || 0;
+                const creators = selectedCreators.map((id) => {
+                  const roster = agencyRoster.find((r: any) => r.id === id);
+                  return {
+                    creatorId: id,
+                    name: roster?.name || "",
+                    allocation: 0,
+                    status: "not_started",
+                    deliverables: [],
+                  };
+                });
+                const newCampaign = await insertCampaign({
+                  name: campaignName.trim(),
+                  brand: brandName.trim(),
+                  brandContact: "",
+                  brief: brief.trim(),
+                  status: "planning",
+                  startDate: startDate || new Date().toISOString().split("T")[0],
+                  endDate: endDate || "",
+                  budget: budgetNum,
+                  agencyCommission: Math.round(budgetNum * (commPct / 100)),
+                  completionPct: 0,
+                  creators,
+                });
+                if (newCampaign) {
+                  onCreated?.(newCampaign);
+                }
+                onClose();
+              } catch (err) {
+                console.error("Failed to create campaign:", err);
+              }
+            }}
+            disabled={inserting}
+            className="px-4 py-2 text-sm font-sans font-600 bg-[#1A2C38] text-[#FAF8F4] rounded-lg hover:bg-[#2a2420] transition-colors disabled:opacity-50"
           >
-            Create Campaign
+            {inserting ? "Creating..." : "Create Campaign"}
           </button>
         </div>
       </div>
@@ -773,7 +831,7 @@ function CampaignDetail({
 export function CampaignsTab() {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { data: campaigns, loading } = useSupabaseQuery<Campaign>("campaigns");
+  const { data: campaigns, loading, setData: setCampaigns } = useSupabaseQuery<Campaign>("campaigns");
 
   if (loading) {
     return (
@@ -793,7 +851,7 @@ export function CampaignsTab() {
         >
           Create your first multi-creator campaign
         </button>
-        {showCreateModal && <CreateCampaignModal onClose={() => setShowCreateModal(false)} />}
+        {showCreateModal && <CreateCampaignModal onClose={() => setShowCreateModal(false)} onCreated={(c) => setCampaigns((prev) => [...prev, c])} />}
       </div>
     );
   }
@@ -815,7 +873,7 @@ export function CampaignsTab() {
     <div className="space-y-6">
       {/* Create modal */}
       {showCreateModal && (
-        <CreateCampaignModal onClose={() => setShowCreateModal(false)} />
+        <CreateCampaignModal onClose={() => setShowCreateModal(false)} onCreated={(c) => setCampaigns((prev) => [...prev, c])} />
       )}
 
       {/* Page header */}

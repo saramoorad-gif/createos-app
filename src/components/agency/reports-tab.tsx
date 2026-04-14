@@ -83,7 +83,7 @@ export function ReportsTab() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">AGENCY OVERVIEW</p>
-                <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
+                <button onClick={() => window.print()} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
               </div>
               <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-6">
                 <h3 className="text-[20px] font-serif text-[#1A2C38] mb-4">Bright Talent Mgmt — <em className="italic text-[#7BAFC8]">Q2 2026</em></h3>
@@ -143,7 +143,21 @@ export function ReportsTab() {
                   </div>
                 ))}
               </div>
-              <button className="mt-4 flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export CSV</button>
+              <button
+                onClick={() => {
+                  const headers = ["Creator", "Total Earned", "Avg Deal", "Completed", "Active", "Health", "Repeat %"];
+                  const rows = agencyRoster.map((c: any) => [c.name, c.totalEarned, c.avgDealValue, c.dealsCompleted, c.dealsActive, c.healthScore, `${c.repeatBrandRate}%`]);
+                  const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+                  const blob = new Blob([csv], { type: "text/csv" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "creator-performance.csv";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="mt-4 flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"
+              ><Download className="h-3.5 w-3.5" /> Export CSV</button>
             </div>
             )
           )}
@@ -161,7 +175,7 @@ export function ReportsTab() {
                   <div key={c.id} className="bg-white border border-[#D8E8EE] rounded-[10px] p-5">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-[15px] font-sans font-600 text-[#1A2C38]">{c.name}</h4>
-                      <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export</button>
+                      <button onClick={() => window.print()} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export</button>
                     </div>
                     <p className="text-[12px] font-sans text-[#8AAABB] mb-3">{c.brand} · {c.creators.length} creators · {formatCurrency(c.budget)} budget</p>
                     <div className="grid grid-cols-4 gap-3">
@@ -186,7 +200,7 @@ export function ReportsTab() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">COMMISSION SUMMARY — APRIL 2026</p>
-                <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
+                <button onClick={() => window.print()} className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export PDF</button>
               </div>
               <div className="bg-white border border-[#D8E8EE] rounded-[10px] overflow-hidden">
                 <div className="grid grid-cols-5 gap-4 px-5 py-3 text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] border-b border-[#D8E8EE]">

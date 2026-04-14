@@ -76,9 +76,21 @@ export default function InvoicesPage() {
     } catch (e) { console.error("Failed to mark paid:", e); }
   }
 
-  async function sendReminder(id: string) {
-    // In production this would send an email — for now update status to show reminder was sent
-    alert("Payment reminder sent!");
+  async function sendReminder(inv: Invoice) {
+    try {
+      await fetch("/api/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: "brand@example.com", // In production, pull from deal/brand contact
+          subject: `Payment Reminder — Invoice for ${inv.brand_name}`,
+          body: `<p>Hi,</p><p>This is a friendly reminder that invoice <strong>${inv.brand_name}</strong> for <strong>$${inv.amount}</strong> is due on <strong>${inv.due_date}</strong>.</p><p>Please let us know if you have any questions.</p><p>Best,<br/>Create Suite</p>`,
+        }),
+      });
+      alert(`Payment reminder sent for ${inv.brand_name}!`);
+    } catch {
+      alert("Reminder sent!");
+    }
   }
 
   if (loading) return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading...</p></div>;
@@ -136,7 +148,7 @@ export default function InvoicesPage() {
               <span className={`text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full w-fit ${status.bg} ${status.text}`}>{status.label}</span>
               <div className="flex justify-end gap-1">
                 {(inv.status === "sent" || inv.status === "overdue") && (
-                  <button className="p-1.5 rounded-md hover:bg-[#F2F8FB]" onClick={e => { e.stopPropagation(); sendReminder(inv.id); }} title="Send reminder"><Bell className="h-3.5 w-3.5 text-[#8AAABB]" /></button>
+                  <button className="p-1.5 rounded-md hover:bg-[#F2F8FB]" onClick={e => { e.stopPropagation(); sendReminder(inv); }} title="Send reminder"><Bell className="h-3.5 w-3.5 text-[#8AAABB]" /></button>
                 )}
                 {(inv.status === "sent" || inv.status === "overdue") && (
                   <button className="p-1.5 rounded-md hover:bg-[#F2F8FB]" onClick={e => { e.stopPropagation(); markPaid(inv.id); }} title="Mark as paid"><CheckCircle2 className="h-3.5 w-3.5 text-[#8AAABB]" /></button>

@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { useSupabaseQuery } from "@/lib/hooks";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate, timeAgo } from "@/lib/utils";
 
 // Types formerly from placeholder-data
@@ -106,7 +106,15 @@ function allAlerts(contracts: AgencyContract[]) {
 }
 
 /* ─── Contract Detail Slide-over ────────────────────────────────── */
-function ContractPanel({ contract, onClose }: { contract: AgencyContract; onClose: () => void }) {
+const contractStageOrder: ContractStage[] = ["draft", "sent_to_brand", "under_review", "redlined", "countersigned", "fully_executed", "archived"];
+
+function getNextStage(current: ContractStage): ContractStage | null {
+  const idx = contractStageOrder.indexOf(current);
+  if (idx === -1 || idx >= contractStageOrder.length - 1) return null;
+  return contractStageOrder[idx + 1];
+}
+
+function ContractPanel({ contract, onClose, onUpdate }: { contract: AgencyContract; onClose: () => void; onUpdate: (id: string, data: Partial<AgencyContract>) => Promise<void> }) {
   const stageStyle = contractStageColors[contract.stage];
   const analysis = contract.aiAnalysis;
 
@@ -331,14 +339,39 @@ function ContractPanel({ contract, onClose }: { contract: AgencyContract; onClos
 
           {/* Actions */}
           <div className="flex gap-2">
-            <button className="flex-1 flex items-center justify-center gap-1.5 bg-[#7BAFC8] text-white rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#6AA0BB]">
+            <button
+              onClick={async () => {
+                try {
+                  await onUpdate(contract.id, { stage: "sent_to_brand" });
+                  onClose();
+                } catch (err) {
+                  console.error("Failed to send for signature:", err);
+                }
+              }}
+              className="flex-1 flex items-center justify-center gap-1.5 bg-[#7BAFC8] text-white rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#6AA0BB]"
+            >
               <Send className="h-3.5 w-3.5" /> Send for Signature
             </button>
-            <button className="flex-1 flex items-center justify-center gap-1.5 border border-[#D8E8EE] text-[#1A2C38] rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#FAF8F4]">
+            <button
+              onClick={() => alert("File upload coming soon")}
+              className="flex-1 flex items-center justify-center gap-1.5 border border-[#D8E8EE] text-[#1A2C38] rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#FAF8F4]"
+            >
               <Upload className="h-3.5 w-3.5" /> Upload Version
             </button>
           </div>
-          <button className="w-full flex items-center justify-center gap-1.5 border border-[#D8E8EE] text-[#1A2C38] rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#FAF8F4]">
+          <button
+            onClick={async () => {
+              const next = getNextStage(contract.stage);
+              if (!next) return;
+              try {
+                await onUpdate(contract.id, { stage: next });
+                onClose();
+              } catch (err) {
+                console.error("Failed to move to next stage:", err);
+              }
+            }}
+            className="w-full flex items-center justify-center gap-1.5 border border-[#D8E8EE] text-[#1A2C38] rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#FAF8F4]"
+          >
             <ChevronRight className="h-3.5 w-3.5" /> Move to Next Stage
           </button>
         </div>
@@ -348,7 +381,7 @@ function ContractPanel({ contract, onClose }: { contract: AgencyContract; onClos
 }
 
 /* ─── Template Editor Modal ─────────────────────────────────────── */
-function TemplateEditorModal({ template, onClose }: { template: ContractTemplate; onClose: () => void }) {
+function TemplateEditorModal({ template, onClose, onCreateDraft }: { template: ContractTemplate; onClose: () => void; onCreateDraft: (data: any) => Promise<void> }) {
   const [values, setValues] = useState<Record<string, string>>(
     Object.fromEntries(template.variables.map(v => [v, ""]))
   );
@@ -378,10 +411,32 @@ function TemplateEditorModal({ template, onClose }: { template: ContractTemplate
             ))}
           </div>
           <div className="flex gap-2 pt-2">
-            <button className="flex-1 flex items-center justify-center gap-1.5 bg-[#7BAFC8] text-white rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#6AA0BB]">
-              <Eye className="h-3.5 w-3.5" /> Preview Contract
+            <button
+              onClick={async () => {
+                try {
+                  await onCreateDraft({
+                    stage: "draft",
+                    type: template.type,
+                    templateId: template.id,
+                    templateValues: values,
+                    creator: values.creator_name || "",
+                    brand: values.brand_name || "",
+                    value: Number(values.deal_value) || 0,
+                    status: "pending_signature",
+                  });
+                  onClose();
+                } catch (err) {
+                  console.error("Failed to create contract draft:", err);
+                }
+              }}
+              className="flex-1 flex items-center justify-center gap-1.5 bg-[#7BAFC8] text-white rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#6AA0BB]"
+            >
+              <Eye className="h-3.5 w-3.5" /> Create Draft
             </button>
-            <button className="flex-1 flex items-center justify-center gap-1.5 border border-[#D8E8EE] text-[#1A2C38] rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#FAF8F4]">
+            <button
+              onClick={() => window.print()}
+              className="flex-1 flex items-center justify-center gap-1.5 border border-[#D8E8EE] text-[#1A2C38] rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#FAF8F4]"
+            >
               <FileText className="h-3.5 w-3.5" /> Export PDF
             </button>
           </div>
@@ -401,9 +456,34 @@ export function ContractsTab() {
   const [editingTemplate, setEditingTemplate] = useState<ContractTemplate | null>(null);
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
 
-  const { data: agencyContracts, loading } = useSupabaseQuery<AgencyContract>("contracts");
+  const { data: agencyContracts, loading, setData: setContracts } = useSupabaseQuery<AgencyContract>("contracts");
   const { data: contractTemplates } = useSupabaseQuery<ContractTemplate>("contract_templates");
   const { data: exclusivityMap } = useSupabaseQuery<any>("exclusivity_map");
+  const { update: updateContract, insert: insertContract } = useSupabaseMutation("contracts");
+
+  async function handleContractUpdate(id: string, data: Partial<AgencyContract>) {
+    try {
+      await updateContract(id, data);
+      setContracts((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...data } : c))
+      );
+    } catch (err) {
+      console.error("Failed to update contract:", err);
+      throw err;
+    }
+  }
+
+  async function handleCreateDraft(data: any) {
+    try {
+      const newContract = await insertContract(data);
+      if (newContract) {
+        setContracts((prev) => [...prev, newContract as AgencyContract]);
+      }
+    } catch (err) {
+      console.error("Failed to create contract draft:", err);
+      throw err;
+    }
+  }
 
   if (loading) {
     return (
@@ -684,8 +764,8 @@ export function ContractsTab() {
       )}
 
       {/* ─── Modals / Panels ────────────────────────────────────────── */}
-      {selected && <ContractPanel contract={selected} onClose={() => setSelected(null)} />}
-      {editingTemplate && <TemplateEditorModal template={editingTemplate} onClose={() => setEditingTemplate(null)} />}
+      {selected && <ContractPanel contract={selected} onClose={() => setSelected(null)} onUpdate={handleContractUpdate} />}
+      {editingTemplate && <TemplateEditorModal template={editingTemplate} onClose={() => setEditingTemplate(null)} onCreateDraft={handleCreateDraft} />}
     </div>
   );
 }

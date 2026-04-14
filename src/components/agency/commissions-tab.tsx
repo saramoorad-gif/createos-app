@@ -1,7 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/layout/page-header";
-import { useSupabaseQuery } from "@/lib/hooks";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
 import { Download, CheckCircle2 } from "lucide-react";
 
@@ -12,8 +12,10 @@ const statusStyles: Record<string, { bg: string; text: string; label: string }> 
 };
 
 export function CommissionsTab() {
-  const { data: commissionPayouts, loading } = useSupabaseQuery<any>("commission_payouts");
-  const { data: agencyRoster } = useSupabaseQuery<any>("agency_creator_links");
+  const { data: commissionPayouts, loading, setData: setPayouts } = useSupabaseQuery<any>("commission_payouts");
+  const { data: agencyRoster, setData: setRoster } = useSupabaseQuery<any>("agency_creator_links");
+  const { update: updatePayout } = useSupabaseMutation("commission_payouts");
+  const { update: updateCreatorLink } = useSupabaseMutation("agency_creator_links");
 
   if (loading) {
     return (
@@ -61,7 +63,21 @@ export function CommissionsTab() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">ALL PAYOUTS</p>
-            <button className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline">
+            <button
+              onClick={() => {
+                const headers = ["Creator", "Deal", "Deal Value", "Rate", "Commission", "Period", "Status"];
+                const rows = commissionPayouts.map((p: any) => [p.creator, p.deal, p.dealValue, `${p.rate}%`, p.amount, p.period, p.status]);
+                const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+                const blob = new Blob([csv], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "commissions.csv";
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"
+            >
               <Download className="h-3.5 w-3.5" /> Export CSV
             </button>
           </div>
@@ -83,7 +99,20 @@ export function CommissionsTab() {
                   <div className="flex items-center gap-1.5">
                     <span className={`text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full ${s.bg} ${s.text}`}>{s.label}</span>
                     {p.status === "pending" && (
-                      <button className="text-[#3D7A58] hover:text-[#3a7a4a]" title="Mark paid"><CheckCircle2 className="h-3.5 w-3.5" /></button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            await updatePayout(p.id, { paid_at: new Date().toISOString(), status: "paid" });
+                            setPayouts((prev: any[]) =>
+                              prev.map((item) => item.id === p.id ? { ...item, status: "paid", paid_at: new Date().toISOString() } : item)
+                            );
+                          } catch (err) {
+                            console.error("Failed to mark as paid:", err);
+                          }
+                        }}
+                        className="text-[#3D7A58] hover:text-[#3a7a4a]"
+                        title="Mark paid"
+                      ><CheckCircle2 className="h-3.5 w-3.5" /></button>
                     )}
                   </div>
                 </div>
@@ -121,7 +150,24 @@ export function CommissionsTab() {
               <div key={c.id} className="flex items-center justify-between">
                 <span className="text-[13px] font-sans text-[#1A2C38]">{c.name}</span>
                 <div className="flex items-center gap-1">
-                  <input type="number" defaultValue={c.commissionRate} className="w-14 text-right rounded-lg border border-[#D8E8EE] px-2 py-1 text-[13px] font-sans text-[#1A2C38] focus:outline-none focus:border-[#7BAFC8]" />
+                  <input
+                    type="number"
+                    defaultValue={c.commissionRate}
+                    onBlur={async (e) => {
+                      const newRate = Number(e.target.value);
+                      if (newRate === c.commissionRate) return;
+                      try {
+                        await updateCreatorLink(c.id, { commissionRate: newRate });
+                        setRoster((prev: any[]) =>
+                          prev.map((item) => item.id === c.id ? { ...item, commissionRate: newRate } : item)
+                        );
+                      } catch (err) {
+                        console.error("Failed to update commission rate:", err);
+                        e.target.value = String(c.commissionRate);
+                      }
+                    }}
+                    className="w-14 text-right rounded-lg border border-[#D8E8EE] px-2 py-1 text-[13px] font-sans text-[#1A2C38] focus:outline-none focus:border-[#7BAFC8]"
+                  />
                   <span className="text-[12px] font-sans text-[#8AAABB]">%</span>
                 </div>
               </div>

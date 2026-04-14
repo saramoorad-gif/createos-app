@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { useSupabaseQuery } from "@/lib/hooks";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { timeAgo } from "@/lib/utils";
 
 // Type formerly from placeholder-data
@@ -30,9 +30,13 @@ export function InboxTab() {
   const [activeThread, setActiveThread] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [showAnnouncement, setShowAnnouncement] = useState(false);
+  const [announcementText, setAnnouncementText] = useState("");
 
-  const { data: messageThreads, loading: threadsLoading } = useSupabaseQuery<MessageThread>("message_threads");
-  const { data: messageData, loading: messagesLoading } = useSupabaseQuery<any>("messages");
+  const { data: messageThreads, loading: threadsLoading, setData: setThreads } = useSupabaseQuery<MessageThread>("message_threads");
+  const { data: messageData, loading: messagesLoading, setData: setMessages } = useSupabaseQuery<any>("messages");
+  const { insert: insertMessage } = useSupabaseMutation("messages");
+  const { insert: insertThread } = useSupabaseMutation("message_threads");
+  const { insert: insertAnnouncement } = useSupabaseMutation("announcements");
 
   const loading = threadsLoading || messagesLoading;
 
@@ -101,10 +105,26 @@ export function InboxTab() {
       {showAnnouncement && (
         <div className="bg-white border border-[#7BAFC8]/20 rounded-[10px] p-4 mb-4">
           <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#7BAFC8] mb-2">ANNOUNCEMENT — ALL CREATORS</p>
-          <textarea rows={2} placeholder="Write an announcement..." className="w-full rounded-lg border border-[#D8E8EE] px-3 py-2 text-[13px] font-sans resize-none focus:outline-none focus:border-[#7BAFC8] mb-2" />
+          <textarea rows={2} placeholder="Write an announcement..." value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} className="w-full rounded-lg border border-[#D8E8EE] px-3 py-2 text-[13px] font-sans resize-none focus:outline-none focus:border-[#7BAFC8] mb-2" />
           <div className="flex justify-end gap-2">
-            <button onClick={() => setShowAnnouncement(false)} className="text-[12px] font-sans font-500 text-[#8AAABB] hover:text-[#1A2C38]">Cancel</button>
-            <button onClick={() => setShowAnnouncement(false)} className="bg-[#7BAFC8] text-white rounded-lg px-3 py-1.5 text-[12px] font-sans font-500">Send to all</button>
+            <button onClick={() => { setShowAnnouncement(false); setAnnouncementText(""); }} className="text-[12px] font-sans font-500 text-[#8AAABB] hover:text-[#1A2C38]">Cancel</button>
+            <button
+              onClick={async () => {
+                if (!announcementText.trim()) return;
+                try {
+                  await insertAnnouncement({
+                    body: announcementText.trim(),
+                    sentAt: new Date().toISOString(),
+                    senderType: "agency_user",
+                  });
+                  setShowAnnouncement(false);
+                  setAnnouncementText("");
+                } catch (err) {
+                  console.error("Failed to send announcement:", err);
+                }
+              }}
+              className="bg-[#7BAFC8] text-white rounded-lg px-3 py-1.5 text-[12px] font-sans font-500"
+            >Send to all</button>
           </div>
         </div>
       )}
@@ -176,7 +196,27 @@ export function InboxTab() {
 
             {/* New thread button */}
             <div className="border-t border-[#D8E8EE] p-2">
-              <button className="w-full flex items-center justify-center gap-1.5 py-2 text-[12px] font-sans font-500 text-[#7BAFC8] hover:bg-[#F2F8FB] rounded-lg">
+              <button
+                onClick={async () => {
+                  try {
+                    const newThread = await insertThread({
+                      threadType: sectionMap[section],
+                      creatorName: section === "creators" ? "New Creator" : null,
+                      creatorAvatar: null,
+                      topic: section === "internal" ? "New internal note" : section === "brand_log" ? "New brand communication" : "New conversation",
+                      lastMessageAt: new Date().toISOString(),
+                      unreadAgency: 0,
+                    });
+                    if (newThread) {
+                      setThreads((prev) => [newThread as MessageThread, ...prev]);
+                      setActiveThread((newThread as MessageThread).id);
+                    }
+                  } catch (err) {
+                    console.error("Failed to create thread:", err);
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-[12px] font-sans font-500 text-[#7BAFC8] hover:bg-[#F2F8FB] rounded-lg"
+              >
                 <Plus className="h-3.5 w-3.5" /> New thread
               </button>
             </div>
@@ -256,7 +296,34 @@ export function InboxTab() {
                       placeholder={section === "internal" ? "Add internal note..." : "Type a message..."}
                       className="flex-1 rounded-lg border border-[#D8E8EE] px-3 py-2 text-[13px] font-sans focus:outline-none focus:border-[#7BAFC8]"
                     />
-                    <button className="bg-[#7BAFC8] text-white rounded-lg p-2 hover:bg-[#6AA0BB]"><Send className="h-4 w-4" /></button>
+                    <button
+                      onClick={async () => {
+                        if (!newMessage.trim() || !activeThread) return;
+                        try {
+                          const msgData = {
+                            threadId: activeThread,
+                            body: newMessage.trim(),
+                            senderType: "agency_user",
+                            senderName: "Agency",
+                            senderRole: "manager",
+                            isInternal: section === "internal",
+                            isUrgent: false,
+                            attachments: [],
+                            createdAt: new Date().toISOString(),
+                            readAt: null,
+                            linkedObjectName: null,
+                          };
+                          const newMsg = await insertMessage(msgData);
+                          if (newMsg) {
+                            setMessages((prev: any[]) => [...prev, newMsg]);
+                          }
+                          setNewMessage("");
+                        } catch (err) {
+                          console.error("Failed to send message:", err);
+                        }
+                      }}
+                      className="bg-[#7BAFC8] text-white rounded-lg p-2 hover:bg-[#6AA0BB]"
+                    ><Send className="h-4 w-4" /></button>
                   </div>
                 </div>
               </>

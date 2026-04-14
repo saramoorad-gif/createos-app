@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { useSupabaseQuery } from "@/lib/hooks";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatDate, timeAgo } from "@/lib/utils";
 import { CheckCircle2 } from "lucide-react";
 
@@ -34,8 +34,9 @@ export function ConflictsTab() {
   const [view, setView] = useState<"conflicts" | "calendar">("conflicts");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const { data: conflicts, loading } = useSupabaseQuery<any>("conflict_log");
+  const { data: conflicts, loading, setData: setConflicts } = useSupabaseQuery<any>("conflict_log");
   const { data: exclusivityMap } = useSupabaseQuery<any>("exclusivity_map");
+  const { update: updateConflict } = useSupabaseMutation("conflict_log");
 
   if (loading) {
     return (
@@ -124,7 +125,20 @@ export function ConflictsTab() {
                         </label>
                       ))}
                     </div>
-                    <button className="mt-4 bg-[#3D7A58] text-white rounded-[10px] px-4 py-2 text-[12px] font-sans font-500 hover:bg-[#3a7a4a]">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await updateConflict(conflict.id, { status: "resolved", resolved_at: new Date().toISOString() });
+                          setConflicts((prev: any[]) =>
+                            prev.map((c) => c.id === conflict.id ? { ...c, status: "resolved", resolved_at: new Date().toISOString() } : c)
+                          );
+                          setExpandedId(null);
+                        } catch (err) {
+                          console.error("Failed to mark as resolved:", err);
+                        }
+                      }}
+                      className="mt-4 bg-[#3D7A58] text-white rounded-[10px] px-4 py-2 text-[12px] font-sans font-500 hover:bg-[#3a7a4a]"
+                    >
                       Mark as resolved
                     </button>
                   </div>
