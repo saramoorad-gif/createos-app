@@ -31,8 +31,11 @@ const filterMap: Record<Filter, (d: Deal) => boolean> = {
 };
 const stageLabels: Record<string, string> = { lead: "Lead", pitched: "Pitched", negotiating: "Negotiating", contracted: "Contracted", in_progress: "In Progress", delivered: "Delivered", paid: "Paid" };
 const stageProgress: Record<string, number> = { lead: 5, pitched: 15, negotiating: 30, contracted: 45, in_progress: 65, delivered: 85, paid: 100 };
+const stageOrder = ["lead", "pitched", "negotiating", "contracted", "in_progress", "delivered", "paid"];
 
-function DealPanel({ deal, onClose }: { deal: Deal; onClose: () => void }) {
+function DealPanel({ deal, onClose, onMoveStage, onCreateInvoice }: { deal: Deal; onClose: () => void; onMoveStage: (dealId: string, newStage: string) => void; onCreateInvoice: (deal: Deal) => void }) {
+  const currentIdx = stageOrder.indexOf(deal.stage);
+  const nextStage = currentIdx < stageOrder.length - 1 ? stageOrder[currentIdx + 1] : null;
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0" style={{ background: "rgba(26,44,56,.4)", backdropFilter: "blur(4px)" }} onClick={onClose} />
@@ -54,10 +57,14 @@ function DealPanel({ deal, onClose }: { deal: Deal; onClose: () => void }) {
             ))}
           </div>
           {deal.notes && <div className="bg-[#FAF8F4] rounded-card p-4"><p className="text-[10px] font-sans uppercase tracking-[2px] text-[#8AAABB] mb-2" style={{ fontWeight: 600 }}>Notes</p><p className="text-[13px] font-sans text-[#1A2C38] leading-relaxed">{deal.notes}</p></div>}
-          <button className="w-full flex items-center justify-center gap-2 bg-[#1E3F52] text-white rounded-btn px-4 py-2.5 text-[13px] font-sans" style={{ fontWeight: 600 }}><ChevronRight className="h-4 w-4" /> Move to next stage</button>
+          {nextStage && (
+            <button onClick={() => { onMoveStage(deal.id, nextStage); onClose(); }} className="w-full flex items-center justify-center gap-2 bg-[#1E3F52] text-white rounded-btn px-4 py-2.5 text-[13px] font-sans" style={{ fontWeight: 600 }}>
+              <ChevronRight className="h-4 w-4" /> Move to {stageLabels[nextStage]}
+            </button>
+          )}
           <div className="grid grid-cols-2 gap-2">
-            <button className="flex items-center justify-center gap-1.5 border-[1.5px] border-[#D8E8EE] rounded-btn px-3 py-2 text-[12px] font-sans text-[#1A2C38] hover:bg-[#FAF8F4]" style={{ fontWeight: 500 }}><FileText className="h-3.5 w-3.5" /> Invoice</button>
-            <button className="flex items-center justify-center gap-1.5 border-[1.5px] border-[#D8E8EE] rounded-btn px-3 py-2 text-[12px] font-sans text-[#1A2C38] hover:bg-[#FAF8F4]" style={{ fontWeight: 500 }}><Eye className="h-3.5 w-3.5" /> Contract</button>
+            <button onClick={() => { onCreateInvoice(deal); onClose(); }} className="flex items-center justify-center gap-1.5 border-[1.5px] border-[#D8E8EE] rounded-btn px-3 py-2 text-[12px] font-sans text-[#1A2C38] hover:bg-[#FAF8F4]" style={{ fontWeight: 500 }}><FileText className="h-3.5 w-3.5" /> Create Invoice</button>
+            <button onClick={() => window.location.href = "/contracts"} className="flex items-center justify-center gap-1.5 border-[1.5px] border-[#D8E8EE] rounded-btn px-3 py-2 text-[12px] font-sans text-[#1A2C38] hover:bg-[#FAF8F4]" style={{ fontWeight: 500 }}><Eye className="h-3.5 w-3.5" /> Contracts</button>
           </div>
         </div>
       </div>
@@ -72,7 +79,28 @@ export default function DealsPage() {
   const [brand, setBrand] = useState(""); const [val, setVal] = useState(""); const [deliv, setDeliv] = useState(""); const [plat, setPlat] = useState("tiktok"); const [dtype, setDtype] = useState("ugc"); const [due, setDue] = useState(""); const [notes, setNotes] = useState("");
 
   const { data: deals, loading, setData: setDeals } = useSupabaseQuery<Deal>("deals", { order: { column: "created_at", ascending: false } });
-  const { insert } = useSupabaseMutation("deals");
+  const { insert, update } = useSupabaseMutation("deals");
+  const { insert: insertInvoice } = useSupabaseMutation("invoices");
+
+  async function handleMoveStage(dealId: string, newStage: string) {
+    try {
+      await update(dealId, { stage: newStage });
+      setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: newStage } : d));
+    } catch (e) { console.error("Failed to move stage:", e); }
+  }
+
+  async function handleCreateInvoice(deal: Deal) {
+    try {
+      await insertInvoice({
+        brand_name: deal.brand_name,
+        amount: deal.value,
+        status: "draft",
+        due_date: deal.due_date || new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
+        deal_id: deal.id,
+      });
+      alert(`Invoice created for ${deal.brand_name} — $${deal.value}`);
+    } catch (e) { console.error("Failed to create invoice:", e); }
+  }
 
   const filtered = deals.filter(filterMap[filter]);
   const totalValue = deals.reduce((s, d) => s + (d.value || 0), 0);
@@ -106,7 +134,7 @@ export default function DealsPage() {
         ))}</div>
       )}
 
-      {selectedDeal && <DealPanel deal={selectedDeal} onClose={() => setSelectedDeal(null)} />}
+      {selectedDeal && <DealPanel deal={selectedDeal} onClose={() => setSelectedDeal(null)} onMoveStage={handleMoveStage} onCreateInvoice={handleCreateInvoice} />}
 
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(26,44,56,.4)", backdropFilter: "blur(4px)" }}>

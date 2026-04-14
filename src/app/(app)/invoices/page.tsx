@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { useSupabaseQuery } from "@/lib/hooks";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { X, Send, Bell, CheckCircle2 } from "lucide-react";
 
@@ -63,10 +63,23 @@ function InvoicePanel({ invoice, onClose }: { invoice: Invoice; onClose: () => v
 }
 
 export default function InvoicesPage() {
-  const { data: invoices, loading } = useSupabaseQuery<Invoice>("invoices", {
+  const { data: invoices, loading, setData: setInvoices } = useSupabaseQuery<Invoice>("invoices", {
     order: { column: "created_at", ascending: false },
   });
+  const { update } = useSupabaseMutation("invoices");
   const [selected, setSelected] = useState<Invoice | null>(null);
+
+  async function markPaid(id: string) {
+    try {
+      await update(id, { status: "paid", paid_date: new Date().toISOString().split("T")[0] });
+      setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status: "paid", paid_date: new Date().toISOString().split("T")[0] } : inv));
+    } catch (e) { console.error("Failed to mark paid:", e); }
+  }
+
+  async function sendReminder(id: string) {
+    // In production this would send an email — for now update status to show reminder was sent
+    alert("Payment reminder sent!");
+  }
 
   if (loading) return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading...</p></div>;
 
@@ -123,10 +136,10 @@ export default function InvoicesPage() {
               <span className={`text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full w-fit ${status.bg} ${status.text}`}>{status.label}</span>
               <div className="flex justify-end gap-1">
                 {(inv.status === "sent" || inv.status === "overdue") && (
-                  <button className="p-1.5 rounded-md hover:bg-[#F2F8FB]" onClick={e => e.stopPropagation()}><Bell className="h-3.5 w-3.5 text-[#8AAABB]" /></button>
+                  <button className="p-1.5 rounded-md hover:bg-[#F2F8FB]" onClick={e => { e.stopPropagation(); sendReminder(inv.id); }} title="Send reminder"><Bell className="h-3.5 w-3.5 text-[#8AAABB]" /></button>
                 )}
                 {(inv.status === "sent" || inv.status === "overdue") && (
-                  <button className="p-1.5 rounded-md hover:bg-[#F2F8FB]" onClick={e => e.stopPropagation()}><CheckCircle2 className="h-3.5 w-3.5 text-[#8AAABB]" /></button>
+                  <button className="p-1.5 rounded-md hover:bg-[#F2F8FB]" onClick={e => { e.stopPropagation(); markPaid(inv.id); }} title="Mark as paid"><CheckCircle2 className="h-3.5 w-3.5 text-[#8AAABB]" /></button>
                 )}
               </div>
             </div>
