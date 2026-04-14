@@ -67,9 +67,11 @@ function AccountSection({ profile, isAgency, inputClass, labelClass, labelStyle,
   const { toast } = useToast();
   const mutation = useSupabaseMutation("profiles");
   const [form, setForm] = useState({
+    full_name: profile?.full_name || "",
+    phone: profile?.phone || "",
     bio: profile?.bio || "", location: profile?.location || "", website: profile?.website || "",
     tiktok_handle: profile?.tiktok_handle || "", instagram_handle: profile?.instagram_handle || "", youtube_handle: profile?.youtube_handle || "",
-    tiktok_followers: profile?.tiktok_followers || "", instagram_followers: profile?.instagram_followers || "", youtube_followers: profile?.youtube_followers || "",
+    tiktok_followers: profile?.tiktok_followers || null, instagram_followers: profile?.instagram_followers || null, youtube_followers: profile?.youtube_followers || null,
     primary_niche: profile?.primary_niche || "", content_style: profile?.content_style || "", gender: profile?.gender || "",
     rate_ugc_video: profile?.rate_ugc_video || "", rate_ig_reel: profile?.rate_ig_reel || "", rate_tiktok: profile?.rate_tiktok || "", rate_youtube: profile?.rate_youtube || "", rate_ig_story: profile?.rate_ig_story || "",
   });
@@ -78,7 +80,24 @@ function AccountSection({ profile, isAgency, inputClass, labelClass, labelStyle,
 
   async function save() {
     setSaving(true);
-    try { await mutation.update(profile.id, form); await refreshProfile(); toast("success", "Settings saved"); } catch (e) { console.error(e); toast("error", "Failed to save — try again"); }
+    try {
+      // Clean data — convert empty follower strings to null for integer columns
+      const cleanData = { ...form };
+      if (!cleanData.tiktok_followers) cleanData.tiktok_followers = null;
+      if (!cleanData.instagram_followers) cleanData.instagram_followers = null;
+      if (!cleanData.youtube_followers) cleanData.youtube_followers = null;
+      // Convert follower counts to integers if they're strings
+      if (cleanData.tiktok_followers) cleanData.tiktok_followers = parseInt(String(cleanData.tiktok_followers)) || null;
+      if (cleanData.instagram_followers) cleanData.instagram_followers = parseInt(String(cleanData.instagram_followers)) || null;
+      if (cleanData.youtube_followers) cleanData.youtube_followers = parseInt(String(cleanData.youtube_followers)) || null;
+
+      await mutation.update(profile.id, cleanData);
+      await refreshProfile();
+      toast("success", "Settings saved");
+    } catch (e) {
+      console.error("Save error:", e);
+      toast("error", "Failed to save — check that all fields are valid");
+    }
     setSaving(false);
   }
 
