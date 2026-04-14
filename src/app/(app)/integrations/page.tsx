@@ -25,7 +25,7 @@ export default function IntegrationsPage() {
     if (oauthType === "google") {
       // Redirect to Google OAuth
       const params = new URLSearchParams({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "62122287732-16205jq5m5lci7308da7top7uca0k8vj.apps.googleusercontent.com",
         redirect_uri: `${window.location.origin}/api/auth/google/callback`,
         response_type: "code",
         scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email",
