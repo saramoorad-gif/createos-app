@@ -14,7 +14,6 @@ const creatorLinks = [
   { name: "Invoices", href: "/invoices" },
   { name: "Income", href: "/income" },
   { name: "Inbox", href: "/inbox" },
-  { name: "Brands", href: "/brand-radar" },
   { name: "Media Kit", href: "/media-kit" },
   { name: "Rate Calculator", href: "/rate-calculator" },
 ];
