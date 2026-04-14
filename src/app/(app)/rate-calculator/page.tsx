@@ -74,8 +74,8 @@ function fmt(n: number) {
 export default function RateCalculatorPage() {
   const [platform, setPlatform] = useState<Platform>("tiktok");
   const [contentType, setContentType] = useState<ContentType>("ugc_video");
-  const [followers, setFollowers] = useState(142000);
-  const [engagementRate, setEngagementRate] = useState(6.4);
+  const [followers, setFollowers] = useState(0);
+  const [engagementRate, setEngagementRate] = useState(0);
   const [usageRights, setUsageRights] = useState<UsageRights>("none");
   const [exclusivity, setExclusivity] = useState<ExclusivityDays>(0);
   const [calculated, setCalculated] = useState(false);
@@ -233,7 +233,7 @@ export default function RateCalculatorPage() {
         <div className="bg-white border border-[#D8E8EE] rounded-[10px] overflow-hidden h-fit">
           <div className="bg-gradient-to-r from-[#7BAFC8] to-[#D4956F] px-5 py-4">
             <p className="text-[15px] font-serif font-medium text-white">
-              Brianna Cole — {platformLabels[platform]}
+              Your Rate Card — {platformLabels[platform]}
             </p>
             <p className="text-[12px] font-sans text-white/70 mt-0.5">
               {(followers / 1000).toFixed(0)}K followers &middot; {engagementRate}% engagement

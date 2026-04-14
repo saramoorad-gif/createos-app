@@ -5,7 +5,7 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { useSupabaseMutation, useSupabaseQuery } from "@/lib/hooks";
-import { Shield, Check, Lock, CreditCard, Users, Bell, Settings as SettingsIcon, FileText, Star } from "lucide-react";
+import { Shield, Check, Lock, CreditCard, Users, Bell, Settings as SettingsIcon, FileText, Star, Plug } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/global/toast";
 
@@ -23,8 +23,8 @@ export default function SettingsPage() {
 
   const isAgency = profile.account_type === "agency";
   const tabs = isAgency
-    ? [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "team", label: "Team", icon: Users }, { key: "deals", label: "Deal Defaults", icon: FileText }, { key: "brands", label: "Brands", icon: Star }, { key: "legal", label: "Legal", icon: Shield }, { key: "agency", label: "Agency Access", icon: Shield }]
-    : [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "agency", label: "Agency Access", icon: Shield }];
+    ? [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "integrations", label: "Integrations", icon: Plug }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "team", label: "Team", icon: Users }, { key: "deals", label: "Deal Defaults", icon: FileText }, { key: "brands", label: "Brands", icon: Star }, { key: "legal", label: "Legal", icon: Shield }, { key: "agency", label: "Agency Access", icon: Shield }]
+    : [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "integrations", label: "Integrations", icon: Plug }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "agency", label: "Agency Access", icon: Shield }];
 
   const inputClass = "w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]";
   const labelStyle = { fontWeight: 600 };
@@ -50,6 +50,7 @@ export default function SettingsPage() {
         <div className="flex-1 min-w-0">
           {activeTab === "account" && <AccountSection profile={profile} isAgency={isAgency} inputClass={inputClass} labelClass={labelClass} labelStyle={labelStyle} sectionClass={sectionClass} />}
           {activeTab === "billing" && <BillingSection profile={profile} />}
+          {activeTab === "integrations" && <IntegrationsSection />}
           {activeTab === "notifications" && <NotificationsSection />}
           {activeTab === "team" && isAgency && <TeamSection />}
           {activeTab === "deals" && isAgency && <DealDefaultsSection inputClass={inputClass} labelClass={labelClass} labelStyle={labelStyle} sectionClass={sectionClass} />}
@@ -165,19 +166,155 @@ function AccountSection({ profile, isAgency, inputClass, labelClass, labelStyle,
 }
 
 function BillingSection({ profile }) {
+  const { toast } = useToast();
+  const [upgrading, setUpgrading] = useState(false);
+
   async function manage() {
     const cid = profile?.stripe_customer_id;
-    if (!cid) { window.location.href = "/pricing"; return; }
-    try { const r = await fetch("/api/stripe/portal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ customerId: cid, returnUrl: window.location.href }) }); const d = await r.json(); if (d.url) window.location.href = d.url; else window.location.href = "/pricing"; } catch { window.location.href = "/pricing"; }
+    if (!cid) {
+      // No Stripe customer — show upgrade flow inline
+      setUpgrading(true);
+      return;
+    }
+    try {
+      const r = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId: cid, returnUrl: window.location.href }),
+      });
+      const d = await r.json();
+      if (d.url) {
+        window.location.href = d.url;
+      } else {
+        toast("error", "Could not open billing portal — please try again");
+      }
+    } catch {
+      toast("error", "Could not open billing portal — please try again");
+    }
   }
+
+  async function handleUpgrade(priceKey) {
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          priceKey,
+          userId: profile?.id,
+          email: profile?.email,
+          successUrl: window.location.origin + "/settings?checkout=success",
+          cancelUrl: window.location.origin + "/settings",
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast("error", "Could not start checkout — please try again");
+      }
+    } catch {
+      toast("error", "Checkout failed — please try again");
+    }
+  }
+
+  const plans = [
+    { key: "ugc_monthly", name: "UGC Creator", price: "$27/mo", features: ["Unlimited deals", "AI contracts", "Rate calculator", "Media kit"] },
+    { key: "ugc_influencer_monthly", name: "UGC + Influencer", price: "$39/mo", features: ["Everything in UGC", "Audience analytics", "Campaign recaps"], recommended: true },
+  ];
+
+  const agencyPlans = [
+    { key: "agency_starter_monthly", name: "Agency Starter", price: "$149/mo", features: ["Up to 15 creators", "Pipeline + campaigns", "Commission tracking"] },
+    { key: "agency_growth_monthly", name: "Agency Growth", price: "$249/mo", features: ["Up to 40 creators", "Everything in Starter", "Priority support"] },
+  ];
+
+  const isAgency = profile?.account_type === "agency";
+  const currentPlans = isAgency ? agencyPlans : plans;
+
   return (
     <div className="space-y-6">
       <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>SUBSCRIPTION</p>
-      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6 flex items-center justify-between">
-        <div><p className="text-[15px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>Plan: {profile?.account_type || "Free"}</p><p className="text-[13px] font-sans text-[#8AAABB] mt-1">Manage subscription, payment method, and invoices</p></div>
-        <button onClick={manage} className="bg-[#1E3F52] text-white rounded-[8px] px-5 py-2.5 text-[13px] font-sans hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>Manage billing</button>
+
+      {!upgrading ? (
+        <>
+          <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[15px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>
+                  Current plan: <span className="text-[#7BAFC8] capitalize">{profile?.account_type?.replace(/_/g, " ") || "Free"}</span>
+                </p>
+                <p className="text-[13px] font-sans text-[#8AAABB] mt-1">
+                  {profile?.stripe_customer_id ? "Manage your subscription, payment method, and invoices" : "Upgrade to unlock all features"}
+                </p>
+              </div>
+              <button onClick={manage} className="bg-[#1E3F52] text-white rounded-[8px] px-5 py-2.5 text-[13px] font-sans hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>
+                {profile?.stripe_customer_id ? "Manage billing" : "Upgrade plan"}
+              </button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <button onClick={() => setUpgrading(false)} className="text-[13px] font-sans text-[#7BAFC8] hover:underline mb-2" style={{ fontWeight: 500 }}>← Back</button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {currentPlans.map(plan => (
+              <div key={plan.key} className={`bg-white border-[1.5px] rounded-[10px] p-5 ${plan.recommended ? "border-[#7BAFC8] ring-1 ring-[#7BAFC8]/20" : "border-[#D8E8EE]"}`}>
+                {plan.recommended && <span className="text-[9px] font-sans uppercase tracking-[4px] text-[#7BAFC8] mb-2 block" style={{ fontWeight: 700 }}>RECOMMENDED</span>}
+                <h3 className="text-[15px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>{plan.name}</h3>
+                <p className="text-[22px] font-serif text-[#3D6E8A] my-2">{plan.price}</p>
+                <div className="space-y-1.5 mb-4">
+                  {plan.features.map(f => (
+                    <div key={f} className="flex items-start gap-2">
+                      <span className="text-[#3D7A58] text-xs mt-0.5">✓</span>
+                      <span className="text-[12px] font-sans text-[#1A2C38]">{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => handleUpgrade(plan.key)} className="w-full bg-[#1E3F52] text-white rounded-[8px] py-2.5 text-[13px] font-sans hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>
+                  Subscribe
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function IntegrationsSection() {
+  const integrations = [
+    { name: "Gmail", desc: "Import brand emails", status: "available", href: "/integrations" },
+    { name: "Google Calendar", desc: "Sync deal deadlines", status: "available", href: "/integrations" },
+    { name: "DocuSign", desc: "E-signatures on contracts", status: "available", href: "/integrations" },
+    { name: "Stripe", desc: "Payment processing", status: "connected", href: "/integrations" },
+    { name: "iCal Export", desc: "Download .ics file", status: "available", href: "/integrations" },
+    { name: "TikTok", desc: "Follower & engagement data", status: "coming_soon", href: "/integrations" },
+    { name: "Instagram", desc: "Stats for media kit", status: "coming_soon", href: "/integrations" },
+    { name: "YouTube", desc: "Subscriber analytics", status: "coming_soon", href: "/integrations" },
+  ];
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB]" style={{ fontWeight: 600 }}>INTEGRATIONS</p>
+        <Link href="/integrations" className="text-[12px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>Manage all →</Link>
       </div>
-      <Link href="/pricing" className="text-[13px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>View all plans →</Link>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {integrations.map(int => (
+          <Link key={int.name} href={int.href} className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-4 hover:border-[#7BAFC8] transition-colors flex items-center justify-between">
+            <div>
+              <p className="text-[13px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>{int.name}</p>
+              <p className="text-[12px] font-sans text-[#8AAABB]">{int.desc}</p>
+            </div>
+            <span className={`text-[9px] font-sans uppercase tracking-[4px] px-2 py-0.5 rounded ${
+              int.status === "connected" ? "bg-[#E8F4EE] text-[#3D7A58]" :
+              int.status === "available" ? "bg-[#F2F8FB] text-[#3D6E8A]" :
+              "bg-[#F0EAE0] text-[#8AAABB]"
+            }`} style={{ fontWeight: 700 }}>
+              {int.status === "connected" ? "Connected" : int.status === "available" ? "Available" : "Soon"}
+            </span>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

@@ -42,7 +42,7 @@ export default function MediaKitPage() {
           <ExternalLink className="h-4 w-4 text-[#8AAABB]" />
           <code className="text-[12px] font-mono text-[#8AAABB]">createsuite.co/kit/{slug}</code>
         </div>
-        <button onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="flex items-center gap-1.5 text-[12px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>
+        <button onClick={() => { navigator.clipboard.writeText("https://createsuite.co/kit/" + slug); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="flex items-center gap-1.5 text-[12px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>
           {copied ? <><Check className="h-3.5 w-3.5" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy link</>}
         </button>
       </div>
