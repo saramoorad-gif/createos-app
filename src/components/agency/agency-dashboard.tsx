@@ -9,8 +9,9 @@ import { CommissionsTab } from "./commissions-tab";
 import { InboxTab } from "./inbox-tab";
 import { ConflictsTab } from "./conflicts-tab";
 import { ReportsTab } from "./reports-tab";
+import { TeamTab } from "./team-tab";
 
-type AgencyTab = "pipeline" | "roster" | "campaigns" | "contracts" | "commissions" | "inbox" | "conflicts" | "reports";
+type AgencyTab = "pipeline" | "roster" | "campaigns" | "contracts" | "commissions" | "inbox" | "conflicts" | "reports" | "team";
 
 const tabs: { key: AgencyTab; label: string }[] = [
   { key: "pipeline", label: "Pipeline" },
@@ -21,12 +22,12 @@ const tabs: { key: AgencyTab; label: string }[] = [
   { key: "inbox", label: "Inbox" },
   { key: "conflicts", label: "Conflicts" },
   { key: "reports", label: "Reports" },
+  { key: "team", label: "Team" },
 ];
 
 export function AgencyDashboard() {
   const [activeTab, setActiveTab] = useState<AgencyTab>("pipeline");
 
-  // Listen for nav bar tab switches
   useEffect(() => {
     function handleTabSwitch(e: Event) {
       const tab = (e as CustomEvent).detail as AgencyTab;
@@ -38,17 +39,16 @@ export function AgencyDashboard() {
 
   return (
     <div>
-      {/* Mobile tab bar (visible below lg) */}
+      {/* Mobile tab bar */}
       <div className="flex items-center gap-1 mb-6 overflow-x-auto lg:hidden pb-2">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setActiveTab(t.key)}
-            className={`px-3 py-1.5 text-[10px] font-sans font-500 uppercase tracking-[1.5px] rounded-full whitespace-nowrap transition-colors ${
-              activeTab === t.key
-                ? "bg-[#1A2C38] text-[#FAF8F4]"
-                : "text-[#8AAABB] hover:text-[#1A2C38] hover:bg-[#F2F8FB]"
+            className={`px-3 py-1.5 text-[10px] font-sans uppercase tracking-[1.5px] rounded-full whitespace-nowrap transition-colors ${
+              activeTab === t.key ? "bg-[#1E3F52] text-white" : "text-[#8AAABB] hover:text-[#1A2C38] hover:bg-[#F2F8FB]"
             }`}
+            style={{ fontWeight: 500 }}
           >
             {t.label}
           </button>
@@ -63,6 +63,7 @@ export function AgencyDashboard() {
       {activeTab === "inbox" && <InboxTab />}
       {activeTab === "conflicts" && <ConflictsTab />}
       {activeTab === "reports" && <ReportsTab />}
+      {activeTab === "team" && <TeamTab />}
     </div>
   );
 }

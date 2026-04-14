@@ -27,6 +27,7 @@ const agencyLinks = [
   { name: "Inbox", param: "inbox" },
   { name: "Conflicts", param: "conflicts" },
   { name: "Reports", param: "reports" },
+  { name: "Team", param: "team" },
 ];
 
 export function NavBar() {
