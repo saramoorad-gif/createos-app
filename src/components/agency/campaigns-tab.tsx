@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   ArrowLeft,
   Plus,
@@ -16,6 +16,9 @@ import {
   Circle,
   Eye,
   Download,
+  CalendarDays,
+  TrendingUp,
+  Save,
 } from "lucide-react";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -739,9 +742,160 @@ function ReportSubTab({ campaign }: { campaign: Campaign }) {
 }
 
 // ---------------------------------------------------------------------------
+// Calendar sub-tab (month grid)
+// ---------------------------------------------------------------------------
+function CalendarSubTab({ campaign }: { campaign: Campaign }) {
+  const [viewMonth, setViewMonth] = useState(() => {
+    const d = new Date();
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
+
+  const today = new Date();
+  const daysInMonth = new Date(viewMonth.year, viewMonth.month + 1, 0).getDate();
+  const firstDayOfWeek = (new Date(viewMonth.year, viewMonth.month, 1).getDay() + 6) % 7; // Mon=0
+  const monthName = new Date(viewMonth.year, viewMonth.month).toLocaleString("default", { month: "long", year: "numeric" });
+
+  // Build deliverable bars from kanbanCards + campaign creators
+  const deliverableBars = useMemo(() => {
+    const colors = ["#7BAFC8", "#A07830", "#3D7A58", "#A03D3D", "#6366f1"];
+    return kanbanCards.map((card, i) => {
+      const due = new Date(card.dueDate);
+      const initials = card.creator.split(" ").map(w => w[0]).join("");
+      return {
+        id: card.id,
+        initials,
+        type: card.type,
+        dueDay: due.getDate(),
+        dueMonth: due.getMonth(),
+        dueYear: due.getFullYear(),
+        color: colors[i % colors.length],
+      };
+    });
+  }, []);
+
+  const prevMonth = () => {
+    setViewMonth(prev => prev.month === 0 ? { year: prev.year - 1, month: 11 } : { year: prev.year, month: prev.month - 1 });
+  };
+  const nextMonth = () => {
+    setViewMonth(prev => prev.month === 11 ? { year: prev.year + 1, month: 0 } : { year: prev.year, month: prev.month + 1 });
+  };
+
+  const days: (number | null)[] = [];
+  for (let i = 0; i < firstDayOfWeek; i++) days.push(null);
+  for (let d = 1; d <= daysInMonth; d++) days.push(d);
+  while (days.length % 7 !== 0) days.push(null);
+
+  const isToday = (day: number | null) =>
+    day !== null && today.getDate() === day && today.getMonth() === viewMonth.month && today.getFullYear() === viewMonth.year;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-[10px] border border-[#D8E8EE] p-5">
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={prevMonth} className="text-[#8AAABB] hover:text-[#1A2C38] text-sm font-sans px-2 py-1 rounded hover:bg-[#F2F8FB]">&larr;</button>
+          <p className="font-serif text-[16px] text-[#1A2C38]">{monthName}</p>
+          <button onClick={nextMonth} className="text-[#8AAABB] hover:text-[#1A2C38] text-sm font-sans px-2 py-1 rounded hover:bg-[#F2F8FB]">&rarr;</button>
+        </div>
+
+        {/* Day headers */}
+        <div className="grid grid-cols-7 gap-px mb-1">
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => (
+            <div key={d} className="text-center text-[10px] font-sans font-600 uppercase tracking-[1.5px] text-[#8AAABB] py-1">{d}</div>
+          ))}
+        </div>
+
+        {/* Day grid */}
+        <div className="grid grid-cols-7 gap-px">
+          {days.map((day, idx) => {
+            const barsForDay = day ? deliverableBars.filter(b => b.dueDay === day && b.dueMonth === viewMonth.month && b.dueYear === viewMonth.year) : [];
+            return (
+              <div key={idx} className={`min-h-[72px] border border-[#F2F8FB] rounded p-1 ${day ? "bg-[#FAF8F4]" : "bg-transparent"}`}>
+                {day && (
+                  <>
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className="text-[11px] font-sans text-[#1A2C38]">{day}</span>
+                      {isToday(day) && <div className="w-1.5 h-1.5 rounded-full bg-[#7BAFC8]" />}
+                    </div>
+                    {barsForDay.map(bar => (
+                      <div key={bar.id} className="rounded px-1 py-0.5 mb-0.5 text-[9px] font-sans font-500 text-white truncate" style={{ backgroundColor: bar.color }}>
+                        {bar.initials} {bar.type}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="bg-white rounded-[10px] border border-[#D8E8EE] p-4">
+        <SectionLabel>Deliverable Legend</SectionLabel>
+        <div className="flex flex-wrap gap-3">
+          {kanbanCards.map((card, i) => {
+            const colors = ["#7BAFC8", "#A07830", "#3D7A58", "#A03D3D", "#6366f1"];
+            return (
+              <div key={card.id} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: colors[i % colors.length] }} />
+                <span className="text-[11px] font-sans text-[#8AAABB]">{card.creator} - {card.type}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Profitability card (added to overview)
+// ---------------------------------------------------------------------------
+function ProfitabilityCard({ campaign }: { campaign: Campaign }) {
+  const [estimatedHours, setEstimatedHours] = useState(40);
+
+  const effectiveRate = estimatedHours > 0 ? campaign.agencyCommission / estimatedHours : 0;
+
+  return (
+    <div className="bg-white rounded-[10px] border border-[#D8E8EE] p-5">
+      <SectionLabel>Profitability</SectionLabel>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div className="bg-[#FAF8F4] rounded-lg p-3">
+          <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-1">Campaign Value</p>
+          <p className="text-[18px] font-serif text-[#1A2C38]">{formatCurrency(campaign.budget)}</p>
+        </div>
+        <div className="bg-[#FAF8F4] rounded-lg p-3">
+          <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-1">Commission Earned</p>
+          <p className="text-[18px] font-serif text-[#3D7A58]">{formatCurrency(campaign.agencyCommission)}</p>
+        </div>
+        <div className="bg-[#FAF8F4] rounded-lg p-3">
+          <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-1">Estimated Hours</p>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="number"
+              value={estimatedHours}
+              onChange={(e) => setEstimatedHours(Math.max(0, Number(e.target.value)))}
+              className="w-16 text-[18px] font-serif text-[#1A2C38] bg-transparent border-b border-[#D8E8EE] focus:outline-none focus:border-[#7BAFC8] text-center"
+            />
+            <span className="text-[11px] font-sans text-[#8AAABB]">hrs</span>
+          </div>
+        </div>
+        <div className="bg-[#FAF8F4] rounded-lg p-3">
+          <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-1">Effective Hourly Rate</p>
+          <p className={`text-[18px] font-serif ${effectiveRate >= 100 ? "text-[#3D7A58]" : effectiveRate >= 50 ? "text-[#A07830]" : "text-[#A03D3D]"}`}>
+            {formatCurrency(Math.round(effectiveRate))}
+            <span className="text-[11px] font-sans text-[#8AAABB]">/hr</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Campaign Detail view
 // ---------------------------------------------------------------------------
-type DetailTab = "overview" | "creators" | "deliverables" | "budget" | "report";
+type DetailTab = "overview" | "creators" | "deliverables" | "budget" | "report" | "calendar";
 
 function CampaignDetail({
   campaign,
@@ -756,6 +910,7 @@ function CampaignDetail({
     { key: "overview", label: "Overview", icon: <FileText size={13} /> },
     { key: "creators", label: "Creators", icon: <Users size={13} /> },
     { key: "deliverables", label: "Deliverables", icon: <ClipboardList size={13} /> },
+    { key: "calendar", label: "Calendar", icon: <CalendarDays size={13} /> },
     { key: "budget", label: "Budget", icon: <DollarSign size={13} /> },
     { key: "report", label: "Report", icon: <BarChart3 size={13} /> },
   ];
@@ -816,9 +971,15 @@ function CampaignDetail({
       </div>
 
       {/* Sub-tab content */}
-      {subTab === "overview" && <OverviewSubTab campaign={campaign} />}
+      {subTab === "overview" && (
+        <div className="space-y-6">
+          <OverviewSubTab campaign={campaign} />
+          <ProfitabilityCard campaign={campaign} />
+        </div>
+      )}
       {subTab === "creators" && <CreatorsSubTab campaign={campaign} />}
       {subTab === "deliverables" && <DeliverablesSubTab />}
+      {subTab === "calendar" && <CalendarSubTab campaign={campaign} />}
       {subTab === "budget" && <BudgetSubTab campaign={campaign} />}
       {subTab === "report" && <ReportSubTab campaign={campaign} />}
     </div>
@@ -909,8 +1070,8 @@ export function CampaignsTab() {
         {campaigns.map((camp) => {
           const creatorCount = camp.creators.length;
           return (
+            <div key={camp.id}>
             <button
-              key={camp.id}
               onClick={() => setSelectedCampaign(camp)}
               className="w-full text-left bg-white rounded-[10px] border border-[#D8E8EE] p-5 hover:border-[#7BAFC8]/40 transition-colors group"
             >
@@ -962,6 +1123,34 @@ export function CampaignsTab() {
                 </span>
               </div>
             </button>
+            <div className="flex justify-end -mt-1 mb-1 px-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const template = {
+                    name: camp.name + " (Template)",
+                    brand: "",
+                    brief: camp.brief,
+                    creatorCount: camp.creators.length,
+                    deliverables: camp.creators.map(c => ({
+                      role: c.name,
+                      deliverables: c.deliverables,
+                    })),
+                    budget: camp.budget,
+                    savedAt: new Date().toISOString(),
+                  };
+                  const existing = JSON.parse(localStorage.getItem("campaign_templates") || "[]");
+                  existing.push(template);
+                  localStorage.setItem("campaign_templates", JSON.stringify(existing));
+                  alert(`Template saved: "${camp.name}"`);
+                }}
+                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-sans font-500 text-[#8AAABB] hover:text-[#7BAFC8] hover:bg-[#F2F8FB] rounded-lg transition-colors"
+              >
+                <Save size={11} />
+                Save as Template
+              </button>
+            </div>
+            </div>
           );
         })}
       </div>

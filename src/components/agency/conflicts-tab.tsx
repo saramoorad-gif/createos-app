@@ -4,7 +4,7 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatDate, timeAgo } from "@/lib/utils";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Search, X, AlertTriangle } from "lucide-react";
 
 const severityStyles: Record<string, { bg: string; text: string; dot: string }> = {
   high: { bg: "bg-[#F4EAEA]", text: "text-[#A03D3D]", dot: "bg-[#A03D3D]" },
@@ -30,12 +30,185 @@ const resolutionChecklist = [
   "Reassign to different creator",
 ];
 
+// ---------------------------------------------------------------------------
+// Pre-Deal Conflict Scan Modal
+// ---------------------------------------------------------------------------
+function ConflictScanModal({
+  onClose,
+  exclusivityMap,
+  agencyRoster,
+}: {
+  onClose: () => void;
+  exclusivityMap: any[];
+  agencyRoster: any[];
+}) {
+  const [selectedCreator, setSelectedCreator] = useState("");
+  const [brandName, setBrandName] = useState("");
+  const [category, setCategory] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [scanResult, setScanResult] = useState<null | { conflict: boolean; message: string }>(null);
+  const [scanned, setScanned] = useState(false);
+
+  const handleScan = () => {
+    if (!selectedCreator || !brandName.trim() || !category.trim() || !startDate || !endDate) return;
+
+    const creatorName = agencyRoster.find((c: any) => c.id === selectedCreator)?.name || selectedCreator;
+
+    // Check against exclusivity map
+    const conflicting = exclusivityMap.find((ex: any) => {
+      const exCreator = ex.creator?.toLowerCase() || "";
+      const matchCreator = creatorName.toLowerCase() === exCreator;
+      const matchCategory = (ex.category?.toLowerCase() || "").includes(category.toLowerCase()) ||
+        category.toLowerCase().includes((ex.category?.toLowerCase() || ""));
+      const exStart = new Date(ex.start);
+      const exEnd = new Date(ex.end);
+      const newStart = new Date(startDate);
+      const newEnd = new Date(endDate);
+      const overlaps = newStart <= exEnd && newEnd >= exStart;
+      return matchCreator && matchCategory && overlaps;
+    });
+
+    if (conflicting) {
+      setScanResult({
+        conflict: true,
+        message: `${creatorName} has active ${conflicting.category} exclusivity with ${conflicting.brand} until ${formatDate(conflicting.end)}`,
+      });
+    } else {
+      setScanResult({ conflict: false, message: "No conflicts found" });
+    }
+    setScanned(true);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+      <div className="bg-white rounded-[10px] border border-[#D8E8EE] w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
+        <div className="flex items-center justify-between p-5 border-b border-[#D8E8EE]">
+          <h2 className="font-serif text-lg text-[#1A2C38]">Pre-Deal Conflict Check</h2>
+          <button onClick={onClose} className="text-[#8AAABB] hover:text-[#1A2C38] transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div>
+            <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-2">Creator</p>
+            <select
+              value={selectedCreator}
+              onChange={(e) => setSelectedCreator(e.target.value)}
+              className="w-full px-3 py-2 text-sm font-sans text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8]"
+            >
+              <option value="">Select a creator...</option>
+              {agencyRoster.map((c: any) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-2">Brand Name</p>
+            <input
+              type="text"
+              value={brandName}
+              onChange={(e) => setBrandName(e.target.value)}
+              placeholder="e.g. Nike"
+              className="w-full px-3 py-2 text-sm font-sans text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8] placeholder:text-[#8AAABB]"
+            />
+          </div>
+
+          <div>
+            <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-2">Category</p>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="e.g. Fashion, Beauty, Beverage"
+              className="w-full px-3 py-2 text-sm font-sans text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8] placeholder:text-[#8AAABB]"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-2">Start Date</p>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 text-sm font-mono text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8]"
+              />
+            </div>
+            <div>
+              <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-2">End Date</p>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 text-sm font-mono text-[#1A2C38] bg-[#FAF8F4] border border-[#D8E8EE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7BAFC8]"
+              />
+            </div>
+          </div>
+
+          {!scanned && (
+            <button
+              onClick={handleScan}
+              disabled={!selectedCreator || !brandName.trim() || !category.trim() || !startDate || !endDate}
+              className="w-full py-2.5 text-sm font-sans font-600 bg-[#1A2C38] text-[#FAF8F4] rounded-lg hover:bg-[#2a2420] transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+            >
+              <Search size={14} />
+              Scan for Conflicts
+            </button>
+          )}
+
+          {scanned && scanResult && (
+            <div className={`rounded-[10px] p-4 ${scanResult.conflict ? "bg-[#F4EAEA] border border-[#A03D3D]/20" : "bg-[#E8F4EE] border border-[#3D7A58]/20"}`}>
+              <div className="flex items-start gap-2.5">
+                {scanResult.conflict ? (
+                  <AlertTriangle className="h-4 w-4 text-[#A03D3D] mt-0.5 flex-shrink-0" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 text-[#3D7A58] mt-0.5 flex-shrink-0" />
+                )}
+                <p className={`text-[13px] font-sans ${scanResult.conflict ? "text-[#A03D3D]" : "text-[#3D7A58]"}`}>
+                  {scanResult.conflict ? `Warning: ${scanResult.message}` : `${scanResult.message} \u2713`}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-end gap-3 p-5 border-t border-[#D8E8EE]">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-sans text-[#8AAABB] hover:text-[#1A2C38] transition-colors">
+            Cancel
+          </button>
+          {scanned && scanResult?.conflict && (
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-sans font-600 bg-[#A07830] text-white rounded-lg hover:bg-[#8a6828] transition-colors"
+            >
+              Proceed anyway
+            </button>
+          )}
+          {scanned && !scanResult?.conflict && (
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-sans font-600 bg-[#3D7A58] text-white rounded-lg hover:bg-[#336a4a] transition-colors"
+            >
+              Done
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ConflictsTab() {
   const [view, setView] = useState<"conflicts" | "calendar">("conflicts");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showScanModal, setShowScanModal] = useState(false);
 
   const { data: conflicts, loading, setData: setConflicts } = useSupabaseQuery<any>("conflict_log");
   const { data: exclusivityMap } = useSupabaseQuery<any>("exclusivity_map");
+  const { data: agencyRoster } = useSupabaseQuery<any>("agency_creator_links");
   const { update: updateConflict } = useSupabaseMutation("conflict_log");
 
   if (loading) {
@@ -69,12 +242,30 @@ export function ConflictsTab() {
         ]}
       />
 
-      <div className="flex items-center gap-1 mb-6">
-        {(["conflicts", "calendar"] as const).map(v => (
-          <button key={v} onClick={() => setView(v)} className={`px-3 py-1 text-[10px] font-sans font-500 uppercase tracking-[1.5px] rounded-full ${view === v ? "bg-[#1A2C38] text-[#FAF8F4]" : "text-[#8AAABB] hover:bg-[#F2F8FB]"}`}>
-            {v === "conflicts" ? "All Conflicts" : "Exclusivity Calendar"}
-          </button>
-        ))}
+      {/* Scan modal */}
+      {showScanModal && (
+        <ConflictScanModal
+          onClose={() => setShowScanModal(false)}
+          exclusivityMap={exclusivityMap}
+          agencyRoster={agencyRoster}
+        />
+      )}
+
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-1">
+          {(["conflicts", "calendar"] as const).map(v => (
+            <button key={v} onClick={() => setView(v)} className={`px-3 py-1 text-[10px] font-sans font-500 uppercase tracking-[1.5px] rounded-full ${view === v ? "bg-[#1A2C38] text-[#FAF8F4]" : "text-[#8AAABB] hover:bg-[#F2F8FB]"}`}>
+              {v === "conflicts" ? "All Conflicts" : "Exclusivity Calendar"}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setShowScanModal(true)}
+          className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-sans font-600 bg-[#7BAFC8] text-white rounded-lg hover:bg-[#6AA0BB] transition-colors"
+        >
+          <Search size={13} />
+          Scan for Conflicts
+        </button>
       </div>
 
       {view === "conflicts" && (

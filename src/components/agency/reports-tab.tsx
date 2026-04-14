@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
-import { Download, FileText, BarChart3, Users, DollarSign } from "lucide-react";
+import { Download, FileText, BarChart3, Users, DollarSign, TrendingUp, CalendarDays } from "lucide-react";
 
-type ReportType = "overview" | "creator" | "brand" | "commission";
+type ReportType = "overview" | "creator" | "brand" | "commission" | "pnl" | "comparison" | "annual";
 
 const reportTypes: { key: ReportType; label: string; icon: typeof BarChart3; desc: string }[] = [
   { key: "overview", label: "Agency Overview", icon: BarChart3, desc: "Total pipeline, commissions, creator count, top performers" },
   { key: "creator", label: "Creator Performance", icon: Users, desc: "Select creators, compare metrics, export performance data" },
   { key: "brand", label: "Brand Report", icon: FileText, desc: "Client-facing campaign report with reach and deliverables" },
   { key: "commission", label: "Commission Report", icon: DollarSign, desc: "Monthly commission summary for accounting" },
+  { key: "pnl", label: "Agency P&L", icon: TrendingUp, desc: "Total roster earnings, commissions, net agency income with date ranges" },
+  { key: "comparison", label: "Creator Comparison", icon: Users, desc: "Side-by-side comparison of 2-5 selected creators with export" },
+  { key: "annual", label: "Annual Summary", icon: CalendarDays, desc: "Full year breakdown by month, creator, and brand with chart" },
 ];
 
 export function ReportsTab() {
@@ -223,6 +226,15 @@ export function ReportsTab() {
             </div>
             )
           )}
+
+          {/* --- Agency P&L Report --- */}
+          {activeReport === "pnl" && <AgencyPnLReport agencyRoster={agencyRoster} agencyPipeline={agencyPipeline} commissionPayouts={commissionPayouts} />}
+
+          {/* --- Creator Comparison Report --- */}
+          {activeReport === "comparison" && <CreatorComparisonReport agencyRoster={agencyRoster} />}
+
+          {/* --- Annual Summary Report --- */}
+          {activeReport === "annual" && <AnnualSummaryReport agencyRoster={agencyRoster} agencyPipeline={agencyPipeline} commissionPayouts={commissionPayouts} />}
         </div>
       )}
     </div>
