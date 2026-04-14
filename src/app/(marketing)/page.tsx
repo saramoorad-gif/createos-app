@@ -19,33 +19,40 @@ const stats = [
 ];
 
 const creatorFeatures = [
-  { title: "Deal Pipeline", desc: "Track every brand deal from first DM to final payment" },
-  { title: "AI Contract Analysis", desc: "Upload any contract — get red flags, fair terms, and counter-clauses in seconds" },
-  { title: "Rate Calculator", desc: "Know your worth with market-benchmarked rate recommendations" },
-  { title: "Brand Radar", desc: "Discover brands hiring creators in your niche right now" },
-  { title: "Media Kit Builder", desc: "Auto-generated media kit with live stats and a shareable link" },
-  { title: "Invoicing", desc: "Create, send, and track invoices — with automatic reminders" },
+  { title: "Deal Pipeline", desc: "Track every brand deal from first DM to final payment with inline editing and stage management" },
+  { title: "AI Contract Analysis", desc: "Upload any contract — get red flags, fair terms, counter-clauses, and an overall deal score" },
+  { title: "Income Tracking", desc: "Track all revenue streams — brand deals, affiliate links, Stan Store, and passive income in one place" },
+  { title: "Rate Calculator", desc: "Know your worth with market-benchmarked rate recommendations based on your platform and engagement" },
+  { title: "Media Kit Builder", desc: "Auto-generated media kit with shareable link, bio, rates, and platform stats" },
+  { title: "Invoicing & Payments", desc: "Create, send, and track invoices with automatic reminders and Stripe integration" },
+  { title: "Help Center & Support", desc: "Searchable FAQs, step-by-step troubleshooter, and direct support at hello@createsuite.co" },
+  { title: "CSV Import", desc: "Import existing deals and invoices from Google Sheets or Excel with smart column mapping" },
 ];
 
 const agencyFeatures = [
-  { title: "Roster Dashboard", desc: "Every creator's health score, deals, and earnings at a glance" },
-  { title: "Campaign Builder", desc: "Multi-creator campaigns with deliverable boards and brand reports" },
-  { title: "Contract Management", desc: "AI analysis, templates, version tracking, and e-signatures" },
-  { title: "Conflict Detection", desc: "Real-time exclusivity scanning catches conflicts before they happen" },
-  { title: "Commission Tracking", desc: "Auto-calculated commissions with payout tracking and monthly exports" },
-  { title: "Internal Messaging", desc: "Replace Slack — threaded messaging, task assignment, and brand comms log" },
+  { title: "Roster Dashboard", desc: "Every creator's health score, deals, earnings, and performance at a glance" },
+  { title: "Campaign Builder", desc: "Multi-creator campaigns with deliverable boards, calendar view, and profitability tracking" },
+  { title: "Contract Lifecycle", desc: "AI analysis, 5 templates, version tracking, e-signatures, and expiry alerts" },
+  { title: "Conflict Detection", desc: "Pre-deal conflict scanning, exclusivity calendar, and resolution workflows" },
+  { title: "Team Collaboration", desc: "Internal channels, task management, shared inbox, and @mentions — replaces Slack and Asana" },
+  { title: "Commission & Reports", desc: "Auto-calculated commissions, P&L reports, creator comparisons, and annual summaries" },
+  { title: "Brand CRM", desc: "Track brand relationships, contact history, deal volume, and blacklist management" },
+  { title: "Role-Based Permissions", desc: "Owner, Manager, and Assistant roles with granular access control" },
 ];
 
 const features = [
-  { title: "Deal Pipeline", desc: "Track every deal from pitch to payment" },
-  { title: "AI Contracts", desc: "Upload contracts, get instant analysis" },
+  { title: "Deal Pipeline", desc: "Track every deal from pitch to payment with inline editing" },
+  { title: "AI Contracts", desc: "Upload contracts, get red flags and counter-clauses" },
+  { title: "Income Tracking", desc: "Brand deals, affiliate links, Stan Store — all in one" },
   { title: "Rate Calculator", desc: "Market-benchmarked rate recommendations" },
-  { title: "Brand Radar", desc: "Discover brands hiring in your niche" },
-  { title: "Media Kit", desc: "Auto-generated with live stats" },
-  { title: "Invoicing", desc: "Create, send, track — with reminders" },
-  { title: "Campaign Builder", desc: "Multi-creator brand activations" },
-  { title: "Conflict Detection", desc: "Exclusivity scanning in real-time" },
-  { title: "Commission Tracking", desc: "Auto-calculated per deal" },
+  { title: "Media Kit", desc: "Shareable profile with stats and rates" },
+  { title: "Invoicing", desc: "Create, send, track — with Stripe payments" },
+  { title: "Team Channels", desc: "Internal chat, tasks, and @mentions" },
+  { title: "Campaign Calendar", desc: "Gantt-style timeline for deliverables" },
+  { title: "Conflict Scanner", desc: "Pre-deal exclusivity checks" },
+  { title: "Help Center", desc: "FAQs, troubleshooter, and live support" },
+  { title: "Keyboard Shortcuts", desc: "⌘K command palette and navigation" },
+  { title: "CSV Import", desc: "Migrate from spreadsheets in seconds" },
 ];
 
 const testimonials = [
@@ -55,10 +62,10 @@ const testimonials = [
 ];
 
 const tiers = [
-  { name: "Free", price: "$0", period: "", desc: "3 deals, basic invoicing", features: ["3 active deals", "Basic invoicing", "Inbound form"], cta: "Start free", featured: false },
-  { name: "UGC Creator", price: "$27", period: "/mo", desc: "Full pipeline + AI tools", features: ["Unlimited deals", "AI contract analysis", "Rate calculator", "Brand radar", "Media kit", "Invoice tracking"], cta: "Get started", featured: false },
-  { name: "UGC + Influencer", price: "$39", period: "/mo", desc: "Everything + audience analytics", features: ["Everything in UGC", "Audience analytics", "Engagement tracking", "Campaign recaps", "Exclusivity manager"], cta: "Get started", featured: true },
-  { name: "Agency Starter", price: "$149", period: "/mo", desc: "Up to 15 creators", features: ["Roster dashboard", "Campaign builder", "Commission tracking", "Conflict detection", "Brand reports", "Internal messaging"], cta: "Start agency plan", featured: false },
+  { name: "Free", price: "$0", period: "", desc: "3 deals, basic invoicing", features: ["3 active deals", "Basic invoicing", "Rate calculator", "Help center"], cta: "Start free", featured: false },
+  { name: "UGC Creator", price: "$27", period: "/mo", desc: "Full pipeline + AI + income tracking", features: ["Unlimited deals", "AI contract analysis", "Income tracking", "Rate calculator", "Media kit", "Invoice tracking", "CSV import"], cta: "Get started", featured: false },
+  { name: "UGC + Influencer", price: "$39", period: "/mo", desc: "Everything + audience analytics", features: ["Everything in UGC", "Audience analytics", "Engagement tracking", "Campaign recaps", "Exclusivity manager", "Gmail integration"], cta: "Get started", featured: true },
+  { name: "Agency Starter", price: "$149", period: "/mo", desc: "Up to 15 creators — replaces Asana + Slack", features: ["Roster dashboard", "Campaign builder + calendar", "Team channels + tasks", "Contract lifecycle", "Conflict scanner", "Commission tracking", "Brand CRM", "P&L reports"], cta: "Start agency plan", featured: false },
 ];
 
 export default function HomePage() {
@@ -78,7 +85,7 @@ export default function HomePage() {
             like a <em className="italic text-[#3D6E8A]">real business</em>
           </h1>
           <p className="text-[18px] font-sans text-[#4A6070] max-w-[600px] mx-auto mb-8 leading-relaxed">
-            Deals, contracts, invoices, rate benchmarking, and AI-powered insights — for solo creators and the agencies that manage them.
+            Deals, contracts, invoices, income tracking, team collaboration, and AI-powered insights — for solo creators and the agencies that manage them.
           </p>
           <div className="flex items-center justify-center gap-3">
             <a href="/signup" className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors">
@@ -109,10 +116,10 @@ export default function HomePage() {
               <div className="flex-1 h-6 rounded-md bg-[#F2F8FB] mx-8" />
             </div>
             <div className="grid grid-cols-4 gap-3 mb-4">
-              {["$8,240", "6 Active", "142K", "84/100"].map((v, i) => (
+              {["$12,400", "8 Active", "3 Streams", "⌘K"].map((v, i) => (
                 <div key={i} className="bg-[#F2F8FB] rounded-[10px] p-3">
                   <p className="text-[18px] font-serif text-[#1A2C38]">{v}</p>
-                  <p className="text-[11px] font-sans text-[#8AAABB]">{["April earned", "Deals", "Followers", "Health"][i]}</p>
+                  <p className="text-[11px] font-sans text-[#8AAABB]">{["Total income", "Deals", "Revenue streams", "Command palette"][i]}</p>
                 </div>
               ))}
             </div>
@@ -164,7 +171,7 @@ export default function HomePage() {
               Stop running your business from your <em className="italic text-[#3D6E8A]">DMs</em>
             </h2>
             <p className="text-[15px] font-sans text-[#4A6070] mb-8 leading-relaxed">
-              Track every deal, analyze contracts with AI, benchmark your rates, and send invoices — all from one dashboard built for creators.
+              Track deals, analyze contracts with AI, benchmark rates, send invoices, track all income streams, and get support — from one dashboard built for creators.
             </p>
             <div className="space-y-4">
               {creatorFeatures.slice(0, 4).map((f) => (
@@ -229,7 +236,7 @@ export default function HomePage() {
               One platform to run your entire <em className="italic text-[#3D6E8A]">roster</em>
             </h2>
             <p className="text-[15px] font-sans text-[#4A6070] mb-8 leading-relaxed">
-              Replace Asana, HoneyBook, Dubsado, and Slack. Manage deals, campaigns, contracts, commissions, and creator communication in one place.
+              Replace Asana, HoneyBook, Dubsado, and Slack. Pipeline, campaigns, contracts, team channels, tasks, conflict detection, and reporting — all in one platform.
             </p>
             <div className="space-y-4">
               {agencyFeatures.slice(0, 4).map((f) => (
@@ -258,7 +265,7 @@ export default function HomePage() {
             <p className="text-[12px] font-sans font-600 uppercase tracking-[3px] text-[#7BAFC8] mb-3">FEATURES</p>
             <h2 className="text-[36px] font-serif text-[#1A2C38]">Everything you need to <em className="italic text-[#3D6E8A]">grow</em></h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {features.map((f) => (
               <div key={f.title} className="bg-[#F0EAE0] border border-[#DDD6C8] rounded-[10px] p-5 hover:bg-white hover:border-[#D8E8EE] transition-colors group">
                 <div className="h-8 w-8 rounded-lg bg-[#F2F8FB] flex items-center justify-center mb-3 group-hover:bg-[#7BAFC8]/10">
