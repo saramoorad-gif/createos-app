@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Command } from "cmdk";
 import { Search, ArrowRight, Plus, FileText, Users, BarChart3, Mail, Settings, DollarSign, Briefcase, TrendingUp, Star } from "lucide-react";
 
-const pages = [
+interface CommandItem {
+  name: string;
+  href: string;
+  icon: typeof Search;
+  category: string;
+}
+
+const items: CommandItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: BarChart3, category: "Navigate" },
   { name: "Deals", href: "/deals", icon: Briefcase, category: "Navigate" },
   { name: "Invoices", href: "/invoices", icon: FileText, category: "Navigate" },
@@ -17,9 +23,6 @@ const pages = [
   { name: "Settings", href: "/settings", icon: Settings, category: "Navigate" },
   { name: "Integrations", href: "/integrations", icon: Settings, category: "Navigate" },
   { name: "Import Data", href: "/import", icon: FileText, category: "Navigate" },
-];
-
-const actions = [
   { name: "New Deal", href: "/deals", icon: Plus, category: "Create" },
   { name: "New Invoice", href: "/invoices", icon: Plus, category: "Create" },
   { name: "Log Earnings", href: "/income", icon: DollarSign, category: "Create" },
@@ -28,12 +31,21 @@ const actions = [
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  const filtered = query
+    ? items.filter(i => i.name.toLowerCase().includes(query.toLowerCase()))
+    : items;
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "k") {
       e.preventDefault();
       setOpen(prev => !prev);
+      setQuery("");
+      setSelected(0);
     }
     if (e.key === "Escape") setOpen(false);
   }, []);
@@ -43,12 +55,25 @@ export function CommandPalette() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+
   function navigate(href: string) {
     router.push(href);
     setOpen(false);
+    setQuery("");
+  }
+
+  function handleInputKey(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown") { e.preventDefault(); setSelected(s => Math.min(s + 1, filtered.length - 1)); }
+    if (e.key === "ArrowUp") { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)); }
+    if (e.key === "Enter" && filtered[selected]) { navigate(filtered[selected].href); }
   }
 
   if (!open) return null;
+
+  const categories = [...new Set(filtered.map(i => i.category))];
 
   return (
     <div className="fixed inset-0 z-[100]" style={{ background: "rgba(26,44,56,.3)" }} onClick={() => setOpen(false)}>
@@ -57,63 +82,58 @@ export function CommandPalette() {
           className="w-[560px] bg-white border-[1.5px] border-[#D8E8EE] rounded-[16px] overflow-hidden"
           style={{ boxShadow: "0 24px 64px rgba(30,63,82,.18)", animation: "cmdkIn 200ms cubic-bezier(0.16,1,0.3,1)" }}
         >
-          <style>{`
-            @keyframes cmdkIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-          `}</style>
-          <Command className="w-full" label="Command palette">
-            <div className="flex items-center gap-3 px-4 border-b border-[#D8E8EE]">
-              <Search className="h-4 w-4 text-[#8AAABB] flex-shrink-0" />
-              <Command.Input
-                autoFocus
-                placeholder="Search pages, create items..."
-                className="w-full py-3.5 text-[15px] font-sans text-[#1A2C38] placeholder-[#8AAABB] bg-transparent border-none outline-none"
-              />
-              <kbd className="text-[10px] font-mono text-[#8AAABB] bg-[#F2F8FB] border border-[#D8E8EE] rounded px-1.5 py-0.5 flex-shrink-0">ESC</kbd>
-            </div>
+          <style>{`@keyframes cmdkIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
 
-            <Command.List className="max-h-[320px] overflow-y-auto p-2">
-              <Command.Empty className="py-8 text-center text-[14px] font-sans text-[#8AAABB]">
-                No results found
-              </Command.Empty>
+          <div className="flex items-center gap-3 px-4 border-b border-[#D8E8EE]">
+            <Search className="h-4 w-4 text-[#8AAABB] flex-shrink-0" />
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={e => { setQuery(e.target.value); setSelected(0); }}
+              onKeyDown={handleInputKey}
+              placeholder="Search pages, create items..."
+              className="w-full py-3.5 text-[15px] font-sans text-[#1A2C38] placeholder-[#8AAABB] bg-transparent border-none outline-none"
+            />
+            <kbd className="text-[10px] font-mono text-[#8AAABB] bg-[#F2F8FB] border border-[#D8E8EE] rounded px-1.5 py-0.5 flex-shrink-0">ESC</kbd>
+          </div>
 
-              <Command.Group heading="Navigate" className="[&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-sans [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[3px] [&_[cmdk-group-heading]]:text-[#8AAABB] [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-semibold">
-                {pages.map(p => (
-                  <Command.Item
-                    key={p.href}
-                    value={p.name}
-                    onSelect={() => navigate(p.href)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-[8px] cursor-pointer text-[14px] font-sans text-[#1A2C38] hover:bg-[#F2F8FB] data-[selected=true]:bg-[#F2F8FB] transition-colors"
-                  >
-                    <p.icon className="h-4 w-4 text-[#8AAABB]" />
-                    <span className="flex-1">{p.name}</span>
-                    <ArrowRight className="h-3 w-3 text-[#D8E8EE]" />
-                  </Command.Item>
-                ))}
-              </Command.Group>
+          <div className="max-h-[320px] overflow-y-auto p-2">
+            {filtered.length === 0 && (
+              <p className="py-8 text-center text-[14px] font-sans text-[#8AAABB]">No results found</p>
+            )}
 
-              <Command.Separator className="h-px bg-[#D8E8EE] my-1" />
+            {categories.map(cat => {
+              const catItems = filtered.filter(i => i.category === cat);
+              return (
+                <div key={cat}>
+                  <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] px-2 py-2" style={{ fontWeight: 600 }}>{cat}</p>
+                  {catItems.map(item => {
+                    const idx = filtered.indexOf(item);
+                    return (
+                      <button
+                        key={item.name + item.href}
+                        onClick={() => navigate(item.href)}
+                        onMouseEnter={() => setSelected(idx)}
+                        className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-[8px] text-left text-[14px] font-sans text-[#1A2C38] transition-colors ${
+                          selected === idx ? "bg-[#F2F8FB]" : "hover:bg-[#F2F8FB]"
+                        }`}
+                      >
+                        <item.icon className="h-4 w-4 text-[#8AAABB]" />
+                        <span className="flex-1">{item.name}</span>
+                        <ArrowRight className="h-3 w-3 text-[#D8E8EE]" />
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
 
-              <Command.Group heading="Quick Create" className="[&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-sans [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[3px] [&_[cmdk-group-heading]]:text-[#8AAABB] [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-semibold">
-                {actions.map(a => (
-                  <Command.Item
-                    key={a.name}
-                    value={a.name}
-                    onSelect={() => navigate(a.href)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-[8px] cursor-pointer text-[14px] font-sans text-[#1A2C38] hover:bg-[#F2F8FB] data-[selected=true]:bg-[#F2F8FB] transition-colors"
-                  >
-                    <a.icon className="h-4 w-4 text-[#7BAFC8]" />
-                    <span className="flex-1">{a.name}</span>
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            </Command.List>
-
-            <div className="border-t border-[#D8E8EE] px-4 py-2 flex items-center gap-4">
-              <span className="text-[11px] font-sans text-[#8AAABB]">↑↓ Navigate</span>
-              <span className="text-[11px] font-sans text-[#8AAABB]">↵ Open</span>
-              <span className="text-[11px] font-sans text-[#8AAABB]">esc Close</span>
-            </div>
-          </Command>
+          <div className="border-t border-[#D8E8EE] px-4 py-2 flex items-center gap-4">
+            <span className="text-[11px] font-sans text-[#8AAABB]">↑↓ Navigate</span>
+            <span className="text-[11px] font-sans text-[#8AAABB]">↵ Open</span>
+            <span className="text-[11px] font-sans text-[#8AAABB]">esc Close</span>
+          </div>
         </div>
       </div>
     </div>
