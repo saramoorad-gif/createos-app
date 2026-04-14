@@ -37,20 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
-      setProfile({
-        id: "demo",
-        full_name: "Brianna Cole",
-        email: "brianna@briannacole.com",
-        account_type: "ugc_influencer",
-        agency_name: null,
-        agency_plan: null,
-        roster_size: null,
-        agency_role: null,
-        has_agency: true,
-        linked_agency_id: "agency_001",
-        avatar_url: null,
-        created_at: new Date().toISOString(),
-      });
+      // No Supabase configured — show empty state, redirect to login
       setLoading(false);
       return;
     }
