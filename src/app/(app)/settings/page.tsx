@@ -71,19 +71,32 @@ export default function SettingsPage() {
   const hasAgency = Boolean(agencyLink);
 
   async function handleManageBilling() {
+    const customerId = (profile as Record<string, unknown>)?.stripe_customer_id;
+
+    // If no Stripe customer yet, redirect to pricing to subscribe
+    if (!customerId) {
+      window.location.href = "/pricing";
+      return;
+    }
+
     try {
       const res = await fetch("/api/stripe/portal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerId: (profile as Record<string, unknown>)?.stripe_customer_id,
+          customerId,
           returnUrl: window.location.href,
         }),
       });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch (e) {
-      console.error("Failed to open billing portal:", e);
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        // Fallback to pricing if portal fails
+        window.location.href = "/pricing";
+      }
+    } catch {
+      window.location.href = "/pricing";
     }
   }
 

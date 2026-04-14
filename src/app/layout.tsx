@@ -25,8 +25,12 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CreateOS — Creator Business OS",
-  description: "The operating system for UGC creators and influencers",
+  title: "Create Suite — The Business OS for Creators & Agencies",
+  description: "Manage brand deals, contracts, invoices, and your creator roster in one place.",
+  manifest: "/manifest.json",
+  themeColor: "#1E3F52",
+  viewport: { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Create Suite" },
 };
 
 export default function RootLayout({

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { LogOut, Settings, Bell, Search } from "lucide-react";
@@ -11,6 +11,7 @@ const creatorLinks = [
   { name: "Today", href: "/dashboard" },
   { name: "Deals", href: "/deals" },
   { name: "Invoices", href: "/invoices" },
+  { name: "Income", href: "/income" },
   { name: "Inbox", href: "/inbox" },
   { name: "Brands", href: "/brand-radar" },
   { name: "Media Kit", href: "/media-kit" },
@@ -30,6 +31,7 @@ const agencyLinks = [
 
 export function NavBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { profile, signOut } = useAuth();
   const [showSearch, setShowSearch] = useState(false);
   const [activeAgencyTab, setActiveAgencyTab] = useState("pipeline");
@@ -77,7 +79,16 @@ export function NavBar() {
                   key={link.name}
                   onClick={() => {
                     setActiveAgencyTab(link.param);
-                    window.dispatchEvent(new CustomEvent("agency-tab", { detail: link.param }));
+                    // Navigate to dashboard first if not already there
+                    if (pathname !== "/dashboard") {
+                      router.push("/dashboard");
+                      // Dispatch after navigation
+                      setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent("agency-tab", { detail: link.param }));
+                      }, 100);
+                    } else {
+                      window.dispatchEvent(new CustomEvent("agency-tab", { detail: link.param }));
+                    }
                   }}
                   className={cn(
                     "px-3 py-1.5 text-[13px] font-sans font-500 transition-colors relative whitespace-nowrap",
