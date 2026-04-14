@@ -1,76 +1,66 @@
 "use client";
 
 import { PageHeader } from "@/components/layout/page-header";
-import { Mail, CreditCard, Video, Camera, Calendar, FileText } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { Mail, CreditCard, Video, Camera, Calendar, FileText, Palette, Check } from "lucide-react";
 
 const integrations = [
-  {
-    name: "Stripe",
-    description: "Process payments and manage subscriptions",
-    icon: CreditCard,
-    status: "available" as const,
-    category: "Payments",
-    connectUrl: "/api/stripe/checkout",
-  },
-  {
-    name: "Gmail",
-    description: "Import brand emails and detect deal opportunities",
-    icon: Mail,
-    status: "coming_soon" as const,
-    category: "Email",
-    connectUrl: null,
-  },
-  {
-    name: "Outlook",
-    description: "Import brand emails from your Outlook inbox",
-    icon: Mail,
-    status: "coming_soon" as const,
-    category: "Email",
-    connectUrl: null,
-  },
-  {
-    name: "TikTok",
-    description: "Pull follower counts and engagement data automatically",
-    icon: Video,
-    status: "coming_soon" as const,
-    category: "Social",
-    connectUrl: null,
-  },
-  {
-    name: "Instagram",
-    description: "Sync your Instagram stats to your media kit",
-    icon: Camera,
-    status: "coming_soon" as const,
-    category: "Social",
-    connectUrl: null,
-  },
-  {
-    name: "YouTube",
-    description: "Import subscriber count and video analytics",
-    icon: Video,
-    status: "coming_soon" as const,
-    category: "Social",
-    connectUrl: null,
-  },
-  {
-    name: "Google Calendar",
-    description: "Sync deal deadlines and campaign timelines",
-    icon: Calendar,
-    status: "coming_soon" as const,
-    category: "Productivity",
-    connectUrl: null,
-  },
-  {
-    name: "DocuSign",
-    description: "Send contracts for e-signature directly from Create Suite",
-    icon: FileText,
-    status: "coming_soon" as const,
-    category: "Contracts",
-    connectUrl: null,
-  },
+  { name: "Gmail", description: "Import brand emails and detect deal opportunities", icon: Mail, category: "Email", oauthType: "google" as const },
+  { name: "Google Calendar", description: "Sync deal deadlines and campaign timelines", icon: Calendar, category: "Calendar", oauthType: "google" as const },
+  { name: "iCal Export", description: "Download all deal deadlines as an .ics file for any calendar app", icon: Calendar, category: "Calendar", oauthType: "ical" as const },
+  { name: "DocuSign", description: "Send contracts for e-signature directly from Create Suite", icon: FileText, category: "Contracts", oauthType: "docusign" as const },
+  { name: "Stripe", description: "Process payments and manage subscriptions", icon: CreditCard, category: "Payments", oauthType: "stripe" as const },
+  { name: "Canva", description: "Import designs and create branded content for your media kit", icon: Palette, category: "Design", oauthType: "coming_soon" as const },
+  { name: "TikTok", description: "Pull follower counts and engagement data automatically", icon: Video, category: "Social", oauthType: "coming_soon" as const },
+  { name: "Instagram", description: "Sync your Instagram stats to your media kit", icon: Camera, category: "Social", oauthType: "coming_soon" as const },
+  { name: "YouTube", description: "Import subscriber count and video analytics", icon: Video, category: "Social", oauthType: "coming_soon" as const },
 ];
 
 export default function IntegrationsPage() {
+  const { user, profile } = useAuth();
+
+  function handleConnect(oauthType: string) {
+    if (!user) return;
+
+    if (oauthType === "google") {
+      // Redirect to Google OAuth
+      const params = new URLSearchParams({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+        redirect_uri: `${window.location.origin}/api/auth/google/callback`,
+        response_type: "code",
+        scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email",
+        access_type: "offline",
+        prompt: "consent",
+        state: user.id,
+      });
+      window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    }
+
+    if (oauthType === "docusign") {
+      const params = new URLSearchParams({
+        response_type: "code",
+        scope: "signature",
+        client_id: process.env.NEXT_PUBLIC_DOCUSIGN_INTEGRATION_KEY || "",
+        redirect_uri: `${window.location.origin}/api/auth/docusign/callback`,
+        state: user.id,
+      });
+      window.location.href = `https://account-d.docusign.com/oauth/auth?${params}`;
+    }
+
+    if (oauthType === "ical") {
+      window.open(`/api/ical?userId=${user.id}`, "_blank");
+    }
+  }
+
+  function getStatus(oauthType: string): "connected" | "available" | "coming_soon" {
+    if (oauthType === "coming_soon") return "coming_soon";
+    if (oauthType === "stripe") return "connected"; // Always available via Stripe dashboard
+    if (oauthType === "ical") return "available";
+    if (oauthType === "google" && profile && "google_connected" in profile && profile.google_connected) return "connected";
+    if (oauthType === "docusign" && profile && "docusign_connected" in profile && profile.docusign_connected) return "connected";
+    return "available";
+  }
+
   return (
     <div>
       <PageHeader
@@ -79,33 +69,46 @@ export default function IntegrationsPage() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {integrations.map((int) => (
-          <div key={int.name} className="bg-white border-[1.5px] border-[#D8E8EE] rounded-card p-5 flex items-start gap-4 hover:border-[#7BAFC8] hover:shadow-card transition-all">
-            <div className="h-10 w-10 rounded-[10px] bg-[#F2F8FB] flex items-center justify-center flex-shrink-0">
-              <int.icon className="h-5 w-5 text-[#7BAFC8]" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-[15px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>{int.name}</h3>
-                <span className={`text-[9px] font-sans uppercase tracking-[4px] px-2 py-0.5 rounded ${
-                  int.status === "available" ? "bg-[#E8F4EE] text-[#3D7A58]" : "bg-[#F2F8FB] text-[#8AAABB]"
-                }`} style={{ fontWeight: 700 }}>
-                  {int.status === "available" ? "Available" : "Coming Soon"}
-                </span>
+        {integrations.map((int) => {
+          const status = getStatus(int.oauthType);
+          return (
+            <div key={int.name} className="bg-white border-[1.5px] border-[#D8E8EE] rounded-card p-5 flex items-start gap-4 hover:border-[#7BAFC8] hover:shadow-card transition-all">
+              <div className="h-10 w-10 rounded-[10px] bg-[#F2F8FB] flex items-center justify-center flex-shrink-0">
+                <int.icon className="h-5 w-5 text-[#7BAFC8]" />
               </div>
-              <p className="text-[13px] font-sans text-[#4A6070] mb-3">{int.description}</p>
-              {int.status === "available" ? (
-                <button className="bg-[#1E3F52] text-white rounded-btn px-4 py-2 text-[12px] font-sans" style={{ fontWeight: 600, letterSpacing: "0.3px" }}>
-                  Connect
-                </button>
-              ) : (
-                <button className="border-[1.5px] border-[#D8E8EE] text-[#8AAABB] rounded-btn px-4 py-2 text-[12px] font-sans cursor-not-allowed" style={{ fontWeight: 500 }}>
-                  Notify me
-                </button>
-              )}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-[15px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>{int.name}</h3>
+                  <span className={`text-[9px] font-sans uppercase tracking-[4px] px-2 py-0.5 rounded ${
+                    status === "connected" ? "bg-[#E8F4EE] text-[#3D7A58]" :
+                    status === "available" ? "bg-[#F2F8FB] text-[#3D6E8A]" :
+                    "bg-[#F0EAE0] text-[#8AAABB]"
+                  }`} style={{ fontWeight: 700 }}>
+                    {status === "connected" ? "Connected" : status === "available" ? "Available" : "Coming Soon"}
+                  </span>
+                </div>
+                <p className="text-[13px] font-sans text-[#4A6070] mb-3">{int.description}</p>
+                {status === "connected" ? (
+                  <span className="flex items-center gap-1.5 text-[12px] font-sans text-[#3D7A58]" style={{ fontWeight: 500 }}>
+                    <Check className="h-3.5 w-3.5" /> Connected
+                  </span>
+                ) : status === "available" ? (
+                  <button
+                    onClick={() => handleConnect(int.oauthType)}
+                    className="bg-[#1E3F52] text-white rounded-btn px-4 py-2 text-[12px] font-sans hover:bg-[#2a5269] transition-colors"
+                    style={{ fontWeight: 600, letterSpacing: "0.3px" }}
+                  >
+                    {int.oauthType === "ical" ? "Download .ics" : "Connect"}
+                  </button>
+                ) : (
+                  <button className="border-[1.5px] border-[#D8E8EE] text-[#8AAABB] rounded-btn px-4 py-2 text-[12px] font-sans cursor-not-allowed" style={{ fontWeight: 500 }}>
+                    Notify me
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
