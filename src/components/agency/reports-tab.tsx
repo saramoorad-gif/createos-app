@@ -493,6 +493,7 @@ export function ReportsTab() {
                   a.download = "creator-performance.csv";
                   a.click();
                   URL.revokeObjectURL(url);
+                  toast("info", "Report exported");
                 }}
                 className="mt-4 flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"
               ><Download className="h-3.5 w-3.5" /> Export CSV</button>

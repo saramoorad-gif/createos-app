@@ -282,7 +282,7 @@ function DealDefaultsSection({ inputClass, labelClass, labelStyle, sectionClass 
           </button>
         </div>
       </div>
-      <button onClick={() => { setSaving(true); setTimeout(() => { setSaving(false); alert("Saved!"); }, 500); }} disabled={saving} className="bg-[#1E3F52] text-white rounded-[8px] px-6 py-3 text-[14px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{saving ? "Saving..." : "Save defaults"}</button>
+      <button onClick={() => { setSaving(true); setTimeout(() => { setSaving(false); toast("success", "Saved"); }, 500); }} disabled={saving} className="bg-[#1E3F52] text-white rounded-[8px] px-6 py-3 text-[14px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{saving ? "Saving..." : "Save defaults"}</button>
     </div>
   );
 }
@@ -412,7 +412,7 @@ function LegalSection({ inputClass, labelClass, labelStyle, sectionClass }) {
           </select>
         </div>
       </div>
-      <button onClick={() => { setSaving(true); setTimeout(() => { setSaving(false); alert("Saved!"); }, 500); }} disabled={saving} className="bg-[#1E3F52] text-white rounded-[8px] px-6 py-3 text-[14px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{saving ? "Saving..." : "Save legal settings"}</button>
+      <button onClick={() => { setSaving(true); setTimeout(() => { setSaving(false); toast("success", "Saved"); }, 500); }} disabled={saving} className="bg-[#1E3F52] text-white rounded-[8px] px-6 py-3 text-[14px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{saving ? "Saving..." : "Save legal settings"}</button>
     </div>
   );
 }

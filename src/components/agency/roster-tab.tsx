@@ -759,7 +759,7 @@ export function RosterTab() {
                   <button onClick={async () => {
                     if (inviteEmail) {
                       await fetch("/api/email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: inviteEmail, subject: "You've been invited to join Create Suite", body: "<p>An agency has invited you to connect your Create Suite account. <a href='https://createsuite.co/signup'>Sign up here</a> to get started.</p>" }) });
-                      alert("Invite sent to " + inviteEmail);
+                      toast("success", "Invite sent to " + inviteEmail);
                       setShowInvite(false); setInviteEmail("");
                     }
                   }} className="flex-1 bg-[#1E3F52] text-white rounded-[8px] py-2.5 text-[13px] font-sans" style={{ fontWeight: 600 }}>Send invite</button>

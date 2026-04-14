@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
@@ -33,7 +33,7 @@ const paySpeedStyles: Record<string, { label: string; color: string }> = {
 function PitchModal({ brand, onClose }: { brand: BrandRadar; onClose: () => void }) {
   const [ready, setReady] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     const t = setTimeout(() => setReady(true), 1500);
     return () => clearTimeout(t);
   });
