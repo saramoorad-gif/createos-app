@@ -475,7 +475,18 @@ export function ContractsTab() {
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
 
   const { data: agencyContracts, loading, setData: setContracts } = useSupabaseQuery<AgencyContract>("contracts");
-  const { data: contractTemplates } = useSupabaseQuery<ContractTemplate>("contract_templates");
+  const { data: dbTemplates } = useSupabaseQuery<ContractTemplate>("contract_templates");
+
+  // Default templates shown when no custom templates exist
+  const defaultTemplates: ContractTemplate[] = [
+    { id: "tpl_1", name: "UGC Content Agreement", type: "ugc", description: "Standard agreement for UGC content creation with usage rights and payment terms.", variables: ["creator_name", "brand_name", "deliverables", "payment_amount", "payment_terms", "usage_rights", "revision_limit", "content_deadline"] },
+    { id: "tpl_2", name: "Influencer Partnership", type: "influencer", description: "Full partnership agreement for influencer campaigns with exclusivity and kill fee.", variables: ["creator_name", "brand_name", "deliverables", "payment_amount", "exclusivity_category", "exclusivity_duration", "kill_fee", "content_deadline"] },
+    { id: "tpl_3", name: "Usage Rights Extension", type: "extension", description: "Extend usage rights on existing content beyond the original agreement.", variables: ["creator_name", "brand_name", "extension_duration", "payment_amount", "usage_rights"] },
+    { id: "tpl_4", name: "Ambassador Retainer", type: "ambassador", description: "Long-term brand ambassador retainer with monthly deliverables.", variables: ["creator_name", "brand_name", "monthly_retainer", "deliverables", "exclusivity_category", "term_length"] },
+    { id: "tpl_5", name: "Talent Representation", type: "representation", description: "Agreement between agency and creator for talent representation.", variables: ["creator_name", "agency_name", "commission_rate", "term_length", "termination_notice"] },
+  ];
+
+  const contractTemplates = dbTemplates.length > 0 ? dbTemplates : defaultTemplates;
   const { data: exclusivityMap } = useSupabaseQuery<any>("exclusivity_map");
   const { update: updateContract, insert: insertContract } = useSupabaseMutation("contracts");
 
