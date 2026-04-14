@@ -61,7 +61,6 @@ export default function SettingsPage() {
 function AccountSection({ profile, inputClass, labelClass, labelStyle, sectionClass }) {
   const mutation = useSupabaseMutation("profiles");
   const [form, setForm] = useState({
-    full_name: profile?.full_name || "", phone: profile?.phone || "", pronouns: profile?.pronouns || "",
     bio: profile?.bio || "", location: profile?.location || "", website: profile?.website || "",
     tiktok_handle: profile?.tiktok_handle || "", instagram_handle: profile?.instagram_handle || "", youtube_handle: profile?.youtube_handle || "",
     tiktok_followers: profile?.tiktok_followers || "", instagram_followers: profile?.instagram_followers || "", youtube_followers: profile?.youtube_followers || "",
@@ -87,7 +86,6 @@ function AccountSection({ profile, inputClass, labelClass, labelStyle, sectionCl
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div><label className={labelClass} style={labelStyle}>Phone</label><input type="text" value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="(555) 123-4567" className={inputClass} /></div>
-          <div><label className={labelClass} style={labelStyle}>Pronouns</label><select value={form.pronouns} onChange={e => set("pronouns", e.target.value)} className={inputClass}><option value="">Select...</option><option>She/Her</option><option>He/Him</option><option>They/Them</option><option>Other</option></select></div>
         </div>
         <div><label className={labelClass} style={labelStyle}>Bio</label><textarea value={form.bio} onChange={e => set("bio", e.target.value)} rows={3} placeholder="Tell brands about yourself..." className={`${inputClass} resize-none`} /></div>
         <div className="grid grid-cols-2 gap-4">
