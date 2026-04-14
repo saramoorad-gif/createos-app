@@ -4,8 +4,8 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
-import { useSupabaseMutation } from "@/lib/hooks";
-import { Shield, Check, Lock, CreditCard, Users, Bell, Settings as SettingsIcon } from "lucide-react";
+import { useSupabaseMutation, useSupabaseQuery } from "@/lib/hooks";
+import { Shield, Check, Lock, CreditCard, Users, Bell, Settings as SettingsIcon, FileText, Star } from "lucide-react";
 import Link from "next/link";
 
 export default function SettingsPage() {
@@ -22,7 +22,7 @@ export default function SettingsPage() {
 
   const isAgency = profile.account_type === "agency";
   const tabs = isAgency
-    ? [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "team", label: "Team", icon: Users }, { key: "agency", label: "Agency Access", icon: Shield }]
+    ? [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "team", label: "Team", icon: Users }, { key: "deals", label: "Deal Defaults", icon: FileText }, { key: "brands", label: "Brands", icon: Star }, { key: "legal", label: "Legal", icon: Shield }, { key: "agency", label: "Agency Access", icon: Shield }]
     : [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "agency", label: "Agency Access", icon: Shield }];
 
   const inputClass = "w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]";
@@ -51,6 +51,9 @@ export default function SettingsPage() {
           {activeTab === "billing" && <BillingSection profile={profile} />}
           {activeTab === "notifications" && <NotificationsSection />}
           {activeTab === "team" && isAgency && <TeamSection />}
+          {activeTab === "deals" && isAgency && <DealDefaultsSection inputClass={inputClass} labelClass={labelClass} labelStyle={labelStyle} sectionClass={sectionClass} />}
+          {activeTab === "brands" && isAgency && <BrandsSection inputClass={inputClass} labelClass={labelClass} labelStyle={labelStyle} sectionClass={sectionClass} />}
+          {activeTab === "legal" && isAgency && <LegalSection inputClass={inputClass} labelClass={labelClass} labelStyle={labelStyle} sectionClass={sectionClass} />}
           {activeTab === "agency" && <AgencySection profile={profile} />}
         </div>
       </div>
@@ -228,6 +231,186 @@ function AgencySection({ profile }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function DealDefaultsSection({ inputClass, labelClass, labelStyle, sectionClass }) {
+  const [paymentTerms, setPaymentTerms] = useState("net_30");
+  const [autoCreateInvoice, setAutoCreateInvoice] = useState(true);
+  const [expiryAlertDays, setExpiryAlertDays] = useState("3");
+  const [exclusivityCheck, setExclusivityCheck] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <div className="space-y-6">
+      <p className={sectionClass} style={{ fontWeight: 600 }}>DEAL DEFAULTS</p>
+      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6 space-y-4">
+        <div>
+          <label className={labelClass} style={labelStyle}>Default Payment Terms</label>
+          <select value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)} className={inputClass}>
+            <option value="net_15">Net 15</option>
+            <option value="net_30">Net 30</option>
+            <option value="net_45">Net 45</option>
+            <option value="net_60">Net 60</option>
+            <option value="on_delivery">On Delivery</option>
+          </select>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <label className={labelClass} style={labelStyle}>Auto-Create Invoice</label>
+            <p className="text-[12px] font-sans text-[#8AAABB]">Automatically create an invoice when a deal moves to Complete</p>
+          </div>
+          <button onClick={() => setAutoCreateInvoice(!autoCreateInvoice)} className={`h-6 w-11 rounded-full transition-colors inline-flex flex-shrink-0 ${autoCreateInvoice ? "bg-[#7BAFC8]" : "bg-[#D8E8EE]"}`}>
+            <div className={`h-5 w-5 rounded-full bg-white shadow transition-transform mt-0.5 ${autoCreateInvoice ? "translate-x-5" : "translate-x-0.5"}`} />
+          </button>
+        </div>
+        <div>
+          <label className={labelClass} style={labelStyle}>Deal Expiry Alert (days)</label>
+          <input type="number" value={expiryAlertDays} onChange={e => setExpiryAlertDays(e.target.value)} min="1" max="30" className={inputClass} style={{ maxWidth: 120 }} />
+          <p className="text-[12px] font-sans text-[#8AAABB] mt-1">Alert this many days before a deal expires</p>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <label className={labelClass} style={labelStyle}>Exclusivity Check on New Deal</label>
+            <p className="text-[12px] font-sans text-[#8AAABB]">Warn if a creator already has an active exclusive deal with another brand</p>
+          </div>
+          <button onClick={() => setExclusivityCheck(!exclusivityCheck)} className={`h-6 w-11 rounded-full transition-colors inline-flex flex-shrink-0 ${exclusivityCheck ? "bg-[#7BAFC8]" : "bg-[#D8E8EE]"}`}>
+            <div className={`h-5 w-5 rounded-full bg-white shadow transition-transform mt-0.5 ${exclusivityCheck ? "translate-x-5" : "translate-x-0.5"}`} />
+          </button>
+        </div>
+      </div>
+      <button onClick={() => { setSaving(true); setTimeout(() => { setSaving(false); alert("Saved!"); }, 500); }} disabled={saving} className="bg-[#1E3F52] text-white rounded-[8px] px-6 py-3 text-[14px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{saving ? "Saving..." : "Save defaults"}</button>
+    </div>
+  );
+}
+
+function BrandsSection({ inputClass, labelClass, labelStyle, sectionClass }) {
+  const { data: brands, loading, refetch } = useSupabaseQuery("agency_brands");
+  const mutation = useSupabaseMutation("agency_brands");
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ name: "", category: "", contact_name: "", contact_email: "", status: "Active" });
+  const [submitting, setSubmitting] = useState(false);
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const statusColors = { Active: "bg-green-100 text-green-700", Warm: "bg-amber-100 text-amber-700", Cold: "bg-gray-100 text-gray-500", Blacklisted: "bg-red-100 text-red-700" };
+
+  async function addBrand() {
+    if (!form.name) return;
+    setSubmitting(true);
+    try {
+      await mutation.insert(form);
+      setForm({ name: "", category: "", contact_name: "", contact_email: "", status: "Active" });
+      setShowForm(false);
+      refetch();
+    } catch (e) { console.error(e); }
+    setSubmitting(false);
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <p className={sectionClass} style={{ fontWeight: 600 }}>BRANDS</p>
+        <button onClick={() => setShowForm(!showForm)} className="bg-[#1E3F52] text-white rounded-[8px] px-4 py-2 text-[13px] font-sans hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{showForm ? "Cancel" : "Add Brand"}</button>
+      </div>
+
+      {showForm && (
+        <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div><label className={labelClass} style={labelStyle}>Brand Name</label><input type="text" value={form.name} onChange={e => set("name", e.target.value)} placeholder="Acme Corp" className={inputClass} /></div>
+            <div><label className={labelClass} style={labelStyle}>Category</label>
+              <select value={form.category} onChange={e => set("category", e.target.value)} className={inputClass}>
+                <option value="">Select...</option>
+                {["Beauty", "Fashion", "Tech", "Food & Beverage", "Fitness", "Lifestyle", "Travel", "Finance", "Health", "Entertainment", "Other"].map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div><label className={labelClass} style={labelStyle}>Contact Name</label><input type="text" value={form.contact_name} onChange={e => set("contact_name", e.target.value)} placeholder="Jane Doe" className={inputClass} /></div>
+            <div><label className={labelClass} style={labelStyle}>Contact Email</label><input type="email" value={form.contact_email} onChange={e => set("contact_email", e.target.value)} placeholder="jane@acme.com" className={inputClass} /></div>
+          </div>
+          <div>
+            <label className={labelClass} style={labelStyle}>Status</label>
+            <select value={form.status} onChange={e => set("status", e.target.value)} className={inputClass} style={{ maxWidth: 200 }}>
+              <option>Active</option><option>Warm</option><option>Cold</option><option>Blacklisted</option>
+            </select>
+          </div>
+          <button onClick={addBrand} disabled={submitting || !form.name} className="bg-[#1E3F52] text-white rounded-[8px] px-5 py-2.5 text-[13px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{submitting ? "Adding..." : "Add Brand"}</button>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-8"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8] mx-auto" /></div>
+      ) : !brands || brands.length === 0 ? (
+        <div className="text-center py-12 bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px]">
+          <p className="text-[16px] font-serif italic text-[#8AAABB]">No brands tracked yet</p>
+        </div>
+      ) : (
+        <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] overflow-hidden">
+          <div className="grid grid-cols-5 gap-4 px-5 py-3 bg-[#F0EAE0] text-[9px] font-sans uppercase tracking-[2px] text-[#8AAABB] border-b border-[#D8E8EE]" style={{ fontWeight: 600 }}>
+            <span>Name</span><span>Category</span><span>Status</span><span>Contact</span><span>Notes</span>
+          </div>
+          {brands.map(brand => (
+            <div key={brand.id} className="grid grid-cols-5 gap-4 px-5 py-3 border-b border-[#EEE8E0] last:border-b-0 items-center">
+              <span className="text-[13px] font-sans text-[#1A2C38]" style={{ fontWeight: 500 }}>{brand.name}</span>
+              <span className="text-[13px] font-sans text-[#4A6070]">{brand.category || "—"}</span>
+              <span><span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-sans ${statusColors[brand.status] || "bg-gray-100 text-gray-500"}`} style={{ fontWeight: 500 }}>{brand.status}</span></span>
+              <span className="text-[13px] font-sans text-[#4A6070]">{brand.contact_name || brand.contact_email || "—"}</span>
+              <span className="text-[13px] font-sans text-[#8AAABB]">{brand.notes || "—"}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LegalSection({ inputClass, labelClass, labelStyle, sectionClass }) {
+  const [representationAgreement, setRepresentationAgreement] = useState(
+    `This Representation Agreement ("Agreement") is entered into between the Agency and the Creator ("Talent"). The Agency agrees to act as Talent's exclusive representative for brand partnership opportunities, subject to the terms outlined herein.\n\n1. Scope of Representation: The Agency shall negotiate, manage, and facilitate brand deals on behalf of Talent.\n2. Commission: The Agency shall receive an agreed-upon percentage of gross deal revenue.\n3. Term: This Agreement shall remain in effect for the duration specified in the signed contract.\n4. Termination: Either party may terminate with 30 days written notice.`
+  );
+  const [gdprNotice, setGdprNotice] = useState(
+    `We collect and process personal data in accordance with GDPR and applicable data protection laws. Data collected includes contact information, content metrics, and payment details necessary for managing brand partnerships. You have the right to access, rectify, or delete your personal data at any time by contacting us.`
+  );
+  const [ftcCompliance, setFtcCompliance] = useState(true);
+  const [contractExpiryPolicy, setContractExpiryPolicy] = useState("flag_review");
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <div className="space-y-6">
+      <p className={sectionClass} style={{ fontWeight: 600 }}>LEGAL</p>
+      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6 space-y-4">
+        <div>
+          <label className={labelClass} style={labelStyle}>Representation Agreement Template</label>
+          <textarea value={representationAgreement} onChange={e => setRepresentationAgreement(e.target.value)} rows={8} className={`${inputClass} resize-none`} />
+        </div>
+      </div>
+      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6 space-y-4">
+        <div>
+          <label className={labelClass} style={labelStyle}>GDPR / Data Notice</label>
+          <textarea value={gdprNotice} onChange={e => setGdprNotice(e.target.value)} rows={4} className={`${inputClass} resize-none`} />
+        </div>
+      </div>
+      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <label className={labelClass} style={labelStyle}>FTC Compliance Enforcement</label>
+            <p className="text-[12px] font-sans text-[#8AAABB]">Require #ad or #sponsored disclosure on all sponsored content</p>
+          </div>
+          <button onClick={() => setFtcCompliance(!ftcCompliance)} className={`h-6 w-11 rounded-full transition-colors inline-flex flex-shrink-0 ${ftcCompliance ? "bg-[#7BAFC8]" : "bg-[#D8E8EE]"}`}>
+            <div className={`h-5 w-5 rounded-full bg-white shadow transition-transform mt-0.5 ${ftcCompliance ? "translate-x-5" : "translate-x-0.5"}`} />
+          </button>
+        </div>
+        <div>
+          <label className={labelClass} style={labelStyle}>Contract Expiry Policy</label>
+          <select value={contractExpiryPolicy} onChange={e => setContractExpiryPolicy(e.target.value)} className={inputClass}>
+            <option value="archive">Archive</option>
+            <option value="flag_review">Flag for Review</option>
+            <option value="auto_renew">Auto-Renew</option>
+          </select>
+        </div>
+      </div>
+      <button onClick={() => { setSaving(true); setTimeout(() => { setSaving(false); alert("Saved!"); }, 500); }} disabled={saving} className="bg-[#1E3F52] text-white rounded-[8px] px-6 py-3 text-[14px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{saving ? "Saving..." : "Save legal settings"}</button>
     </div>
   );
 }

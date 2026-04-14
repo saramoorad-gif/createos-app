@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
-import { LogOut, Settings, Bell, Search } from "lucide-react";
+import { LogOut, Settings, Search } from "lucide-react";
 import { useState } from "react";
+import { NotificationBell } from "@/components/global/notification-panel";
 
 const creatorLinks = [
   { name: "Today", href: "/dashboard" },
@@ -115,12 +116,7 @@ export function NavBar() {
 
       {/* Right */}
       <div className="flex-shrink-0 flex items-center gap-3">
-        {isAgency && (
-          <button className="relative text-[#8AAABB] hover:text-[#3D6E8A] transition-colors" title="Notifications">
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#7BAFC8]" />
-          </button>
-        )}
+        <NotificationBell />
         <span className="text-[13px] font-sans text-[#4A6070] hidden sm:block">{displayName}</span>
         <div className="h-8 w-8 rounded-full bg-[#F2F8FB] border border-[#D8E8EE] flex items-center justify-center text-[11px] font-sans font-500 text-[#7BAFC8]">
           {initials}
