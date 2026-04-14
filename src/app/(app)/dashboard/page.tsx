@@ -27,19 +27,19 @@ const tagStyles: Record<string, string> = {
 };
 
 const actionItems = [
-  { priority: "high", task: "Aritzia contract needs signature", detail: "90-day fashion exclusivity clause — review before signing", due: "Apr 15", tag: "Contract" },
-  { priority: "high", task: "Mejuri Reel #2 due tomorrow", detail: "Gold Drop Collection — second reel in the series", due: "Apr 15", tag: "Deliverable" },
-  { priority: "medium", task: "Glossier invoice is 14 days overdue", detail: "$1,200 remaining balance — consider sending follow-up", due: "Mar 30", tag: "Invoice" },
-  { priority: "low", task: "Oatly shoot prep — scripts approved", detail: "2 TikTok videos, casual morning routine vibe", due: "May 1", tag: "Deliverable" },
-  { priority: "low", task: "Glossier exclusivity expires in 5 days", detail: "Beauty category — you can pitch competing brands after Apr 19", due: "Apr 19", tag: "Exclusivity" },
+  { priority: "high", task: "Aritzia contract needs signature", detail: "90-day fashion exclusivity clause — review before signing", due: "Tuesday, April 15, 2026 · 5:00 PM EST", tag: "Contract" },
+  { priority: "high", task: "Mejuri Reel #2 due tomorrow", detail: "Gold Drop Collection — second reel in the series", due: "Tuesday, April 15, 2026 · 11:59 PM EST", tag: "Deliverable" },
+  { priority: "medium", task: "Glossier invoice is 14 days overdue", detail: "$1,200 remaining balance — consider sending follow-up", due: "Sunday, March 30, 2026 · 12:00 PM EST", tag: "Invoice" },
+  { priority: "low", task: "Oatly shoot prep — scripts approved", detail: "2 TikTok videos, casual morning routine vibe", due: "Friday, May 1, 2026 · 11:59 PM EST", tag: "Deliverable" },
+  { priority: "low", task: "Glossier exclusivity expires in 5 days", detail: "Beauty category — you can pitch competing brands after Apr 19", due: "Saturday, April 19, 2026 · 11:59 PM EST", tag: "Exclusivity" },
 ];
 
 const calendarDays = [
-  { day: "Monday, Apr 14", items: ["Mejuri Reel #2 filming", "Aritzia contract review call 2pm"] },
-  { day: "Tuesday, Apr 15", items: ["Aritzia contract deadline", "Mejuri Reel #2 due"] },
-  { day: "Wednesday, Apr 16", items: ["Oatly creative call 11am"] },
-  { day: "Thursday, Apr 17", items: ["Nothing scheduled"] },
-  { day: "Friday, Apr 18", items: ["Weekly digest review", "Content batch day"] },
+  { day: "Monday, April 14, 2026", items: ["9:00 AM – 11:00 AM EST · Mejuri Reel #2 filming", "2:00 PM – 2:30 PM EST · Aritzia contract review call"] },
+  { day: "Tuesday, April 15, 2026", items: ["5:00 PM EST · Aritzia contract signing deadline", "11:59 PM EST · Mejuri Reel #2 final delivery due"] },
+  { day: "Wednesday, April 16, 2026", items: ["11:00 AM – 11:45 AM EST · Oatly creative direction call"] },
+  { day: "Thursday, April 17, 2026", items: ["No events scheduled"] },
+  { day: "Friday, April 18, 2026", items: ["10:00 AM – 10:30 AM EST · Weekly digest review", "1:00 PM – 5:00 PM EST · Content batch day (blocked)"] },
 ];
 
 const stageProgress: Record<string, number> = {
