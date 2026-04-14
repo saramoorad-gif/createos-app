@@ -59,6 +59,7 @@ export default function SettingsPage() {
 }
 
 function AccountSection({ profile, isAgency, inputClass, labelClass, labelStyle, sectionClass }) {
+  const { refreshProfile } = useAuth();
   const mutation = useSupabaseMutation("profiles");
   const [form, setForm] = useState({
     bio: profile?.bio || "", location: profile?.location || "", website: profile?.website || "",
@@ -72,7 +73,7 @@ function AccountSection({ profile, isAgency, inputClass, labelClass, labelStyle,
 
   async function save() {
     setSaving(true);
-    try { await mutation.update(profile.id, form); alert("Saved!"); } catch (e) { console.error(e); }
+    try { await mutation.update(profile.id, form); await refreshProfile(); alert("Saved!"); } catch (e) { console.error(e); }
     setSaving(false);
   }
 
