@@ -82,7 +82,7 @@ export default function CreatorInboxPage() {
         />
         <div className="text-center py-16">
           <p className="text-[20px] font-serif italic text-[#8AAABB]">No messages yet — connect Gmail or wait for your agency to reach out.</p>
-          <button className="mt-4 text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline">Connect Gmail →</button>
+          <a href="/integrations" className="mt-4 text-[13px] font-sans text-[#7BAFC8] hover:underline inline-block" style={{ fontWeight: 500 }}>Connect Gmail →</a>
         </div>
       </div>
     );

@@ -353,7 +353,25 @@ function ContractPanel({ contract, onClose, onUpdate }: { contract: AgencyContra
               <Send className="h-3.5 w-3.5" /> Send for Signature
             </button>
             <button
-              onClick={() => alert("File upload coming soon")}
+              onClick={async () => {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = ".pdf,.doc,.docx";
+                input.onchange = async (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (!file) return;
+                  const formData = new FormData();
+                  formData.append("file", file);
+                  formData.append("folder", "contracts");
+                  try {
+                    const res = await fetch("/api/upload", { method: "POST", body: formData });
+                    const data = await res.json();
+                    if (data.url) alert("Contract uploaded: " + file.name);
+                    else alert("Upload failed — please try again");
+                  } catch { alert("Upload failed — please try again"); }
+                };
+                input.click();
+              }}
               className="flex-1 flex items-center justify-center gap-1.5 border border-[#D8E8EE] text-[#1A2C38] rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#FAF8F4]"
             >
               <Upload className="h-3.5 w-3.5" /> Upload Version
@@ -501,7 +519,24 @@ export function ContractsTab() {
           <button onClick={() => setView("templates")} className="rounded-[8px] bg-[#1E3F52] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#2a5269]">
             Create from template →
           </button>
-          <button onClick={() => alert("Upload a contract PDF — file uploads coming soon")} className="rounded-[8px] border-[1.5px] border-[#D8E8EE] px-5 py-2.5 text-[13px] font-medium text-[#1A2C38] hover:bg-[#F2F8FB]">
+          <button onClick={() => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".pdf,.doc,.docx";
+            input.onchange = async (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (!file) return;
+              const formData = new FormData();
+              formData.append("file", file);
+              formData.append("folder", "contracts");
+              try {
+                const res = await fetch("/api/upload", { method: "POST", body: formData });
+                const data = await res.json();
+                if (data.url) alert("Contract uploaded: " + file.name);
+              } catch { alert("Upload failed"); }
+            };
+            input.click();
+          }} className="rounded-[8px] border-[1.5px] border-[#D8E8EE] px-5 py-2.5 text-[13px] font-medium text-[#1A2C38] hover:bg-[#F2F8FB]">
             Upload PDF
           </button>
         </div>

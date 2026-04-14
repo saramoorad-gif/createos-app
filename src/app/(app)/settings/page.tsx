@@ -1360,23 +1360,359 @@ function LegalComplianceTab() {
 
 function CreatorAccountTab() {
   const { profile } = useAuth();
+  const mutation = useSupabaseMutation("profiles");
+
+  const [form, setForm] = useState({
+    full_name: "",
+    phone: "",
+    pronouns: "",
+    bio: "",
+    location_city: "",
+    location_country: "",
+    date_of_birth: "",
+    website: "",
+    tiktok_handle: "",
+    tiktok_followers: "",
+    instagram_handle: "",
+    instagram_followers: "",
+    youtube_handle: "",
+    youtube_followers: "",
+    gender: "",
+    ethnicity: "",
+    primary_language: "",
+    additional_languages: [] as string[],
+    primary_niche: "",
+    secondary_niches: [] as string[],
+    content_style: "",
+    rate_ugc_video: "",
+    rate_instagram_reel: "",
+    rate_tiktok: "",
+    rate_youtube_integration: "",
+    rate_instagram_story: "",
+    brands_worked_with: [] as string[],
+  });
+  const [initialized, setInitialized] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [langInput, setLangInput] = useState("");
+  const [nicheInput, setNicheInput] = useState("");
+  const [brandInput, setBrandInput] = useState("");
+
+  if (!initialized && profile) {
+    const p = profile as Record<string, unknown>;
+    setForm({
+      full_name: (p.full_name as string) || "",
+      phone: (p.phone as string) || "",
+      pronouns: (p.pronouns as string) || "",
+      bio: (p.bio as string) || "",
+      location_city: (p.location_city as string) || "",
+      location_country: (p.location_country as string) || "",
+      date_of_birth: (p.date_of_birth as string) || "",
+      website: (p.website as string) || "",
+      tiktok_handle: (p.tiktok_handle as string) || "",
+      tiktok_followers: (p.tiktok_followers as string) || "",
+      instagram_handle: (p.instagram_handle as string) || "",
+      instagram_followers: (p.instagram_followers as string) || "",
+      youtube_handle: (p.youtube_handle as string) || "",
+      youtube_followers: (p.youtube_followers as string) || "",
+      gender: (p.gender as string) || "",
+      ethnicity: (p.ethnicity as string) || "",
+      primary_language: (p.primary_language as string) || "",
+      additional_languages: (p.additional_languages as string[]) || [],
+      primary_niche: (p.primary_niche as string) || "",
+      secondary_niches: (p.secondary_niches as string[]) || [],
+      content_style: (p.content_style as string) || "",
+      rate_ugc_video: (p.rate_ugc_video as string) || "",
+      rate_instagram_reel: (p.rate_instagram_reel as string) || "",
+      rate_tiktok: (p.rate_tiktok as string) || "",
+      rate_youtube_integration: (p.rate_youtube_integration as string) || "",
+      rate_instagram_story: (p.rate_instagram_story as string) || "",
+      brands_worked_with: (p.brands_worked_with as string[]) || [],
+    });
+    setInitialized(true);
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      if (profile?.id) {
+        await mutation.update(profile.id, form as unknown as Record<string, unknown>);
+      }
+    } catch { /* handled by hook */ }
+    setSaving(false);
+  }
+
+  function addLanguage() {
+    const lang = langInput.trim();
+    if (lang && !form.additional_languages.includes(lang)) {
+      setForm({ ...form, additional_languages: [...form.additional_languages, lang] });
+      setLangInput("");
+    }
+  }
+
+  function removeLanguage(lang: string) {
+    setForm({ ...form, additional_languages: form.additional_languages.filter((l) => l !== lang) });
+  }
+
+  function addSecondaryNiche() {
+    const niche = nicheInput.trim();
+    if (niche && !form.secondary_niches.includes(niche)) {
+      setForm({ ...form, secondary_niches: [...form.secondary_niches, niche] });
+      setNicheInput("");
+    }
+  }
+
+  function removeSecondaryNiche(niche: string) {
+    setForm({ ...form, secondary_niches: form.secondary_niches.filter((n) => n !== niche) });
+  }
+
+  function addBrand() {
+    const brand = brandInput.trim();
+    if (brand && !form.brands_worked_with.includes(brand)) {
+      setForm({ ...form, brands_worked_with: [...form.brands_worked_with, brand] });
+      setBrandInput("");
+    }
+  }
+
+  function removeBrand(brand: string) {
+    setForm({ ...form, brands_worked_with: form.brands_worked_with.filter((b) => b !== brand) });
+  }
+
+  const pronounOptions = [
+    { value: "", label: "Select pronouns" },
+    { value: "she/her", label: "She/Her" },
+    { value: "he/him", label: "He/Him" },
+    { value: "they/them", label: "They/Them" },
+    { value: "other", label: "Other" },
+  ];
+
+  const genderOptions = [
+    { value: "", label: "Select gender" },
+    { value: "female", label: "Female" },
+    { value: "male", label: "Male" },
+    { value: "non-binary", label: "Non-binary" },
+    { value: "prefer_not_to_say", label: "Prefer not to say" },
+  ];
+
+  const languageOptions = [
+    { value: "", label: "Select language" },
+    { value: "English", label: "English" },
+    { value: "Spanish", label: "Spanish" },
+    { value: "French", label: "French" },
+    { value: "Portuguese", label: "Portuguese" },
+    { value: "German", label: "German" },
+    { value: "Mandarin", label: "Mandarin" },
+    { value: "Arabic", label: "Arabic" },
+    { value: "Hindi", label: "Hindi" },
+    { value: "Japanese", label: "Japanese" },
+    { value: "Korean", label: "Korean" },
+    { value: "Other", label: "Other" },
+  ];
+
+  const nicheOptions = [
+    { value: "", label: "Select niche" },
+    { value: "beauty", label: "Beauty" },
+    { value: "fashion", label: "Fashion" },
+    { value: "lifestyle", label: "Lifestyle" },
+    { value: "fitness", label: "Fitness" },
+    { value: "food", label: "Food" },
+    { value: "tech", label: "Tech" },
+    { value: "gaming", label: "Gaming" },
+    { value: "travel", label: "Travel" },
+    { value: "wellness", label: "Wellness" },
+    { value: "parenting", label: "Parenting" },
+    { value: "other", label: "Other" },
+  ];
+
+  const contentStyleOptions = [
+    { value: "", label: "Select style" },
+    { value: "educational", label: "Educational" },
+    { value: "entertainment", label: "Entertainment" },
+    { value: "lifestyle", label: "Lifestyle" },
+    { value: "tutorial", label: "Tutorial" },
+    { value: "vlog", label: "Vlog" },
+    { value: "review", label: "Review" },
+    { value: "grwm", label: "GRWM" },
+    { value: "other", label: "Other" },
+  ];
+
   return (
-    <div>
-      <SectionLabel>Account</SectionLabel>
-      <Card className="p-5 space-y-3">
-        <div className="flex justify-between">
-          <span className="text-[12px] font-sans text-[#8AAABB]">Name</span>
-          <span className="text-[13px] font-sans text-[#1A2C38]" style={{ fontWeight: 500 }}>{profile?.full_name || "---"}</span>
+    <div className="space-y-6">
+      {/* ── Profile ──────────────────────────────────────────── */}
+      <SectionLabel>Profile</SectionLabel>
+      <Card className="p-5 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <InputField label="Full name" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} placeholder="Your full name" />
+          <div>
+            <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Email</label>
+            <div className="w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2 text-[13px] font-sans text-[#8AAABB] bg-[#F9FCFD]">
+              {profile?.email || "---"}
+            </div>
+          </div>
         </div>
-        <div className="flex justify-between border-t border-[#D8E8EE] pt-3">
-          <span className="text-[12px] font-sans text-[#8AAABB]">Email</span>
-          <span className="text-[13px] font-sans text-[#1A2C38]" style={{ fontWeight: 500 }}>{profile?.email || "---"}</span>
+        <div className="grid grid-cols-2 gap-4">
+          <InputField label="Phone number" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="+1 (555) 000-0000" />
+          <SelectField label="Pronouns" value={form.pronouns} onChange={(v) => setForm({ ...form, pronouns: v })} options={pronounOptions} />
         </div>
-        <div className="flex justify-between border-t border-[#D8E8EE] pt-3">
-          <span className="text-[12px] font-sans text-[#8AAABB]">Plan</span>
-          <span className="text-[13px] font-sans text-[#3D6E8A]" style={{ fontWeight: 500 }}>{profile?.account_type || "Free"}</span>
+        <div>
+          <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Bio</label>
+          <textarea
+            value={form.bio}
+            onChange={(e) => {
+              if (e.target.value.length <= 300) setForm({ ...form, bio: e.target.value });
+            }}
+            rows={3}
+            placeholder="Tell brands about yourself..."
+            className="w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] focus:border-[#7BAFC8] outline-none px-3 py-2 text-[13px] font-sans text-[#1A2C38] placeholder:text-[#8AAABB]/50 resize-none"
+          />
+          <p className="text-[11px] font-sans text-[#8AAABB] text-right mt-0.5">{form.bio.length}/300</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <InputField label="City" value={form.location_city} onChange={(v) => setForm({ ...form, location_city: v })} placeholder="Los Angeles" />
+          <InputField label="Country" value={form.location_country} onChange={(v) => setForm({ ...form, location_country: v })} placeholder="United States" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <InputField label="Date of birth" value={form.date_of_birth} onChange={(v) => setForm({ ...form, date_of_birth: v })} type="date" />
+          <InputField label="Website URL" value={form.website} onChange={(v) => setForm({ ...form, website: v })} placeholder="https://yoursite.com" />
         </div>
       </Card>
+
+      {/* ── Social Handles ───────────────────────────────────── */}
+      <SectionLabel>Social Handles</SectionLabel>
+      <Card className="p-5 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <InputField label="TikTok handle" value={form.tiktok_handle} onChange={(v) => setForm({ ...form, tiktok_handle: v })} placeholder="@yourhandle" />
+          <InputField label="TikTok followers" value={form.tiktok_followers} onChange={(v) => setForm({ ...form, tiktok_followers: v })} placeholder="e.g. 50000" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <InputField label="Instagram handle" value={form.instagram_handle} onChange={(v) => setForm({ ...form, instagram_handle: v })} placeholder="@yourhandle" />
+          <InputField label="Instagram followers" value={form.instagram_followers} onChange={(v) => setForm({ ...form, instagram_followers: v })} placeholder="e.g. 120000" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <InputField label="YouTube handle" value={form.youtube_handle} onChange={(v) => setForm({ ...form, youtube_handle: v })} placeholder="@yourchannel" />
+          <InputField label="YouTube followers" value={form.youtube_followers} onChange={(v) => setForm({ ...form, youtube_followers: v })} placeholder="e.g. 25000" />
+        </div>
+      </Card>
+
+      {/* ── Demographics (Optional) ──────────────────────────── */}
+      <SectionLabel>Demographics (Optional)</SectionLabel>
+      <Card className="p-5 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <SelectField label="Gender" value={form.gender} onChange={(v) => setForm({ ...form, gender: v })} options={genderOptions} />
+          <InputField label="Ethnicity" value={form.ethnicity} onChange={(v) => setForm({ ...form, ethnicity: v })} placeholder="Optional" />
+        </div>
+        <SelectField label="Primary language" value={form.primary_language} onChange={(v) => setForm({ ...form, primary_language: v })} options={languageOptions} />
+        <div>
+          <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Additional Languages</label>
+          <div className="flex gap-2">
+            <input
+              value={langInput}
+              onChange={(e) => setLangInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addLanguage(); } }}
+              placeholder="Type a language and press Enter"
+              className="flex-1 rounded-[8px] border-[1.5px] border-[#D8E8EE] focus:border-[#7BAFC8] outline-none px-3 py-2 text-[13px] font-sans text-[#1A2C38] placeholder:text-[#8AAABB]/50"
+            />
+            <button onClick={addLanguage} className="px-3 py-2 rounded-[8px] bg-[#F2F8FB] text-[#7BAFC8] text-[12px] font-sans hover:bg-[#D8E8EE]" style={{ fontWeight: 500 }}>
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+          {form.additional_languages.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {form.additional_languages.map((lang) => (
+                <span key={lang} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F2F8FB] text-[12px] font-sans text-[#3D6E8A]" style={{ fontWeight: 500 }}>
+                  {lang}
+                  <button onClick={() => removeLanguage(lang)} className="text-[#8AAABB] hover:text-[#A03D3D]">
+                    <XCircle className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* ── Niche & Content ──────────────────────────────────── */}
+      <SectionLabel>Niche & Content</SectionLabel>
+      <Card className="p-5 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <SelectField label="Primary niche" value={form.primary_niche} onChange={(v) => setForm({ ...form, primary_niche: v })} options={nicheOptions} />
+          <SelectField label="Content style" value={form.content_style} onChange={(v) => setForm({ ...form, content_style: v })} options={contentStyleOptions} />
+        </div>
+        <div>
+          <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Secondary Niches</label>
+          <div className="flex gap-2">
+            <input
+              value={nicheInput}
+              onChange={(e) => setNicheInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSecondaryNiche(); } }}
+              placeholder="Type a niche and press Enter"
+              className="flex-1 rounded-[8px] border-[1.5px] border-[#D8E8EE] focus:border-[#7BAFC8] outline-none px-3 py-2 text-[13px] font-sans text-[#1A2C38] placeholder:text-[#8AAABB]/50"
+            />
+            <button onClick={addSecondaryNiche} className="px-3 py-2 rounded-[8px] bg-[#F2F8FB] text-[#7BAFC8] text-[12px] font-sans hover:bg-[#D8E8EE]" style={{ fontWeight: 500 }}>
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+          {form.secondary_niches.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {form.secondary_niches.map((niche) => (
+                <span key={niche} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F2F8FB] text-[12px] font-sans text-[#3D6E8A]" style={{ fontWeight: 500 }}>
+                  {niche}
+                  <button onClick={() => removeSecondaryNiche(niche)} className="text-[#8AAABB] hover:text-[#A03D3D]">
+                    <XCircle className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* ── Rate Card ────────────────────────────────────────── */}
+      <SectionLabel>Rate Card</SectionLabel>
+      <Card className="p-5 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <InputField label="UGC Video rate ($)" value={form.rate_ugc_video} onChange={(v) => setForm({ ...form, rate_ugc_video: v })} placeholder="e.g. 250" />
+          <InputField label="Instagram Reel rate ($)" value={form.rate_instagram_reel} onChange={(v) => setForm({ ...form, rate_instagram_reel: v })} placeholder="e.g. 300" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <InputField label="TikTok rate ($)" value={form.rate_tiktok} onChange={(v) => setForm({ ...form, rate_tiktok: v })} placeholder="e.g. 200" />
+          <InputField label="YouTube Integration rate ($)" value={form.rate_youtube_integration} onChange={(v) => setForm({ ...form, rate_youtube_integration: v })} placeholder="e.g. 500" />
+        </div>
+        <InputField label="Instagram Story rate ($)" value={form.rate_instagram_story} onChange={(v) => setForm({ ...form, rate_instagram_story: v })} placeholder="e.g. 100" />
+      </Card>
+
+      {/* ── Brands Worked With ───────────────────────────────── */}
+      <SectionLabel>Brands Worked With</SectionLabel>
+      <Card className="p-5">
+        <div className="flex gap-2">
+          <input
+            value={brandInput}
+            onChange={(e) => setBrandInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addBrand(); } }}
+            placeholder="Type a brand name and press Enter"
+            className="flex-1 rounded-[8px] border-[1.5px] border-[#D8E8EE] focus:border-[#7BAFC8] outline-none px-3 py-2 text-[13px] font-sans text-[#1A2C38] placeholder:text-[#8AAABB]/50"
+          />
+          <button onClick={addBrand} className="px-3 py-2 rounded-[8px] bg-[#F2F8FB] text-[#7BAFC8] text-[12px] font-sans hover:bg-[#D8E8EE]" style={{ fontWeight: 500 }}>
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+        {form.brands_worked_with.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {form.brands_worked_with.map((brand) => (
+              <span key={brand} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F2F8FB] text-[12px] font-sans text-[#3D6E8A]" style={{ fontWeight: 500 }}>
+                {brand}
+                <button onClick={() => removeBrand(brand)} className="text-[#8AAABB] hover:text-[#A03D3D]">
+                  <XCircle className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* ── Save ─────────────────────────────────────────────── */}
+      <div className="flex justify-end pt-2">
+        <PrimaryButton onClick={handleSave} loading={saving}>Save changes</PrimaryButton>
+      </div>
     </div>
   );
 }
@@ -1567,7 +1903,15 @@ export default function SettingsPage() {
   const { profile, loading: authLoading } = useAuth();
   const isAgency = profile?.account_type === "agency";
   const tabs = isAgency ? agencyTabs : creatorTabs;
-  const [activeTab, setActiveTab] = useState("profile");
+  const defaultTab = isAgency ? "profile" : "account";
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  // Reset tab when account type changes (e.g. after auth loads)
+  const [lastType, setLastType] = useState<string | null>(null);
+  if (profile?.account_type && profile.account_type !== lastType) {
+    setLastType(profile.account_type);
+    setActiveTab(profile.account_type === "agency" ? "profile" : "account");
+  }
 
   if (authLoading) {
     return <div className="pt-20 text-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8] mx-auto" /></div>;
@@ -1578,26 +1922,34 @@ export default function SettingsPage() {
   }
 
   function renderAgencyTab() {
-    switch (activeTab) {
-      case "profile": return <AgencyProfileTab />;
-      case "team": return <TeamMembersTab />;
-      case "roster": return <CreatorRosterTab />;
-      case "deals": return <DealDefaultsTab />;
-      case "notifications": return <NotificationsTab />;
-      case "integrations": return <IntegrationsTab />;
-      case "billing": return <AgencyBillingTab />;
-      case "brands": return <BrandRelationshipsTab />;
-      case "legal": return <LegalComplianceTab />;
-      default: return <AgencyProfileTab />;
+    try {
+      switch (activeTab) {
+        case "profile": return <AgencyProfileTab />;
+        case "team": return <TeamMembersTab />;
+        case "roster": return <CreatorRosterTab />;
+        case "deals": return <DealDefaultsTab />;
+        case "notifications": return <NotificationsTab />;
+        case "integrations": return <IntegrationsTab />;
+        case "billing": return <AgencyBillingTab />;
+        case "brands": return <BrandRelationshipsTab />;
+        case "legal": return <LegalComplianceTab />;
+        default: return <AgencyProfileTab />;
+      }
+    } catch {
+      return <div className="py-12 text-center"><p className="text-[14px] font-sans text-[#A03D3D]">Something went wrong loading this tab. Please run the latest SQL migration in Supabase.</p></div>;
     }
   }
 
   function renderCreatorTab() {
-    switch (activeTab) {
-      case "account": return <CreatorAccountTab />;
-      case "billing": return <CreatorBillingTab />;
-      case "agency": return <CreatorAgencyAccessTab />;
-      default: return <CreatorAccountTab />;
+    try {
+      switch (activeTab) {
+        case "account": return <CreatorAccountTab />;
+        case "billing": return <CreatorBillingTab />;
+        case "agency": return <CreatorAgencyAccessTab />;
+        default: return <CreatorAccountTab />;
+      }
+    } catch {
+      return <div className="py-12 text-center"><p className="text-[14px] font-sans text-[#A03D3D]">Something went wrong loading this tab.</p></div>;
     }
   }
 
