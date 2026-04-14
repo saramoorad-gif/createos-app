@@ -1025,7 +1025,8 @@ export function TeamTab() {
   const { user, profile } = useAuth();
 
   const userId = user?.id || "";
-  const role = (profile as any)?.agency_role || "assistant";
+  // If account_type is agency, they're the owner. Otherwise check agency_role.
+  const role = (profile as any)?.account_type === "agency" ? "owner" : ((profile as any)?.agency_role || "assistant");
 
   return (
     <div className="bg-[#FAF8F4] min-h-screen">
