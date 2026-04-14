@@ -31,6 +31,7 @@ export const metadata: Metadata = {
   themeColor: "#1E3F52",
   viewport: { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false },
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Create Suite" },
+  other: { "mobile-web-app-capable": "yes" },
 };
 
 export default function RootLayout({

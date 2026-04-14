@@ -52,24 +52,15 @@ export function NavBar() {
         <img src="/logo.svg" alt="Create Suite" className="h-8" />
       </Link>
 
-      {/* Search (agency) */}
-      {isAgency && (
-        <div className="flex-shrink-0 mr-4">
-          {showSearch ? (
-            <input
-              autoFocus
-              type="text"
-              placeholder="Search creators, deals, brands..."
-              className="w-56 bg-white border border-[#D8E8EE] rounded-btn px-3 py-1.5 text-[12px] font-sans text-[#1A2C38] placeholder-[#8AAABB] focus:outline-none focus:border-[#7BAFC8]"
-              onBlur={() => setShowSearch(false)}
-            />
-          ) : (
-            <button onClick={() => setShowSearch(true)} className="text-[#8AAABB] hover:text-[#3D6E8A] transition-colors">
-              <Search className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-      )}
+      {/* Search — opens command palette */}
+      <button
+        onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+        className="flex-shrink-0 mr-4 flex items-center gap-2 bg-white/60 border border-[#D8E8EE] rounded-[8px] px-3 py-1.5 text-[12px] font-sans text-[#8AAABB] hover:border-[#7BAFC8] hover:text-[#4A6070] transition-colors cursor-pointer"
+      >
+        <Search className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">Search...</span>
+        <kbd className="text-[10px] font-mono bg-[#F2F8FB] border border-[#D8E8EE] rounded px-1 py-0.5 ml-1">⌘K</kbd>
+      </button>
 
       {/* Center — Nav tabs */}
       <nav className="flex-1 flex items-center justify-center gap-0.5 overflow-x-auto">
