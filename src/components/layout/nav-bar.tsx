@@ -19,6 +19,7 @@ const creatorLinks = [
 ];
 
 const agencyLinks = [
+  { name: "Home", param: "home" },
   { name: "Pipeline", param: "pipeline" },
   { name: "Roster", param: "roster" },
   { name: "Campaigns", param: "campaigns" },

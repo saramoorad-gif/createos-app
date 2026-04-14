@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AgencyHome } from "./agency-home";
 import { PipelineTab } from "./pipeline-tab";
 import { RosterTab } from "./roster-tab";
 import { CampaignsTab } from "./campaigns-tab";
@@ -11,9 +12,10 @@ import { ConflictsTab } from "./conflicts-tab";
 import { ReportsTab } from "./reports-tab";
 import { TeamTab } from "./team-tab";
 
-type AgencyTab = "pipeline" | "roster" | "campaigns" | "contracts" | "commissions" | "inbox" | "conflicts" | "reports" | "team";
+type AgencyTab = "home" | "pipeline" | "roster" | "campaigns" | "contracts" | "commissions" | "inbox" | "conflicts" | "reports" | "team";
 
 const tabs: { key: AgencyTab; label: string }[] = [
+  { key: "home", label: "Home" },
   { key: "pipeline", label: "Pipeline" },
   { key: "roster", label: "Roster" },
   { key: "campaigns", label: "Campaigns" },
@@ -26,7 +28,7 @@ const tabs: { key: AgencyTab; label: string }[] = [
 ];
 
 export function AgencyDashboard() {
-  const [activeTab, setActiveTab] = useState<AgencyTab>("pipeline");
+  const [activeTab, setActiveTab] = useState<AgencyTab>("home");
 
   useEffect(() => {
     function handleTabSwitch(e: Event) {
@@ -36,6 +38,11 @@ export function AgencyDashboard() {
     window.addEventListener("agency-tab", handleTabSwitch);
     return () => window.removeEventListener("agency-tab", handleTabSwitch);
   }, []);
+
+  function navigateTo(tab: string) {
+    setActiveTab(tab as AgencyTab);
+    window.dispatchEvent(new CustomEvent("agency-tab", { detail: tab }));
+  }
 
   return (
     <div>
@@ -55,6 +62,7 @@ export function AgencyDashboard() {
         ))}
       </div>
 
+      {activeTab === "home" && <AgencyHome onNavigate={navigateTo} />}
       {activeTab === "pipeline" && <PipelineTab />}
       {activeTab === "roster" && <RosterTab />}
       {activeTab === "campaigns" && <CampaignsTab />}
