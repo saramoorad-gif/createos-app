@@ -13,12 +13,21 @@ import {
   Download,
   ArrowRight,
 } from "lucide-react";
-import {
-  agencyPipeline,
-  dealStageLabels,
-  type DealStage,
-} from "@/lib/placeholder-data";
+import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
+// ─── Types (formerly from placeholder-data) ────────────────────────
+type DealStage = "lead" | "pitched" | "negotiating" | "contracted" | "in_progress" | "delivered" | "paid";
+
+const dealStageLabels: Record<DealStage, string> = {
+  lead: "Lead",
+  pitched: "Pitched",
+  negotiating: "Negotiating",
+  contracted: "Contracted",
+  in_progress: "In Progress",
+  delivered: "Delivered",
+  paid: "Paid",
+};
 
 // ─── Types ──────────────────────────────────────────────────────────
 type FilterMode = "all" | "creator" | "stage" | "brand";
@@ -352,7 +361,8 @@ export function PipelineTab() {
     name: string;
     id: string;
   } | null>(null);
-  const [deals, setDeals] = useState(agencyPipeline);
+  const { data: rawDeals, loading, setData: setDeals } = useSupabaseQuery<any>("deals");
+  const deals = rawDeals as any[];
   const [openStageDropdown, setOpenStageDropdown] = useState<string | null>(null);
 
   const sortRef = useRef<HTMLDivElement>(null);
@@ -668,6 +678,25 @@ export function PipelineTab() {
   }
 
   // ─── Render ───────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
+      </div>
+    );
+  }
+
+  if (!loading && deals.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No deals in pipeline yet</p>
+        <button className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
+          Create a deal for one of your creators
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF8F4] pb-12">
       {/* Page header */}

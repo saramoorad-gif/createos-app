@@ -2,30 +2,91 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import {
-  messageThreads,
-  messageData,
-  creatorTasks,
-  announcements,
-} from "@/lib/placeholder-data";
+import { useSupabaseQuery } from "@/lib/hooks";
 import { timeAgo } from "@/lib/utils";
 import { Send, Paperclip, Flag, CheckCircle2, Megaphone, FileText } from "lucide-react";
 
-// Filter to creator-facing threads only (Brianna's perspective)
-const creatorId = "usr_brianna_001";
-const myThreads = messageThreads.filter(
-  (t) => t.creatorId === creatorId && t.threadType === "creator_facing"
-);
-const myTasks = creatorTasks.filter((t) => t.creatorId === creatorId);
-const unreadCount = myThreads.reduce((s, t) => s + t.unreadCreator, 0);
+interface MessageThread {
+  id: string;
+  agencyId: string;
+  creatorId: string | null;
+  creatorName: string | null;
+  creatorAvatar: string | null;
+  topic: string;
+  threadType: "creator_facing" | "internal" | "brand_log";
+  lastMessageAt: string;
+  unreadAgency: number;
+  unreadCreator: number;
+}
+
+interface Message {
+  id: string;
+  threadId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: string;
+  senderType: "creator" | "agency_user";
+  body: string;
+  attachments: { name: string; type: string }[];
+  linkedObjectType: "deal" | "invoice" | "contract" | "campaign" | null;
+  linkedObjectName: string | null;
+  isInternal: boolean;
+  isUrgent: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+
+interface CreatorTask {
+  id: string;
+  creatorId: string;
+  title: string;
+  dueDate: string | null;
+  completed: boolean;
+  fromMessage: string | null;
+  createdAt: string;
+}
+
+interface Announcement {
+  id: string;
+  body: string;
+  sentTo: "all" | "selected";
+  sentAt: string;
+}
 
 export default function CreatorInboxPage() {
+  const { data: allThreads, loading: threadsLoading } = useSupabaseQuery<MessageThread>("message_threads");
+  const { data: allMessages, loading: messagesLoading } = useSupabaseQuery<Message>("messages");
   const [activeThread, setActiveThread] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [view, setView] = useState<"messages" | "tasks" | "announcements">("messages");
 
+  const loading = threadsLoading || messagesLoading;
+
+  if (loading) return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading...</p></div>;
+
+  // Filter to creator-facing threads
+  const myThreads = allThreads.filter(
+    (t) => t.threadType === "creator_facing"
+  );
+  const unreadCount = myThreads.reduce((s, t) => s + t.unreadCreator, 0);
+
+  if (myThreads.length === 0 && view === "messages") {
+    return (
+      <div>
+        <PageHeader
+          headline={<>Your <em className="italic text-[#7BAFC8]">inbox</em></>}
+          subheading="Messages from your agency team."
+        />
+        <div className="text-center py-16">
+          <p className="text-[20px] font-serif italic text-[#8AAABB]">No messages yet — connect Gmail or wait for your agency to reach out.</p>
+          <button className="mt-4 text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline">Connect Gmail →</button>
+        </div>
+      </div>
+    );
+  }
+
   const threadMessages = activeThread
-    ? messageData.filter((m) => m.threadId === activeThread && !m.isInternal)
+    ? allMessages.filter((m) => m.threadId === activeThread && !m.isInternal)
     : [];
 
   return (
@@ -36,7 +97,6 @@ export default function CreatorInboxPage() {
         stats={[
           { value: String(unreadCount), label: "Unread" },
           { value: String(myThreads.length), label: "Conversations" },
-          { value: String(myTasks.filter((t) => !t.completed).length), label: "Open tasks" },
         ]}
       />
 
@@ -62,7 +122,7 @@ export default function CreatorInboxPage() {
             {/* Thread list */}
             <div className="w-[300px] border-r border-[#D8E8EE] overflow-y-auto">
               {myThreads.map((thread) => {
-                const lastMsg = messageData
+                const lastMsg = allMessages
                   .filter((m) => m.threadId === thread.id && !m.isInternal)
                   .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
                 return (
@@ -161,36 +221,15 @@ export default function CreatorInboxPage() {
 
       {/* Tasks view */}
       {view === "tasks" && (
-        <div className="space-y-2">
-          {myTasks.map((task) => (
-            <div key={task.id} className="bg-white border border-[#D8E8EE] rounded-[10px] p-4 flex items-center gap-3">
-              <input type="checkbox" defaultChecked={task.completed} className="rounded border-[#D8E8EE]" />
-              <div className="flex-1">
-                <p className={`text-[13px] font-sans font-500 ${task.completed ? "line-through text-[#8AAABB]" : "text-[#1A2C38]"}`}>{task.title}</p>
-                {task.fromMessage && <p className="text-[11px] font-sans text-[#8AAABB] mt-0.5">Assigned by Bright Talent Mgmt</p>}
-              </div>
-              {task.dueDate && <span className="text-[11px] font-mono text-[#8AAABB]">{task.dueDate}</span>}
-            </div>
-          ))}
-          {myTasks.length === 0 && (
-            <div className="text-center py-12"><p className="text-[14px] font-serif italic text-[#8AAABB]">No tasks assigned</p></div>
-          )}
+        <div className="text-center py-12">
+          <p className="text-[14px] font-serif italic text-[#8AAABB]">No tasks assigned</p>
         </div>
       )}
 
       {/* Announcements view */}
       {view === "announcements" && (
-        <div className="space-y-3">
-          {announcements.map((ann) => (
-            <div key={ann.id} className="bg-white border border-[#D8E8EE] rounded-[10px] p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Megaphone className="h-3.5 w-3.5 text-[#7BAFC8]" />
-                <span className="text-[10px] font-sans font-500 uppercase tracking-[1.5px] text-[#7BAFC8]">Announcement</span>
-                <span className="text-[10px] font-mono text-[#8AAABB]">{timeAgo(ann.sentAt)}</span>
-              </div>
-              <p className="text-[13px] font-sans text-[#1A2C38]">{ann.body}</p>
-            </div>
-          ))}
+        <div className="text-center py-12">
+          <p className="text-[14px] font-serif italic text-[#8AAABB]">No announcements yet</p>
         </div>
       )}
     </div>

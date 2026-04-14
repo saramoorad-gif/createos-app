@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { conflicts, exclusivityMap } from "@/lib/placeholder-data";
+import { useSupabaseQuery } from "@/lib/hooks";
 import { formatDate, timeAgo } from "@/lib/utils";
 import { CheckCircle2 } from "lucide-react";
 
@@ -34,7 +34,27 @@ export function ConflictsTab() {
   const [view, setView] = useState<"conflicts" | "calendar">("conflicts");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const activeCount = conflicts.filter(c => c.status === "active").length;
+  const { data: conflicts, loading } = useSupabaseQuery<any>("conflict_log");
+  const { data: exclusivityMap } = useSupabaseQuery<any>("exclusivity_map");
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
+      </div>
+    );
+  }
+
+  if (!loading && conflicts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No conflicts detected</p>
+        <p className="text-[13px] text-[#8AAABB]">The system scans for exclusivity overlaps automatically.</p>
+      </div>
+    );
+  }
+
+  const activeCount = conflicts.filter((c: any) => c.status === "active").length;
 
   return (
     <div>

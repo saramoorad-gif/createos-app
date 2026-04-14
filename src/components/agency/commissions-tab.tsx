@@ -1,7 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/layout/page-header";
-import { commissionPayouts, agencyRoster } from "@/lib/placeholder-data";
+import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
 import { Download, CheckCircle2 } from "lucide-react";
 
@@ -12,17 +12,37 @@ const statusStyles: Record<string, { bg: string; text: string; label: string }> 
 };
 
 export function CommissionsTab() {
-  const earned = commissionPayouts.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0);
-  const pending = commissionPayouts.filter(p => p.status === "pending" || p.status === "processing").reduce((s, p) => s + p.amount, 0);
-  const ytd = commissionPayouts.reduce((s, p) => s + p.amount, 0);
+  const { data: commissionPayouts, loading } = useSupabaseQuery<any>("commission_payouts");
+  const { data: agencyRoster } = useSupabaseQuery<any>("agency_creator_links");
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
+      </div>
+    );
+  }
+
+  if (!loading && commissionPayouts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No commissions tracked yet</p>
+        <p className="text-[13px] text-[#8AAABB]">Commissions are calculated automatically when deals are completed.</p>
+      </div>
+    );
+  }
+
+  const earned = commissionPayouts.filter((p: any) => p.status === "paid").reduce((s: number, p: any) => s + p.amount, 0);
+  const pending = commissionPayouts.filter((p: any) => p.status === "pending" || p.status === "processing").reduce((s: number, p: any) => s + p.amount, 0);
+  const ytd = commissionPayouts.reduce((s: number, p: any) => s + p.amount, 0);
 
   // Per-creator breakdown
-  const creatorTotals = agencyRoster.map(c => {
-    const total = commissionPayouts.filter(p => p.creatorId === c.id).reduce((s, p) => s + p.amount, 0);
+  const creatorTotals = agencyRoster.map((c: any) => {
+    const total = commissionPayouts.filter((p: any) => p.creatorId === c.id).reduce((s: number, p: any) => s + p.amount, 0);
     return { name: c.name, total, rate: c.commissionRate };
-  }).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
+  }).filter((c: any) => c.total > 0).sort((a: any, b: any) => b.total - a.total);
 
-  const maxCreatorTotal = Math.max(...creatorTotals.map(c => c.total), 1);
+  const maxCreatorTotal = Math.max(...creatorTotals.map((c: any) => c.total), 1);
 
   return (
     <div>

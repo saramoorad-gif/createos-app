@@ -2,9 +2,19 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { invoices, type Invoice } from "@/lib/placeholder-data";
+import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { X, Send, Bell, CheckCircle2 } from "lucide-react";
+
+interface Invoice {
+  id: string;
+  brand_name: string;
+  amount: number;
+  status: "draft" | "sent" | "paid" | "overdue";
+  due_date: string;
+  paid_date: string | null;
+  created_at: string;
+}
 
 const statusStyles: Record<string, { bg: string; text: string; label: string; rowBg?: string }> = {
   paid: { bg: "bg-[#E8F4EE]", text: "text-[#3D7A58]", label: "Paid" },
@@ -53,7 +63,28 @@ function InvoicePanel({ invoice, onClose }: { invoice: Invoice; onClose: () => v
 }
 
 export default function InvoicesPage() {
+  const { data: invoices, loading } = useSupabaseQuery<Invoice>("invoices", {
+    order: { column: "created_at", ascending: false },
+  });
   const [selected, setSelected] = useState<Invoice | null>(null);
+
+  if (loading) return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading...</p></div>;
+
+  if (invoices.length === 0) {
+    return (
+      <div>
+        <PageHeader
+          headline={<>Invoice <em className="italic text-[#7BAFC8]">tracker</em></>}
+          subheading="Send, track, and collect payment for your work."
+        />
+        <div className="text-center py-16">
+          <p className="text-[20px] font-serif italic text-[#8AAABB]">No invoices yet — create one from a deal.</p>
+          <button className="mt-4 text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline">Go to deals →</button>
+        </div>
+      </div>
+    );
+  }
+
   const outstanding = invoices.filter(i => i.status === "sent" || i.status === "overdue").reduce((s, i) => s + i.amount, 0);
   const paid = invoices.filter(i => i.status === "paid").reduce((s, i) => s + i.amount, 0);
   const overdueCount = invoices.filter(i => i.status === "overdue").length;
@@ -65,7 +96,7 @@ export default function InvoicesPage() {
         subheading="Send, track, and collect payment for your work."
         stats={[
           { value: formatCurrency(outstanding), label: "Outstanding" },
-          { value: formatCurrency(paid), label: "Paid this month", change: "+$2,800" },
+          { value: formatCurrency(paid), label: "Paid this month" },
           { value: String(overdueCount), label: "Overdue" },
         ]}
       />

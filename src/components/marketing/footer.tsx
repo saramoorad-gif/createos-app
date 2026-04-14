@@ -67,7 +67,7 @@ export function MarketingFooter() {
         </div>
 
         <div className="border-t border-[#DDD6C8] pt-6 flex items-center justify-between">
-          <span className="text-[18px] font-serif italic text-[#3D6E8A]">Create Suite</span>
+          <img src="/logo.svg" alt="Create Suite" className="h-7" />
           <p className="text-[13px] font-sans text-[#8AAABB]">
             &copy; 2026 Create Suite. All rights reserved.
           </p>

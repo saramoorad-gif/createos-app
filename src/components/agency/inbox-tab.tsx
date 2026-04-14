@@ -2,12 +2,19 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import {
-  messageThreads,
-  messageData,
-  type MessageThread,
-} from "@/lib/placeholder-data";
+import { useSupabaseQuery } from "@/lib/hooks";
 import { timeAgo } from "@/lib/utils";
+
+// Type formerly from placeholder-data
+interface MessageThread {
+  id: string;
+  threadType: "creator_facing" | "internal" | "brand_log";
+  creatorName: string | null;
+  creatorAvatar: string | null;
+  topic: string;
+  lastMessageAt: string;
+  unreadAgency: number;
+}
 import { Send, Paperclip, MessageSquare, Flag, CheckCircle2, Pin, Plus, Megaphone, FileText, Clock } from "lucide-react";
 
 type Section = "creators" | "internal" | "brand_log";
@@ -18,26 +25,44 @@ const sectionMap: Record<Section, MessageThread["threadType"]> = {
   brand_log: "brand_log",
 };
 
-function getThreads(type: Section) {
-  return messageThreads
-    .filter((t) => t.threadType === sectionMap[type])
-    .sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
-}
-
-function getMessages(threadId: string) {
-  return messageData
-    .filter((m) => m.threadId === threadId)
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-}
-
 export function InboxTab() {
   const [section, setSection] = useState<Section>("creators");
   const [activeThread, setActiveThread] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [showAnnouncement, setShowAnnouncement] = useState(false);
 
-  const threads = getThreads(section);
-  const messages = activeThread ? getMessages(activeThread) : [];
+  const { data: messageThreads, loading: threadsLoading } = useSupabaseQuery<MessageThread>("message_threads");
+  const { data: messageData, loading: messagesLoading } = useSupabaseQuery<any>("messages");
+
+  const loading = threadsLoading || messagesLoading;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
+      </div>
+    );
+  }
+
+  if (!loading && messageThreads.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No messages yet</p>
+        <button className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
+          Start a conversation with one of your creators
+        </button>
+      </div>
+    );
+  }
+
+  const threads = messageThreads
+    .filter((t) => t.threadType === sectionMap[section])
+    .sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+  const messages = activeThread
+    ? messageData
+        .filter((m: any) => m.threadId === activeThread)
+        .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    : [];
   const activeThreadData = messageThreads.find((t) => t.id === activeThread);
 
   const totalUnread = messageThreads.reduce((s, t) => s + t.unreadAgency, 0);

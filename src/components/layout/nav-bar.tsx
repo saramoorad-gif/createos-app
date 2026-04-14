@@ -45,9 +45,7 @@ export function NavBar() {
     >
       {/* Left — Logo */}
       <Link href="/dashboard" className="flex-shrink-0 mr-6">
-        <span className="text-[20px] font-serif text-[#1A2C38]">
-          Create<em className="italic text-[#7BAFC8]">OS</em>
-        </span>
+        <img src="/logo.svg" alt="Create Suite" className="h-8" />
       </Link>
 
       {/* Search (agency) */}

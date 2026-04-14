@@ -2,8 +2,35 @@
 
 import { useState, useMemo } from "react";
 import { ArrowLeft, Search, Pin, ChevronRight } from "lucide-react";
-import { agencyRoster, type CreatorProfile } from "@/lib/placeholder-data";
+import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
+
+// Type formerly from placeholder-data
+interface CreatorProfile {
+  id: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  tier: string;
+  platforms: { name: string; followers: number; engagement: number }[];
+  healthScore: number;
+  commissionRate: number;
+  dealsActive: number;
+  dealsCompleted: number;
+  totalEarned: number;
+  avgDealValue: number;
+  brandsWorkedWith: number;
+  repeatBrandRate: number;
+  joinedDate: string;
+  monthlyEarnings: { month: string; amount: number }[];
+  rateCard: { type: string; rate: string }[];
+  dealHistory: { brand: string; type: string; value: number; date: string; stage: string; commission: number; outcome: string }[];
+  brandRelationships: { brand: string; deals: number; totalValue: number; avgDeal: number; lastDeal: string; exclusivity: boolean; repeat: boolean }[];
+  contentPerformance: { deal: string; views: number; saves: number; shares: number; engagement: number; date: string }[];
+  rateHistory: { date: string; type: string; rate: number }[];
+  followerGrowth: { date: string; platform: string; count: number }[];
+  notes: { id: string; body: string; tag: string; date: string; pinned: boolean }[];
+}
 
 type ProfileSubTab = "overview" | "deals" | "brands" | "performance" | "rates" | "growth" | "notes";
 
@@ -674,17 +701,37 @@ function EmptyState({ message }: { message: string }) {
 export function RosterTab() {
   const [search, setSearch] = useState("");
   const [selectedCreator, setSelectedCreator] = useState<CreatorProfile | null>(null);
+  const { data: agencyRoster, loading } = useSupabaseQuery<CreatorProfile>("agency_creator_links");
 
   const filtered = useMemo(() => {
     if (!search.trim()) return agencyRoster;
     const q = search.toLowerCase();
     return agencyRoster.filter(
       (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.handle.toLowerCase().includes(q) ||
-        c.tier.toLowerCase().includes(q)
+        c.name?.toLowerCase().includes(q) ||
+        c.handle?.toLowerCase().includes(q) ||
+        c.tier?.toLowerCase().includes(q)
     );
-  }, [search]);
+  }, [search, agencyRoster]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
+      </div>
+    );
+  }
+
+  if (!loading && agencyRoster.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No creators on your roster yet</p>
+        <button className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
+          Invite creators to link their accounts
+        </button>
+      </div>
+    );
+  }
 
   if (selectedCreator) {
     return (

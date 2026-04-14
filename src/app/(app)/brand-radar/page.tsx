@@ -54,6 +54,20 @@ export default function BrandsPage() {
 
   const filtered = category === "All" ? brandRadarData : brandRadarData.filter(b => b.category === category);
 
+  if (!brandRadarData || brandRadarData.length === 0) {
+    return (
+      <div>
+        <PageHeader
+          headline={<>Brand <em className="italic text-[#7BAFC8]">radar</em></>}
+          subheading="AI-matched brands based on your niche, engagement, and content style."
+        />
+        <div className="text-center py-16">
+          <p className="text-[20px] font-serif italic text-[#8AAABB]">No brand matches yet — check back soon.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <PageHeader

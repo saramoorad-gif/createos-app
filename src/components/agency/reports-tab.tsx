@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { agencyRoster, agencyPipeline, commissionPayouts, campaigns } from "@/lib/placeholder-data";
+import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
 import { Download, FileText, BarChart3, Users, DollarSign } from "lucide-react";
 
@@ -18,9 +18,25 @@ const reportTypes: { key: ReportType; label: string; icon: typeof BarChart3; des
 export function ReportsTab() {
   const [activeReport, setActiveReport] = useState<ReportType | null>(null);
 
-  const totalPipeline = agencyPipeline.reduce((s, d) => s + d.value, 0);
-  const totalCommission = commissionPayouts.reduce((s, p) => s + p.amount, 0);
-  const topCreator = agencyRoster.sort((a, b) => b.totalEarned - a.totalEarned)[0];
+  const { data: agencyRoster, loading: rosterLoading } = useSupabaseQuery<any>("agency_creator_links");
+  const { data: agencyPipeline, loading: pipelineLoading } = useSupabaseQuery<any>("deals");
+  const { data: commissionPayouts, loading: commissionsLoading } = useSupabaseQuery<any>("commission_payouts");
+  const { data: campaigns, loading: campaignsLoading } = useSupabaseQuery<any>("campaigns");
+
+  const loading = rosterLoading || pipelineLoading || commissionsLoading || campaignsLoading;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
+      </div>
+    );
+  }
+
+  const totalPipeline = agencyPipeline.reduce((s: number, d: any) => s + (d.value || 0), 0);
+  const totalCommission = commissionPayouts.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+  const sortedRoster = [...agencyRoster].sort((a: any, b: any) => (b.totalEarned || 0) - (a.totalEarned || 0));
+  const topCreator = sortedRoster[0];
 
   return (
     <div>
@@ -31,6 +47,11 @@ export function ReportsTab() {
 
       {!activeReport ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {agencyRoster.length === 0 && agencyPipeline.length === 0 && commissionPayouts.length === 0 && campaigns.length === 0 && (
+            <div className="col-span-full flex flex-col items-center justify-center py-16">
+              <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No data available for reports yet</p>
+            </div>
+          )}
           {reportTypes.map(r => (
             <button
               key={r.key}
@@ -54,6 +75,11 @@ export function ReportsTab() {
           </button>
 
           {activeReport === "overview" && (
+            agencyPipeline.length === 0 && agencyRoster.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <p className="font-serif italic text-[16px] text-[#8AAABB]">No data available for this report yet.</p>
+              </div>
+            ) : (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">AGENCY OVERVIEW</p>
@@ -77,26 +103,32 @@ export function ReportsTab() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] mb-2">TOP PERFORMER</p>
-                    <p className="text-[15px] font-sans font-600 text-[#1A2C38]">{topCreator.name}</p>
-                    <p className="text-[13px] font-serif text-[#7BAFC8]">{formatCurrency(topCreator.totalEarned)} lifetime</p>
+                    <p className="text-[15px] font-sans font-600 text-[#1A2C38]">{topCreator?.name || "—"}</p>
+                    <p className="text-[13px] font-serif text-[#7BAFC8]">{formatCurrency(topCreator?.totalEarned || 0)} lifetime</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] mb-2">AVG DEAL SIZE</p>
-                    <p className="text-[22px] font-serif text-[#1A2C38]">{formatCurrency(totalPipeline / agencyPipeline.length)}</p>
+                    <p className="text-[22px] font-serif text-[#1A2C38]">{formatCurrency(agencyPipeline.length > 0 ? totalPipeline / agencyPipeline.length : 0)}</p>
                   </div>
                 </div>
               </div>
             </div>
+            )
           )}
 
           {activeReport === "creator" && (
+            agencyRoster.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <p className="font-serif italic text-[16px] text-[#8AAABB]">No data available for this report yet.</p>
+              </div>
+            ) : (
             <div>
               <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-4">CREATOR COMPARISON</p>
               <div className="bg-white border border-[#D8E8EE] rounded-[10px] overflow-hidden">
                 <div className="grid grid-cols-7 gap-4 px-5 py-3 text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] border-b border-[#D8E8EE]">
                   <span>Creator</span><span>Total Earned</span><span>Avg Deal</span><span>Completed</span><span>Active</span><span>Health</span><span>Repeat %</span>
                 </div>
-                {agencyRoster.map(c => (
+                {agencyRoster.map((c: any) => (
                   <div key={c.id} className="grid grid-cols-7 gap-4 px-5 py-3.5 items-center border-b border-[#D8E8EE] last:border-b-0">
                     <span className="text-[13px] font-sans font-500 text-[#1A2C38]">{c.name}</span>
                     <span className="text-[14px] font-serif text-[#1A2C38]">{formatCurrency(c.totalEarned)}</span>
@@ -113,13 +145,19 @@ export function ReportsTab() {
               </div>
               <button className="mt-4 flex items-center gap-1.5 text-[12px] font-sans font-500 text-[#7BAFC8] hover:underline"><Download className="h-3.5 w-3.5" /> Export CSV</button>
             </div>
+            )
           )}
 
           {activeReport === "brand" && (
+            campaigns.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <p className="font-serif italic text-[16px] text-[#8AAABB]">No data available for this report yet.</p>
+              </div>
+            ) : (
             <div>
               <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-4">BRAND REPORT — SELECT A CAMPAIGN</p>
               <div className="space-y-3">
-                {campaigns.map(c => (
+                {campaigns.map((c: any) => (
                   <div key={c.id} className="bg-white border border-[#D8E8EE] rounded-[10px] p-5">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-[15px] font-sans font-600 text-[#1A2C38]">{c.name}</h4>
@@ -136,9 +174,15 @@ export function ReportsTab() {
                 ))}
               </div>
             </div>
+            )
           )}
 
           {activeReport === "commission" && (
+            commissionPayouts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <p className="font-serif italic text-[16px] text-[#8AAABB]">No data available for this report yet.</p>
+              </div>
+            ) : (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB]">COMMISSION SUMMARY — APRIL 2026</p>
@@ -148,7 +192,7 @@ export function ReportsTab() {
                 <div className="grid grid-cols-5 gap-4 px-5 py-3 text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] border-b border-[#D8E8EE]">
                   <span>Creator</span><span>Deal</span><span>Deal Value</span><span>Rate</span><span className="text-right">Commission</span>
                 </div>
-                {commissionPayouts.map(p => (
+                {commissionPayouts.map((p: any) => (
                   <div key={p.id} className="grid grid-cols-5 gap-4 px-5 py-3.5 items-center border-b border-[#D8E8EE] last:border-b-0">
                     <span className="text-[13px] font-sans font-500 text-[#1A2C38]">{p.creator}</span>
                     <span className="text-[12px] font-sans text-[#8AAABB]">{p.deal}</span>
@@ -159,10 +203,11 @@ export function ReportsTab() {
                 ))}
                 <div className="grid grid-cols-5 gap-4 px-5 py-3 bg-[#FAF8F4] border-t border-[#D8E8EE]">
                   <span className="text-[12px] font-sans font-600 text-[#1A2C38] col-span-4">Total</span>
-                  <span className="text-[16px] font-serif text-[#3D7A58] text-right">{formatCurrency(commissionPayouts.reduce((s, p) => s + p.amount, 0))}</span>
+                  <span className="text-[16px] font-serif text-[#3D7A58] text-right">{formatCurrency(commissionPayouts.reduce((s: number, p: any) => s + p.amount, 0))}</span>
                 </div>
               </div>
             </div>
+            )
           )}
         </div>
       )}

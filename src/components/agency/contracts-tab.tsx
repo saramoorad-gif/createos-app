@@ -1,13 +1,56 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import {
-  agencyContracts, contractTemplates, exclusivityMap,
-  contractStageLabels, contractStageColors,
-  type AgencyContract, type ContractStage, type ContractTemplate
-} from "@/lib/placeholder-data";
+import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency, formatDate, timeAgo } from "@/lib/utils";
+
+// Types formerly from placeholder-data
+type ContractStage = "draft" | "sent_to_brand" | "under_review" | "redlined" | "countersigned" | "fully_executed" | "archived";
+
+const contractStageLabels: Record<ContractStage, string> = {
+  draft: "Draft", sent_to_brand: "Sent to Brand", under_review: "Under Review",
+  redlined: "Redlined", countersigned: "Countersigned", fully_executed: "Fully Executed", archived: "Archived",
+};
+
+const contractStageColors: Record<ContractStage, { bg: string; text: string }> = {
+  draft: { bg: "bg-[#F2EEE8]", text: "text-[#9A9088]" },
+  sent_to_brand: { bg: "bg-[#FBF5EC]", text: "text-[#D4A030]" },
+  under_review: { bg: "bg-[#FBF5EC]", text: "text-[#D4A030]" },
+  redlined: { bg: "bg-[#FEF0EB]", text: "text-[#E05C3A]" },
+  countersigned: { bg: "bg-[#EBF5EB]", text: "text-[#4A9060]" },
+  fully_executed: { bg: "bg-[#EBF5EB]", text: "text-[#4A9060]" },
+  archived: { bg: "bg-[#F2EEE8]", text: "text-[#9A9088]" },
+};
+
+interface ContractTemplate {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  variables: string[];
+}
+
+interface AgencyContract {
+  id: string;
+  creator: string;
+  creatorId: string;
+  brand: string;
+  type: string;
+  value: number;
+  signedDate: string | null;
+  expiryDate: string;
+  exclusivityCategory: string | null;
+  exclusivityDays: number | null;
+  stage: ContractStage;
+  status: "active" | "expired" | "pending_signature" | "disputed";
+  aiAnalysis: any;
+  legacyAnalysis: any;
+  fileName: string;
+  versions: any[];
+  signatures: any[];
+  alerts: any[];
+}
 import {
   X, Upload, FileText, AlertTriangle, CheckCircle2, Clock,
   Send, Shield, ChevronRight, Search, Copy, Eye
@@ -55,9 +98,9 @@ function variableLabel(v: string): string {
   return v.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
-function allAlerts() {
-  return agencyContracts.flatMap(c =>
-    c.alerts.map(a => ({ ...a, contractBrand: c.brand, contractCreator: c.creator }))
+function allAlerts(contracts: AgencyContract[]) {
+  return contracts.flatMap(c =>
+    (c.alerts || []).map((a: any) => ({ ...a, contractBrand: c.brand, contractCreator: c.creator }))
   );
 }
 
@@ -357,11 +400,34 @@ export function ContractsTab() {
   const [editingTemplate, setEditingTemplate] = useState<ContractTemplate | null>(null);
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
 
+  const { data: agencyContracts, loading } = useSupabaseQuery<AgencyContract>("contracts");
+  const { data: contractTemplates } = useSupabaseQuery<ContractTemplate>("contract_templates");
+  const { data: exclusivityMap } = useSupabaseQuery<any>("exclusivity_map");
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
+      </div>
+    );
+  }
+
+  if (!loading && agencyContracts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No contracts yet</p>
+        <button className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
+          Upload a contract or create one from a template
+        </button>
+      </div>
+    );
+  }
+
   const pending = agencyContracts.filter(c => c.status === "pending_signature").length;
   const active = agencyContracts.filter(c => c.status === "active").length;
-  const totalAlerts = agencyContracts.reduce((acc, c) => acc + c.alerts.filter(a => !a.dismissed).length, 0);
+  const totalAlerts = agencyContracts.reduce((acc, c) => acc + (c.alerts || []).filter((a: any) => !a.dismissed).length, 0);
 
-  const filteredContracts = useMemo(() => {
+  const filteredContracts = (() => {
     let list = agencyContracts;
     if (stageFilter !== "all") {
       const stages = stageFilterMap[stageFilter];
@@ -376,11 +442,9 @@ export function ContractsTab() {
       );
     }
     return list;
-  }, [stageFilter, searchQuery]);
+  })();
 
-  const alerts = useMemo(() => {
-    return allAlerts().filter(a => !a.dismissed && !dismissedAlerts.includes(a.id));
-  }, [dismissedAlerts]);
+  const alerts = allAlerts(agencyContracts).filter(a => !a.dismissed && !dismissedAlerts.includes(a.id));
 
   const filterPills: { key: StageFilter; label: string }[] = [
     { key: "all", label: "All" },

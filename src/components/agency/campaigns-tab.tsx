@@ -17,8 +17,30 @@ import {
   Eye,
   Download,
 } from "lucide-react";
-import { campaigns, agencyRoster, type Campaign } from "@/lib/placeholder-data";
+import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
+// Type formerly from placeholder-data
+interface Campaign {
+  id: string;
+  name: string;
+  brand: string;
+  brandContact: string;
+  brief: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  budget: number;
+  agencyCommission: number;
+  completionPct: number;
+  creators: {
+    creatorId: string;
+    name: string;
+    allocation: number;
+    status: string;
+    deliverables: string[];
+  }[];
+}
 
 // ---------------------------------------------------------------------------
 // Status pill
@@ -113,6 +135,7 @@ const columnMeta: Record<string, { label: string; icon: React.ReactNode }> = {
 // ---------------------------------------------------------------------------
 function CreateCampaignModal({ onClose }: { onClose: () => void }) {
   const [selectedCreators, setSelectedCreators] = useState<string[]>([]);
+  const { data: agencyRoster } = useSupabaseQuery<any>("agency_creator_links");
 
   function toggleCreator(id: string) {
     setSelectedCreators((prev) =>
@@ -317,6 +340,7 @@ function OverviewSubTab({ campaign }: { campaign: Campaign }) {
 // Creators sub-tab
 // ---------------------------------------------------------------------------
 function CreatorsSubTab({ campaign }: { campaign: Campaign }) {
+  const { data: agencyRoster } = useSupabaseQuery<any>("agency_creator_links");
   const approvalMap: Record<string, { label: string; cls: string }> = {
     in_progress: { label: "Approved", cls: "text-emerald-600" },
     delivered: { label: "Approved", cls: "text-emerald-600" },
@@ -749,6 +773,30 @@ function CampaignDetail({
 export function CampaignsTab() {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { data: campaigns, loading } = useSupabaseQuery<Campaign>("campaigns");
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8]" />
+      </div>
+    );
+  }
+
+  if (!loading && campaigns.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No campaigns yet</p>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]"
+        >
+          Create your first multi-creator campaign
+        </button>
+        {showCreateModal && <CreateCampaignModal onClose={() => setShowCreateModal(false)} />}
+      </div>
+    );
+  }
 
   const activeCampaigns = campaigns.filter((c) => c.status === "active");
   const totalBudget = campaigns.reduce((s, c) => s + c.budget, 0);

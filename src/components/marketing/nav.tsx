@@ -20,8 +20,8 @@ export function MarketingNav() {
       <header className="sticky top-0 z-50 w-full backdrop-blur-md" style={{ background: "rgba(250,248,244,.94)" }}>
         <div className="max-w-[1200px] mx-auto flex items-center justify-between px-6 h-16">
           {/* Logo */}
-          <Link href="/" className="text-[22px] font-serif italic text-[#3D6E8A]">
-            Create Suite
+          <Link href="/" className="flex-shrink-0">
+            <img src="/logo.svg" alt="Create Suite" className="h-8" />
           </Link>
 
           {/* Desktop nav */}
