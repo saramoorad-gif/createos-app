@@ -175,7 +175,7 @@ function ContractPanel({ contract, onClose }: { contract: AgencyContract; onClos
                     <div>
                       <span className="text-[12px] font-sans text-[#8AAABB]">Items</span>
                       <ul className="mt-1 space-y-0.5">
-                        {analysis.deliverablesList.map((d, i) => (
+                        {analysis.deliverablesList.map((d: string, i: number) => (
                           <li key={i} className="text-[13px] font-sans text-[#1A2C38] pl-3 relative before:content-[''] before:absolute before:left-0 before:top-[8px] before:h-[4px] before:w-[4px] before:rounded-full before:bg-[#8AAABB]">{d}</li>
                         ))}
                       </ul>
