@@ -497,9 +497,14 @@ export function ContractsTab() {
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No contracts yet</p>
-        <button className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
-          Upload a contract or create one from a template
-        </button>
+        <div className="flex gap-3">
+          <button onClick={() => setView("templates")} className="rounded-[8px] bg-[#1E3F52] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#2a5269]">
+            Create from template →
+          </button>
+          <button onClick={() => alert("Upload a contract PDF — file uploads coming soon")} className="rounded-[8px] border-[1.5px] border-[#D8E8EE] px-5 py-2.5 text-[13px] font-medium text-[#1A2C38] hover:bg-[#F2F8FB]">
+            Upload PDF
+          </button>
+        </div>
       </div>
     );
   }

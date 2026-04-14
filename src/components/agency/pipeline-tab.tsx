@@ -749,8 +749,11 @@ export function PipelineTab() {
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No deals in pipeline yet</p>
-        <button className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
-          Create a deal for one of your creators
+        <button
+          onClick={() => setQuickAddCreator({ name: "New Creator", id: "" })}
+          className="rounded-[8px] bg-[#1E3F52] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#2a5269]"
+        >
+          Create your first deal →
         </button>
       </div>
     );

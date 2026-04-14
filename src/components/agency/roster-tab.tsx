@@ -701,6 +701,8 @@ function EmptyState({ message }: { message: string }) {
 export function RosterTab() {
   const [search, setSearch] = useState("");
   const [selectedCreator, setSelectedCreator] = useState<CreatorProfile | null>(null);
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
   const { data: agencyRoster, loading } = useSupabaseQuery<CreatorProfile>("agency_creator_links");
 
   const filtered = useMemo(() => {
@@ -726,9 +728,39 @@ export function RosterTab() {
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No creators on your roster yet</p>
-        <button className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
-          Invite creators to link their accounts
+        <button
+          onClick={() => setShowInvite(true)}
+          className="rounded-[8px] bg-[#1E3F52] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#2a5269]"
+        >
+          Invite creators →
         </button>
+
+        {showInvite && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(26,44,56,.4)", backdropFilter: "blur(4px)" }}>
+            <div className="bg-white rounded-[16px] border-[1.5px] border-[#D8E8EE] w-full max-w-sm overflow-hidden">
+              <div className="bg-[#F2F8FB] px-6 py-4 border-b border-[#D8E8EE]">
+                <h3 className="text-[18px] font-serif text-[#1A2C38]">Invite a creator</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Creator Email</label>
+                  <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="creator@example.com" className="w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] focus:outline-none focus:border-[#7BAFC8]" />
+                </div>
+                <p className="text-[12px] font-sans text-[#8AAABB]">They&apos;ll receive an email with a link to connect their Create Suite account to your agency.</p>
+                <div className="flex gap-2">
+                  <button onClick={() => { setShowInvite(false); setInviteEmail(""); }} className="flex-1 border-[1.5px] border-[#D8E8EE] rounded-[8px] py-2.5 text-[13px] font-sans text-[#1A2C38]" style={{ fontWeight: 500 }}>Cancel</button>
+                  <button onClick={async () => {
+                    if (inviteEmail) {
+                      await fetch("/api/email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: inviteEmail, subject: "You've been invited to join Create Suite", body: "<p>An agency has invited you to connect your Create Suite account. <a href='https://createsuite.co/signup'>Sign up here</a> to get started.</p>" }) });
+                      alert("Invite sent to " + inviteEmail);
+                      setShowInvite(false); setInviteEmail("");
+                    }
+                  }} className="flex-1 bg-[#1E3F52] text-white rounded-[8px] py-2.5 text-[13px] font-sans" style={{ fontWeight: 600 }}>Send invite</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
