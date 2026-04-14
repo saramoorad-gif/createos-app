@@ -286,8 +286,8 @@ function LoadingState() {
 }
 
 function Initials({ name }: { name: string }) {
-  const parts = (name || "?").split(" ");
-  const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0][0];
+  const parts = (name || "?").trim().split(" ").filter(Boolean);
+  const initials = parts.length > 1 ? `${parts[0]?.[0] || ""}${parts[1]?.[0] || ""}` : parts[0]?.[0] || "?";
   return (
     <div className="h-8 w-8 rounded-full bg-[#F2F8FB] border border-[#D8E8EE] flex items-center justify-center text-[11px] font-sans text-[#7BAFC8] flex-shrink-0" style={{ fontWeight: 700 }}>
       {initials.toUpperCase()}
@@ -320,11 +320,11 @@ const creatorTabs = [
 function AgencyProfileTab() {
   const { profile } = useAuth();
   const { data: settings, loading } = useSupabaseQuery<AgencySetting>("agency_settings", {
-    eq: profile?.id ? { column: "id", value: profile.id } : undefined,
+    eq: profile?.id ? { column: "agency_id", value: profile.id } : undefined,
   });
   const mutation = useSupabaseMutation("agency_settings");
 
-  const s = settings[0];
+  const s = settings && settings.length > 0 ? settings[0] : null;
   const [form, setForm] = useState({
     agency_name: "", bio: "", contact_name: "", contact_email: "", contact_phone: "",
     website: "", instagram: "", linkedin: "", tiktok: "", agency_type: "talent_management",
