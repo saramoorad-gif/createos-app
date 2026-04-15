@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { needsCheckout } from "@/lib/feature-gates";
@@ -10,7 +10,8 @@ interface SubscriptionGateProps {
   children: React.ReactNode;
 }
 
-export function SubscriptionGate({ children }: SubscriptionGateProps) {
+// Inner component that uses useSearchParams — wrapped in Suspense below
+function SubscriptionGateInner({ children }: SubscriptionGateProps) {
   const { profile, loading, refreshProfile } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -27,7 +28,6 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
       return;
     }
     if (pollAttempts >= 15) {
-      // Give up polling after 15 attempts — let normal flow handle it
       setWaitingForWebhook(false);
       return;
     }
@@ -42,13 +42,10 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
   useEffect(() => {
     if (loading) return;
     if (!profile) return;
-    if (waitingForWebhook) return; // Don't redirect while we're waiting for webhook
+    if (waitingForWebhook) return;
 
-    // Paid tier without active subscription → redirect to checkout
     if (needsCheckout(profile)) {
-      // Only redirect if we're not already on checkout/onboarding
       if (!pathname.startsWith("/checkout") && !pathname.startsWith("/onboarding")) {
-        // Fallback to 'ugc' if account_type is somehow missing
         const planKey = profile.account_type && profile.account_type !== "free"
           ? profile.account_type
           : "ugc";
@@ -57,7 +54,6 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
     }
   }, [loading, profile, pathname, router, waitingForWebhook]);
 
-  // Show loading screen while waiting for webhook after checkout
   if (waitingForWebhook) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -74,7 +70,6 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
     );
   }
 
-  // If past_due, show warning banner but allow access
   const showPastDueWarning = profile?.subscription_status === "past_due";
 
   return (
@@ -98,5 +93,14 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
       )}
       {children}
     </>
+  );
+}
+
+// Wrapper with Suspense boundary (required by useSearchParams)
+export function SubscriptionGate({ children }: SubscriptionGateProps) {
+  return (
+    <Suspense fallback={<>{children}</>}>
+      <SubscriptionGateInner>{children}</SubscriptionGateInner>
+    </Suspense>
   );
 }
