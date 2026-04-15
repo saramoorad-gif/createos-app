@@ -79,9 +79,9 @@ const features = [
     mockup: {
       title: "AI Deal Scanner",
       items: [
-        { brand: "Glow Recipe", amount: "$2,500", niche: "Beauty", status: "High confidence" },
-        { brand: "Olipop", amount: "$1,800", niche: "Beverage", status: "Medium" },
-        { brand: "Rare Beauty", amount: "$3,200", niche: "Makeup", status: "High" },
+        { brand: "Glow Recipe", budget: "$2,500", niche: "Beauty", status: "Open" },
+        { brand: "Olipop", budget: "$1,800", niche: "Beverage", status: "Closing Soon" },
+        { brand: "Rare Beauty", budget: "$3,200", niche: "Makeup", status: "Open" },
       ],
     },
   },
@@ -442,7 +442,8 @@ function InvoiceMockup({ items }: { items: { brand: string; amount: string; stat
   );
 }
 
-const mockupRenderers = [DealPipelineMockup, ContractMockup, RateTableMockup, BrandRadarMockup, MediaKitMockup, InvoiceMockup];
+// Feature order: DEAL PIPELINE, AI DEAL SCANNER, AI CONTRACTS, REFERRAL PROGRAM, RATE CALCULATOR, BRAND RADAR, MEDIA KIT, INVOICING
+const mockupRenderers = [DealPipelineMockup, BrandRadarMockup, ContractMockup, MediaKitMockup, RateTableMockup, BrandRadarMockup, MediaKitMockup, InvoiceMockup];
 
 /* ═══════════════════════════════════════════════════════════
    PAGE
