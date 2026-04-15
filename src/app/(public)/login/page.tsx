@@ -104,7 +104,7 @@ function LoginContent() {
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-[28px] font-serif text-[#1A2C38]">
-            create<em className="italic text-[#7BAFC8]">OS</em>
+            create<em className="italic text-[#7BAFC8]">Suite</em>
           </h1>
           <p className="text-[13px] font-sans text-[#8AAABB] mt-1">
             Sign in to your creator dashboard
@@ -186,7 +186,7 @@ function LoginContent() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="brianna@example.com"
+                      placeholder="you@example.com"
                       required
                       className={inputClass}
                     />
@@ -227,7 +227,7 @@ function LoginContent() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="brianna@example.com"
+                      placeholder="you@example.com"
                       required
                       className={inputClass}
                     />

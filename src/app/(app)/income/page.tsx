@@ -267,10 +267,15 @@ function AffiliateTab() {
 
   async function handleLogEarning() {
     if (!showLogEarning || !earningAmount) return;
+    const parsedAmount = parseFloat(earningAmount);
+    if (isNaN(parsedAmount) || parsedAmount < 0) {
+      toast("error", "Please enter a valid amount");
+      return;
+    }
     const created = await insertEarning({
       affiliate_link_id: showLogEarning,
       month: earningMonth,
-      amount: parseFloat(earningAmount),
+      amount: parsedAmount,
       notes: earningNotes,
     });
     if (created) { setEarnings([...earnings, created as AffiliateEarning]); toast("success", "Earnings logged"); }

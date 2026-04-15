@@ -21,7 +21,7 @@ export default function AppLayout({
           <LoadingBar />
           <NavBar />
           <SubscriptionGate>
-            <main className="max-w-[1200px] mx-auto px-12 pb-16">
+            <main className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-12 pb-16">
               <ErrorBoundary>
                 {children}
               </ErrorBoundary>

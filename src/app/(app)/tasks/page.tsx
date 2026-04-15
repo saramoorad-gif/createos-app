@@ -47,6 +47,8 @@ const categoryConfig: Record<string, { label: string; color: string }> = {
 function formatDueDate(dateStr: string | null): { text: string; overdue: boolean; soon: boolean } {
   if (!dateStr) return { text: "No due date", overdue: false, soon: false };
   const due = new Date(dateStr + "T23:59:59");
+  if (isNaN(due.getTime())) return { text: "Invalid date", overdue: false, soon: false };
+
   const now = new Date();
   const diff = due.getTime() - now.getTime();
   const days = Math.ceil(diff / 86400000);

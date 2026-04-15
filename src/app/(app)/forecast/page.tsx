@@ -99,7 +99,14 @@ function ForecastContent() {
       (s, inv) => s + (inv.amount || 0),
       0
     );
-    const monthlyAvg = recentPaid.length > 0 ? recentTotal / 3 : 0;
+    // Divide by number of distinct months in the recent paid data, not a fixed 3
+    const distinctMonths = new Set(
+      recentPaid.map(inv => {
+        const d = new Date(inv.paid_date || inv.created_at);
+        return `${d.getFullYear()}-${d.getMonth()}`;
+      })
+    ).size;
+    const monthlyAvg = distinctMonths > 0 ? recentTotal / distinctMonths : 0;
     const annualProjected = monthlyAvg * 12;
 
     return { thisMonthEarned, pipeline, monthlyAvg, annualProjected };

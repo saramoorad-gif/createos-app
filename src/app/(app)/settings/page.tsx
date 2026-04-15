@@ -34,8 +34,8 @@ export default function SettingsPage() {
   return (
     <div>
       <PageHeader headline={<><em className="italic text-[#7BAFC8]">Settings</em></>} subheading="Manage your account and preferences." />
-      <div className="flex gap-8">
-        <div className="w-48 flex-shrink-0 space-y-1">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+        <div className="w-full md:w-48 flex-shrink-0 flex md:flex-col gap-1 space-y-0 md:space-y-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
           {tabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;

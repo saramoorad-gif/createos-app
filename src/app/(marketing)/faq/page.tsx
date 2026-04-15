@@ -10,9 +10,9 @@ interface FAQItem {
 
 const creatorFAQs: FAQItem[] = [
   {
-    question: "What is CreateOS?",
+    question: "What is Create Suite?",
     answer:
-      "CreateOS is the business operating system inside Create Suite, built specifically for content creators. It brings your deals, contracts, invoices, audience analytics, rate benchmarking, and media kit into a single dashboard so you can run your creator business without juggling a dozen different tools.",
+      "Create Suite is the business operating system built specifically for content creators. It brings your deals, contracts, invoices, audience analytics, rate benchmarking, and media kit into a single dashboard so you can run your creator business without juggling a dozen different tools.",
   },
   {
     question: "How is this different from a spreadsheet or Notion template?",

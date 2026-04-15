@@ -88,21 +88,32 @@ export default function InvoicesPage() {
     } catch (e) { console.error("Failed to mark paid:", e); toast("error", "Failed to mark as paid"); }
   }
 
+  function escapeHtml(str: string): string {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   async function sendReminder(inv: Invoice) {
-    // Prompt user for brand contact email since we don't have it stored
     const brandEmail = window.prompt(`Send payment reminder to ${inv.brand_name}:\n\nEnter the brand contact email:`);
     if (!brandEmail || !brandEmail.includes("@")) {
       if (brandEmail !== null) toast("error", "Valid email required");
       return;
     }
     try {
+      const safeBrand = escapeHtml(inv.brand_name);
+      const safeAmount = escapeHtml(String(inv.amount));
+      const safeDate = escapeHtml(inv.due_date || "");
       const res = await fetch("/api/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to: brandEmail,
-          subject: `Payment Reminder — Invoice for ${inv.brand_name}`,
-          body: `<p>Hi,</p><p>This is a friendly reminder that invoice for <strong>${inv.brand_name}</strong> in the amount of <strong>$${inv.amount}</strong> is due on <strong>${inv.due_date}</strong>.</p><p>Please let us know if you have any questions.</p><p>Best,<br/>Create Suite</p>`,
+          subject: `Payment Reminder — Invoice for ${safeBrand}`,
+          body: `<p>Hi,</p><p>This is a friendly reminder that invoice for <strong>${safeBrand}</strong> in the amount of <strong>$${safeAmount}</strong> is due on <strong>${safeDate}</strong>.</p><p>Please let us know if you have any questions.</p><p>Best,<br/>Create Suite</p>`,
         }),
       });
       if (!res.ok) throw new Error("Email send failed");

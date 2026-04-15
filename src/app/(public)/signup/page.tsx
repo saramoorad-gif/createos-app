@@ -214,7 +214,7 @@ function SignUpContent() {
                 </div>
                 <div>
                   <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Email</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="brianna@example.com" required className={inputClass} />
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required className={inputClass} />
                 </div>
                 <div>
                   <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Password</label>

@@ -94,16 +94,20 @@ export default function DealsPage() {
 
   async function handleSave() {
     if (!fBrand.trim()) { toast("error", "Brand name is required"); return; }
+    // Parse and validate numeric values
+    const parsedValue = parseFloat(fValue);
+    const parsedExclDays = parseInt(fExclDays);
+
     const payload: Record<string, any> = {
       brand_name: fBrand.trim(),
       deal_type: fType,
       platform: fPlat,
-      value: parseFloat(fValue) || 0,
+      value: isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue,
       deliverables: fDeliv.trim(),
       due_date: fDue || null,
       stage: fStage,
       notes: fNotes.trim(),
-      exclusivity_days: parseInt(fExclDays) || null,
+      exclusivity_days: isNaN(parsedExclDays) || parsedExclDays <= 0 ? null : parsedExclDays,
       exclusivity_category: fExclCat.trim() || null,
     };
 

@@ -99,17 +99,19 @@ function CreatorDashboard() {
     .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime())
     .slice(0, 3);
 
-  // Monthly income breakdown
+  // Monthly income breakdown — last 6 months (with correct year handling)
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const currentMonth = now.getMonth();
   const monthlyIncome = Array.from({ length: 6 }, (_, i) => {
-    const month = (currentMonth - 5 + i + 12) % 12;
+    const target = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    const targetMonth = target.getMonth();
+    const targetYear = target.getFullYear();
     const monthInvoices = invoices.filter(inv => {
-      if (inv.status !== "paid") return false;
+      if (inv.status !== "paid" || !inv.due_date) return false;
       const d = new Date(inv.due_date);
-      return d.getMonth() === month;
+      if (isNaN(d.getTime())) return false;
+      return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
     });
-    return { month: monthNames[month], total: monthInvoices.reduce((s, inv) => s + inv.amount, 0) };
+    return { month: monthNames[targetMonth], total: monthInvoices.reduce((s, inv) => s + (inv.amount || 0), 0) };
   });
   const maxIncome = Math.max(...monthlyIncome.map(m => m.total), 1);
 

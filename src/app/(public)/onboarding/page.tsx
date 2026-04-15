@@ -106,7 +106,7 @@ function CreatorOnboarding() {
           <div className="space-y-4">
             <div>
               <h2 className="text-[18px] font-serif text-[#1A2C38]">Represented by an <em className="italic text-[#7BAFC8]">agency</em>?</h2>
-              <p className="text-[13px] font-sans text-[#8AAABB] mt-1">If your agency uses CreateOS, link your accounts.</p>
+              <p className="text-[13px] font-sans text-[#8AAABB] mt-1">If your agency uses Create Suite, link your accounts.</p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setHasAgency(true)} className={`rounded-[10px] border px-3 py-3 text-[13px] font-sans font-medium ${hasAgency === true ? "border-[#7BAFC8] bg-[#7BAFC8]/5 text-[#7BAFC8]" : "border-[#D8E8EE] text-[#8AAABB]"}`}>Yes</button>
@@ -235,7 +235,7 @@ function AgencyOnboarding() {
             </div>
             <div>
               <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Or enter creator emails</label>
-              <textarea className={`${inputClass} resize-none`} rows={3} value={emails} onChange={e => setEmails(e.target.value)} placeholder={"brianna@example.com\nmaya@example.com"} />
+              <textarea className={`${inputClass} resize-none`} rows={3} value={emails} onChange={e => setEmails(e.target.value)} placeholder={"you@example.com\nmaya@example.com"} />
             </div>
             <div className="flex gap-2">
               <button onClick={() => setStep(3)} className="flex-1 border border-[#D8E8EE] rounded-[10px] px-4 py-2.5 text-[13px] font-sans font-500 text-[#8AAABB] hover:bg-[#FAF8F4]">Skip for now</button>
