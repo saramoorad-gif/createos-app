@@ -455,7 +455,7 @@ export default function ForAgenciesPage() {
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <Link
-              href="/login"
+              href="/contact?topic=demo"
               className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors"
             >
               Book a demo
@@ -652,7 +652,7 @@ export default function ForAgenciesPage() {
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <Link
-              href="/login"
+              href="/contact?topic=demo"
               className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-8 py-4 rounded-[10px] hover:bg-[#2a5269] transition-colors"
             >
               Book a demo

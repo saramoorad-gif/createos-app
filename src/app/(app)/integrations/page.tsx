@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
@@ -27,7 +27,7 @@ export default function IntegrationsPage() {
   const { toast } = useToast();
 
   // Check URL params for successful connection
-  useState(() => {
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const connected = params.get("connected");
@@ -38,7 +38,7 @@ export default function IntegrationsPage() {
         window.history.replaceState({}, "", "/integrations");
       }
     }
-  });
+  }, [refreshProfile]);
 
   function handleConnect(oauthType: string) {
     if (!user) return;

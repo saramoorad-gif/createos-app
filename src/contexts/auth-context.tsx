@@ -80,15 +80,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function fetchProfile(userId: string) {
-    const sb = getSupabase();
-    const { data } = await sb
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    try {
+      const sb = getSupabase();
+      const { data, error } = await sb
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
 
-    setProfile(data as Profile | null);
-    setLoading(false);
+      if (error) {
+        console.error("Profile fetch error:", error);
+      }
+      setProfile(data as Profile | null);
+    } catch (e) {
+      console.error("Failed to fetch profile:", e);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function signOut() {

@@ -90,7 +90,7 @@ export default function InvoicesPage() {
 
   async function sendReminder(inv: Invoice) {
     try {
-      await fetch("/api/email", {
+      const res = await fetch("/api/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -99,9 +99,10 @@ export default function InvoicesPage() {
           body: `<p>Hi,</p><p>This is a friendly reminder that invoice <strong>${inv.brand_name}</strong> for <strong>$${inv.amount}</strong> is due on <strong>${inv.due_date}</strong>.</p><p>Please let us know if you have any questions.</p><p>Best,<br/>Create Suite</p>`,
         }),
       });
-      toast("info", "Reminder sent for " + inv.brand_name);
+      if (!res.ok) throw new Error("Email send failed");
+      toast("success", "Reminder sent for " + inv.brand_name);
     } catch {
-      toast("info", "Reminder sent for " + inv.brand_name);
+      toast("error", "Failed to send reminder. Please try again.");
     }
   }
 

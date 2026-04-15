@@ -23,7 +23,11 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
     if (needsCheckout(profile)) {
       // Only redirect if we're not already on checkout/onboarding
       if (!pathname.startsWith("/checkout") && !pathname.startsWith("/onboarding")) {
-        router.push(`/checkout?plan=${profile.account_type}`);
+        // Fallback to 'ugc' if account_type is somehow missing
+        const planKey = profile.account_type && profile.account_type !== "free"
+          ? profile.account_type
+          : "ugc";
+        router.push(`/checkout?plan=${planKey}`);
       }
     }
   }, [loading, profile, pathname, router]);

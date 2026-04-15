@@ -37,8 +37,11 @@ export async function POST(req: NextRequest) {
     const { priceKey, userId, email, successUrl, cancelUrl, referralCode } = await req.json();
 
     const priceId = PRICE_IDS[priceKey as keyof typeof PRICE_IDS];
-    if (!priceId) {
-      return NextResponse.json({ error: "Invalid price" }, { status: 400 });
+    if (!priceId || priceId === "") {
+      return NextResponse.json(
+        { error: `Price ID not configured for ${priceKey}. Check STRIPE_PRICE_* env vars.` },
+        { status: 400 }
+      );
     }
 
     // Apply referral discount only for ugc_influencer plan
@@ -61,8 +64,8 @@ export async function POST(req: NextRequest) {
       customer_email: email,
       line_items: [{ price: priceId, quantity: 1 }],
       discounts,
-      success_url: successUrl || `${req.nextUrl.origin}/dashboard?checkout=success`,
-      cancel_url: cancelUrl || `${req.nextUrl.origin}/pricing?checkout=cancelled`,
+      success_url: successUrl || `${req.nextUrl.origin}/onboarding?checkout=success`,
+      cancel_url: cancelUrl || `${req.nextUrl.origin}/checkout?plan=${priceKey.split("_")[0]}&cancelled=1`,
       metadata: {
         userId,
         priceKey,

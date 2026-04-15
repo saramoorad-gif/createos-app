@@ -99,7 +99,7 @@ export default function HomePage() {
             <a href="/signup" className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors">
               Get started free
             </a>
-            <Link href="/for-agencies" className="border border-[#D8E8EE] text-[#3D6E8A] text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#F2F8FB] transition-colors">
+            <Link href="/contact?topic=demo" className="border border-[#D8E8EE] text-[#3D6E8A] text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#F2F8FB] transition-colors">
               Book a demo
             </Link>
           </div>

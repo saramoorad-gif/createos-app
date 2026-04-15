@@ -96,7 +96,7 @@ function CheckoutContent() {
 
   // If user is already subscribed, redirect to dashboard
   useEffect(() => {
-    if (!authLoading && profile?.subscription_status === "active") {
+    if (!authLoading && profile && (profile.subscription_status === "active" || profile.subscription_status === "trialing")) {
       router.push("/dashboard");
     }
   }, [authLoading, profile, router]);
