@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate, timeAgo } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
+import { useAuth } from "@/contexts/auth-context";
 import { TableSkeleton } from "@/components/global/skeleton";
 import { ContextMenu } from "@/components/global/context-menu";
 
@@ -514,6 +515,7 @@ function TemplateEditorModal({ template, onClose, onCreateDraft }: { template: C
 
 /* ─── Main Component ────────────────────────────────────────────── */
 export function ContractsTab() {
+  const { user } = useAuth();
   const [selected, setSelected] = useState<AgencyContract | null>(null);
   const [view, setView] = useState<ViewTab>("contracts");
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
@@ -770,12 +772,13 @@ Agency: _____________________ Date: _________`
 
   async function handleCreateDraft(data: any) {
     try {
-      // Map modal data to actual table columns
       const insertData: Record<string, any> = {
         stage: data.stage || "draft",
         contract_type: data.type || null,
         brand_name: data.brand_name || data.brand || null,
         value: data.value || 0,
+        uploaded_by: user?.id || null,
+        uploaded_by_type: "agency",
       };
       const newContract = await insertContract(insertData);
       if (newContract) {

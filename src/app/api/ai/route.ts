@@ -53,6 +53,8 @@ function getSystemPrompt(type: string): string {
       return "You are a contract analyst for creator deals. Identify red flags, unfavorable terms, and suggest specific counter-clauses. Be practical and specific.";
     case "pitch":
       return "You are a brand outreach specialist for content creators. Write a personalized, compelling pitch email to a brand. Keep it under 150 words, professional but warm.";
+    case "dashboard_insight":
+      return "You are a business advisor for content creators. Give a brief (2-3 sentence) personalized daily insight based on their stats. Include one specific, actionable tip. Be motivational but practical. Reference their actual numbers.";
     default:
       return "You are a helpful assistant for content creators and their agencies.";
   }
@@ -81,6 +83,8 @@ function getFallbackResponse(type: string, context: Record<string, string>) {
       return {
         result: `Based on ${context.followers || "your"} followers with ${context.engagement || "average"}% engagement on ${context.platform || "social media"}, your recommended rate range is:\n\n• UGC Video: $${Math.round((parseInt(context.followers) || 50000) * 0.008)}-$${Math.round((parseInt(context.followers) || 50000) * 0.015)}\n• Instagram Reel: $${Math.round((parseInt(context.followers) || 50000) * 0.012)}-$${Math.round((parseInt(context.followers) || 50000) * 0.022)}\n• TikTok: $${Math.round((parseInt(context.followers) || 50000) * 0.01)}-$${Math.round((parseInt(context.followers) || 50000) * 0.018)}\n\nYour engagement is a key differentiator — brands pay a premium for engaged audiences.`,
       };
+    case "dashboard_insight":
+      return { result: "Your creator business is growing! Focus on following up with active deals this week, and check your invoices for any overdue payments. Consistency is key — keep delivering great work and the pipeline will grow." };
     default:
       return { result: "AI feature is available when ANTHROPIC_API_KEY is configured." };
   }
