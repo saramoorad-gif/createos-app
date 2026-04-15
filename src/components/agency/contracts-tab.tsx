@@ -772,23 +772,31 @@ Agency: _____________________ Date: _________`
 
   async function handleCreateDraft(data: any) {
     try {
-      const insertData: Record<string, any> = {
-        stage: data.stage || "draft",
-        contract_type: data.type || null,
-        brand_name: data.brand_name || data.brand || null,
-        value: data.value || 0,
-        uploaded_by: user?.id || null,
-        uploaded_by_type: "agency",
-      };
-      const newContract = await insertContract(insertData);
-      if (newContract) {
-        setContracts((prev) => [...prev, newContract as AgencyContract]);
-        toast("success", "Contract draft created");
-        setView("contracts");
+      const res = await fetch("/api/contracts/create-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.id,
+          stage: data.stage || "draft",
+          contract_type: data.type || null,
+          brand_name: data.brand_name || data.brand || null,
+          value: data.value || 0,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        console.error("Create draft failed:", result);
+        toast("error", result.error || "Failed to create contract");
+        return;
       }
+      if (result.contract) {
+        setContracts((prev) => [...prev, result.contract as AgencyContract]);
+      }
+      toast("success", "Contract draft created");
+      setView("contracts");
     } catch (err) {
       console.error("Failed to create contract draft:", err);
-      toast("error", "Failed to create contract — check browser console for details");
+      toast("error", "Failed to create contract");
     }
   }
 
