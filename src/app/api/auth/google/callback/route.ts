@@ -15,20 +15,11 @@ export async function GET(req: NextRequest) {
   try {
     // Exchange code for tokens
     console.log("[Google Callback] Exchanging code for tokens...");
-    console.log("[Google Callback] Using client_id prefix:", (process.env.GOOGLE_CLIENT_ID || "").substring(0, 20));
-    console.log("[Google Callback] Using redirect_uri:", process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/google/callback` : "https://createsuite.co/api/auth/google/callback");
     const tokens = await exchangeGoogleCode(code);
-    console.log("[Google Callback] Full token response:", JSON.stringify(tokens));
-    console.log("[Google Callback] Token response:", {
-      hasAccessToken: !!tokens.access_token,
-      hasRefreshToken: !!tokens.refresh_token,
-      error: tokens.error,
-      error_description: tokens.error_description
-    });
 
     if (!tokens.access_token) {
-      console.error("[Google Callback] No access token. Error:", tokens.error, tokens.error_description);
-      return NextResponse.redirect(new URL(`/integrations?error=google_failed&detail=${encodeURIComponent(tokens.error_description || tokens.error || "unknown")}`, req.url));
+      console.error("[Google Callback] Token exchange failed. Error code:", tokens.error);
+      return NextResponse.redirect(new URL("/integrations?error=google_failed", req.url));
     }
 
     // Store tokens in Supabase
@@ -48,7 +39,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL("/integrations?error=google_db_error", req.url));
     }
 
-    console.log("[Google Callback] Success! Tokens saved for user:", state);
+    console.log("[Google Callback] Success! Tokens saved for user.");
     return NextResponse.redirect(new URL("/integrations?connected=google", req.url));
   } catch (err) {
     console.error("[Google Callback] Exception:", err);

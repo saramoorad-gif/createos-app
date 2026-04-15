@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { isAdmin } from "@/lib/admin";
+import { verifyAdminRequest } from "@/lib/admin-auth";
 
 // Returns aggregated stats for the admin overview page
-// Requires admin email in the query param (verified against ADMIN_EMAILS)
+// Requires valid Supabase auth token in Authorization header
 
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get("email");
-
-  if (!email || !isAdmin(email)) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -37,7 +36,7 @@ export async function GET(req: NextRequest) {
     const planPricing: Record<string, number> = {
       ugc: 27,
       ugc_influencer: 39,
-      agency: 149, // starter default
+      agency: 149,
     };
 
     const activeSubscriptions = profiles.filter(p =>
@@ -48,7 +47,6 @@ export async function GET(req: NextRequest) {
       return sum + (planPricing[p.account_type] || 0);
     }, 0);
 
-    // User breakdown
     const userBreakdown = {
       total: profiles.length,
       free: profiles.filter(p => p.account_type === "free").length,
@@ -59,7 +57,6 @@ export async function GET(req: NextRequest) {
       cancelled: profiles.filter(p => p.subscription_status === "cancelled").length,
     };
 
-    // New signups (last 30 days)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
     const newSignups30d = profiles.filter(p => new Date(p.created_at) >= thirtyDaysAgo).length;
     const newSignups7d = profiles.filter(p => {
@@ -67,7 +64,6 @@ export async function GET(req: NextRequest) {
       return new Date(p.created_at) >= sevenDaysAgo;
     }).length;
 
-    // Financial stats
     const totalRevenue = invoices
       .filter(i => i.status === "paid")
       .reduce((sum, i) => sum + Number(i.amount || 0), 0);
@@ -76,11 +72,9 @@ export async function GET(req: NextRequest) {
       .filter(i => i.status === "sent" || i.status === "overdue")
       .reduce((sum, i) => sum + Number(i.amount || 0), 0);
 
-    // Referral stats
     const referralSignups = referrals.length;
     const referralConversions = referrals.filter(r => r.status === "converted").length;
 
-    // Signups by day (last 30 days)
     const signupsByDay: Record<string, number> = {};
     for (let i = 29; i >= 0; i--) {
       const day = new Date(Date.now() - i * 86400000).toISOString().split("T")[0];

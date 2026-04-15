@@ -67,7 +67,7 @@ export default function MediaKitPage() {
     );
   }
 
-  const displayName = profile.full_name || "Creator";
+  const displayName = fullName || profile.full_name || "Creator";
   const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   const slug = displayName.toLowerCase().replace(/\s+/g, "");
   const inputClass = "w-full rounded-btn border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]";

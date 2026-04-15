@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { verifyUserRequest } from "@/lib/api-auth";
 
 export async function POST(req: NextRequest) {
   const { userId, type } = await req.json();
 
   if (!userId || !type) {
     return NextResponse.json({ error: "Missing userId or type" }, { status: 400 });
+  }
+
+  const auth = await verifyUserRequest(req, userId);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const sb = createClient(

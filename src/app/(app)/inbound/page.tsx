@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { useSupabaseQuery } from "@/lib/hooks";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { useToast } from "@/components/global/toast";
 import { CardGridSkeleton } from "@/components/global/skeleton";
 
@@ -39,11 +39,46 @@ const platformLabel: Record<string, string> = {
 };
 
 export default function InboundPage() {
-  const { data: inboundInquiries, loading } = useSupabaseQuery<InboundInquiry>("inbound_inquiries", {
+  const { data: inboundInquiries, loading, setData: setInquiries } = useSupabaseQuery<InboundInquiry>("inbound_inquiries", {
     order: { column: "created_at", ascending: false },
   });
+  const { update } = useSupabaseMutation("inbound_inquiries");
+  const { insert: insertDeal } = useSupabaseMutation("deals");
   const [selectedInquiry, setSelectedInquiry] = useState<string | null>(null);
   const { toast } = useToast();
+
+  async function handleAddToPipeline(inq: InboundInquiry) {
+    try {
+      // Create a new deal from the inquiry
+      await insertDeal({
+        brand_name: inq.brand_name,
+        stage: "lead",
+        notes: `From inbound inquiry: ${inq.message}`,
+        platform: inq.platforms_requested[0] || null,
+      });
+
+      // Mark the inquiry as added
+      await update(inq.id, { status: "added_to_pipeline" });
+      setInquiries(prev => prev.map(i => i.id === inq.id ? { ...i, status: "added_to_pipeline" } : i));
+      toast("success", `${inq.brand_name} added to pipeline`);
+      setSelectedInquiry(null);
+    } catch (e) {
+      console.error("Failed to add inquiry to pipeline:", e);
+      toast("error", "Failed to add to pipeline");
+    }
+  }
+
+  async function handleDecline(inq: InboundInquiry) {
+    try {
+      await update(inq.id, { status: "declined" });
+      setInquiries(prev => prev.map(i => i.id === inq.id ? { ...i, status: "declined" } : i));
+      toast("info", `${inq.brand_name} declined`);
+      setSelectedInquiry(null);
+    } catch (e) {
+      console.error("Failed to decline inquiry:", e);
+      toast("error", "Failed to decline");
+    }
+  }
 
   function formatDate(dateStr: string) {
     const d = new Date(dateStr);
@@ -125,8 +160,8 @@ export default function InboundPage() {
                     <a href={`mailto:${inq.contact_email}`} className="text-[12px] font-mono text-[#7BAFC8] hover:underline">{inq.contact_email}</a>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => toast("success", `${inq.brand_name} added to pipeline`)} className="flex-1 bg-[#1E3F52] text-white rounded-btn px-3 py-2 text-[12px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>Add to pipeline</button>
-                    <button onClick={() => toast("info", `${inq.brand_name} declined`)} className="flex-1 border-[1.5px] border-[#D8E8EE] text-[#8AAABB] rounded-btn px-3 py-2 text-[12px] font-sans hover:border-[#7BAFC8] transition-colors" style={{ fontWeight: 500 }}>Decline</button>
+                    <button onClick={() => handleAddToPipeline(inq)} className="flex-1 bg-[#1E3F52] text-white rounded-btn px-3 py-2 text-[12px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>Add to pipeline</button>
+                    <button onClick={() => handleDecline(inq)} className="flex-1 border-[1.5px] border-[#D8E8EE] text-[#8AAABB] rounded-btn px-3 py-2 text-[12px] font-sans hover:border-[#7BAFC8] transition-colors" style={{ fontWeight: 500 }}>Decline</button>
                   </div>
                 </div>
               )}

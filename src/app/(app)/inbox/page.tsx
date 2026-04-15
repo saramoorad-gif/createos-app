@@ -130,12 +130,22 @@ export default function CreatorInboxPage() {
   }, [isGmailConnected, loading, allThreads]);
 
   // Fetch Gmail emails
+  async function getAuthHeader() {
+    const { getSupabase } = await import("@/lib/supabase");
+    const sb = getSupabase();
+    const { data: { session } } = await sb.auth.getSession();
+    return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+  }
+
   async function fetchGmail() {
     if (!user) return;
     setEmailsLoading(true);
     setGmailError(null);
     try {
-      const res = await fetch(`/api/gmail?userId=${user.id}`);
+      const authHeader = await getAuthHeader();
+      const res = await fetch(`/api/gmail?userId=${user.id}`, {
+        headers: authHeader as any,
+      });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Failed to fetch emails");
@@ -156,9 +166,10 @@ export default function CreatorInboxPage() {
     setScanning(true);
     setScanComplete(false);
     try {
+      const authHeader = await getAuthHeader();
       const res = await fetch("/api/gmail/scan", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(authHeader as any) },
         body: JSON.stringify({ userId: user.id }),
       });
       if (!res.ok) throw new Error("Scan failed");
@@ -196,9 +207,10 @@ export default function CreatorInboxPage() {
 
     setCreatingDeal(reviewDeal.email_id);
     try {
+      const authHeader = await getAuthHeader();
       const res = await fetch("/api/gmail/create-deal", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(authHeader as any) },
         body: JSON.stringify({
           userId: user.id,
           brand_name: formBrand.trim(),

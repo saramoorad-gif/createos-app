@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { isAdmin } from "@/lib/admin";
+import { verifyAdminRequest } from "@/lib/admin-auth";
 
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get("email");
-  if (!email || !isAdmin(email)) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get("email");
-  if (!email || !isAdmin(email)) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

@@ -67,15 +67,23 @@ export default function AdminPortal() {
     fetchData();
   }, [authLoading, user]);
 
+  async function getAuthHeader() {
+    const { getSupabase } = await import("@/lib/supabase");
+    const sb = getSupabase();
+    const { data: { session } } = await sb.auth.getSession();
+    return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+  }
+
   async function fetchData() {
     if (!user?.email) return;
     setLoading(true);
     try {
+      const authHeader = await getAuthHeader();
       const [statsRes, usersRes, errorsRes, referralsRes] = await Promise.all([
-        fetch(`/api/admin/stats?email=${encodeURIComponent(user.email)}`).then(r => r.json()),
-        fetch(`/api/admin/users?email=${encodeURIComponent(user.email)}`).then(r => r.json()),
-        fetch(`/api/admin/errors?email=${encodeURIComponent(user.email)}`).then(r => r.json()),
-        fetch(`/api/admin/referrals?email=${encodeURIComponent(user.email)}`).then(r => r.json()),
+        fetch(`/api/admin/stats`, { headers: authHeader as any }).then(r => r.json()),
+        fetch(`/api/admin/users`, { headers: authHeader as any }).then(r => r.json()),
+        fetch(`/api/admin/errors`, { headers: authHeader as any }).then(r => r.json()),
+        fetch(`/api/admin/referrals`, { headers: authHeader as any }).then(r => r.json()),
       ]);
       setStats(statsRes);
       setUsers(usersRes.users || []);
@@ -92,9 +100,10 @@ export default function AdminPortal() {
   async function resolveError(errorId: string) {
     if (!user?.email) return;
     try {
-      await fetch(`/api/admin/errors?email=${encodeURIComponent(user.email)}`, {
+      const authHeader = await getAuthHeader();
+      await fetch(`/api/admin/errors`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(authHeader as any) },
         body: JSON.stringify({ errorId, resolved: true }),
       });
       setErrors(prev => prev.map(e => e.id === errorId ? { ...e, resolved: true } : e));

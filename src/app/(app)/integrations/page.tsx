@@ -79,9 +79,14 @@ export default function IntegrationsPage() {
     if (!user) return;
     setDisconnecting(oauthType);
     try {
+      const { getSupabase } = await import("@/lib/supabase");
+      const sb = getSupabase();
+      const { data: { session } } = await sb.auth.getSession();
+      const authHeader = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+
       const res = await fetch("/api/integrations/disconnect", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(authHeader as any) },
         body: JSON.stringify({ userId: user.id, type: oauthType }),
       });
       if (res.ok) {

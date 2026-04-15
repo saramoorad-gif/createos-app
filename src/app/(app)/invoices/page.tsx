@@ -89,18 +89,24 @@ export default function InvoicesPage() {
   }
 
   async function sendReminder(inv: Invoice) {
+    // Prompt user for brand contact email since we don't have it stored
+    const brandEmail = window.prompt(`Send payment reminder to ${inv.brand_name}:\n\nEnter the brand contact email:`);
+    if (!brandEmail || !brandEmail.includes("@")) {
+      if (brandEmail !== null) toast("error", "Valid email required");
+      return;
+    }
     try {
       const res = await fetch("/api/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: "brand@example.com", // In production, pull from deal/brand contact
+          to: brandEmail,
           subject: `Payment Reminder — Invoice for ${inv.brand_name}`,
-          body: `<p>Hi,</p><p>This is a friendly reminder that invoice <strong>${inv.brand_name}</strong> for <strong>$${inv.amount}</strong> is due on <strong>${inv.due_date}</strong>.</p><p>Please let us know if you have any questions.</p><p>Best,<br/>Create Suite</p>`,
+          body: `<p>Hi,</p><p>This is a friendly reminder that invoice for <strong>${inv.brand_name}</strong> in the amount of <strong>$${inv.amount}</strong> is due on <strong>${inv.due_date}</strong>.</p><p>Please let us know if you have any questions.</p><p>Best,<br/>Create Suite</p>`,
         }),
       });
       if (!res.ok) throw new Error("Email send failed");
-      toast("success", "Reminder sent for " + inv.brand_name);
+      toast("success", `Reminder sent to ${brandEmail}`);
     } catch {
       toast("error", "Failed to send reminder. Please try again.");
     }

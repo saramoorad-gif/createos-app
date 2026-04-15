@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { verifyUserRequest } from "@/lib/api-auth";
 
 // Creates a deal in the pipeline from an AI-detected email opportunity
 
@@ -10,6 +11,11 @@ export async function POST(req: NextRequest) {
 
   if (!userId || !brand_name) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const auth = await verifyUserRequest(req, userId);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";

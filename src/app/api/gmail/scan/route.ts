@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { refreshGoogleToken } from "@/lib/google";
+import { verifyUserRequest } from "@/lib/api-auth";
 
 // AI-powered email scanner: detects brand deal opportunities in Gmail
 // and auto-creates deals in the pipeline
@@ -41,6 +42,11 @@ interface DetectedDeal {
 export async function POST(req: NextRequest) {
   const { userId } = await req.json();
   if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+
+  const auth = await verifyUserRequest(req, userId);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const tokens = await getGoogleTokens(userId);
   if (!tokens?.google_access_token) {

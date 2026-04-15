@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { refreshGoogleToken } from "@/lib/google";
+import { verifyUserRequest } from "@/lib/api-auth";
 
 async function getGoogleTokens(userId: string) {
   const sb = createClient(
@@ -18,6 +19,11 @@ async function getGoogleTokens(userId: string) {
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
   if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+
+  const auth = await verifyUserRequest(req, userId);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const tokens = await getGoogleTokens(userId);
   if (!tokens?.google_access_token) {
