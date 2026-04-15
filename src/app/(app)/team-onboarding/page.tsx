@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { useSupabaseMutation } from "@/lib/hooks";
 import { CheckCircle2, Users, Bell, MessageSquare, ListTodo } from "lucide-react";
@@ -15,9 +15,11 @@ export default function TeamOnboardingPage() {
   const mutation = useSupabaseMutation("profiles");
 
   // Populate full name from profile once loaded
-  if (profile && !fullName) {
-    setFullName(profile.full_name || "Team Member");
-  }
+  useEffect(() => {
+    if (profile?.full_name && !fullName) {
+      setFullName(profile.full_name);
+    }
+  }, [profile?.full_name, fullName]);
 
   const displayName = profile?.full_name || "Team Member";
   const agencyName = profile?.agency_name || "your agency";

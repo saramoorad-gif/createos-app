@@ -84,7 +84,10 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
-  const planKey = searchParams.get("plan") || "ugc";
+  const rawPlanKey = searchParams.get("plan") || "ugc";
+  // Validate plan key — only allow valid paid plans (not "free" or unknown)
+  const validPlans = ["ugc", "ugc_influencer", "agency"];
+  const planKey = validPlans.includes(rawPlanKey) ? rawPlanKey : "ugc";
   const refCode = searchParams.get("ref") || (profile as any)?.referred_by_code || null;
   const plan = plans[planKey] || plans.ugc;
 
@@ -129,7 +132,7 @@ function CheckoutContent() {
           userId: user.id,
           email: user.email,
           referralCode: hasReferralDiscount ? refCode : null,
-          successUrl: `${window.location.origin}/onboarding?checkout=success&plan=${planKey}`,
+          successUrl: `${window.location.origin}/dashboard?checkout=success&plan=${planKey}`,
           cancelUrl: `${window.location.origin}/checkout?plan=${planKey}${refCode ? `&ref=${refCode}` : ""}`,
         }),
       });

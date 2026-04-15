@@ -1077,7 +1077,7 @@ export function CampaignsTab() {
               items={[
                 { label: "View details", onClick: () => setSelectedCampaign(camp) },
                 { label: "Duplicate", onClick: () => toast("info", "Duplicate coming soon") },
-                { label: "Archive", onClick: () => {}, danger: true },
+                { label: "Archive", onClick: () => toast("info", "Archive coming soon"), danger: true },
               ]}
             >
             <div>

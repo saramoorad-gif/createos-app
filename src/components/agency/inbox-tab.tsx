@@ -51,8 +51,8 @@ export function InboxTab() {
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No messages yet</p>
-        <button onClick={() => toast("info", "Navigate to your Roster to start a conversation with a creator")} className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
-          Start a conversation with one of your creators
+        <button onClick={() => { window.dispatchEvent(new CustomEvent("agency-tab", { detail: "roster" })); }} className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
+          Go to Roster →
         </button>
       </div>
     );

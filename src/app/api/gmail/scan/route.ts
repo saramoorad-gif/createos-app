@@ -41,7 +41,9 @@ interface DetectedDeal {
 
 export async function POST(req: NextRequest) {
   const { userId } = await req.json();
-  if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  if (!userId || typeof userId !== "string" || !userId.trim()) {
+    return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
+  }
 
   const auth = await verifyUserRequest(req, userId);
   if (!auth.authorized) {

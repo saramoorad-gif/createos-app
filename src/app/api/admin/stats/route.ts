@@ -81,8 +81,12 @@ export async function GET(req: NextRequest) {
       signupsByDay[day] = 0;
     }
     profiles.forEach(p => {
+      if (!p.created_at) return;
       const day = new Date(p.created_at).toISOString().split("T")[0];
-      if (signupsByDay[day] !== undefined) signupsByDay[day]++;
+      // Only count if within our 30-day window
+      if (day in signupsByDay) {
+        signupsByDay[day] = (signupsByDay[day] || 0) + 1;
+      }
     });
 
     return NextResponse.json({

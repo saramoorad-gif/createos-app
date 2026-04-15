@@ -5,8 +5,8 @@ import { verifyUserRequest } from "@/lib/api-auth";
 export async function POST(req: NextRequest) {
   const { userId, type } = await req.json();
 
-  if (!userId || !type) {
-    return NextResponse.json({ error: "Missing userId or type" }, { status: 400 });
+  if (!userId || typeof userId !== "string" || !userId.trim() || !type) {
+    return NextResponse.json({ error: "Missing or invalid userId/type" }, { status: 400 });
   }
 
   const auth = await verifyUserRequest(req, userId);

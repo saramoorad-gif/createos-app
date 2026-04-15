@@ -18,7 +18,9 @@ async function getGoogleTokens(userId: string) {
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  if (!userId || typeof userId !== "string" || !userId.trim()) {
+    return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
+  }
 
   const auth = await verifyUserRequest(req, userId);
   if (!auth.authorized) {

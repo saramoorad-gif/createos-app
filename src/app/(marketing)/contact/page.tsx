@@ -15,6 +15,16 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Escape HTML to prevent injection via user input
+  function escapeHtml(str: string): string {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -25,14 +35,14 @@ export default function ContactPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to: "hello@createsuite.co",
-          subject: `[Contact Form] ${subject}`,
+          subject: `[Contact Form] ${escapeHtml(subject)}`,
           body: `
             <h3>New contact form submission</h3>
-            <p><strong>From:</strong> ${name} &lt;${email}&gt;</p>
-            <p><strong>Account type:</strong> ${accountType}</p>
-            <p><strong>Subject:</strong> ${subject}</p>
+            <p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p>
+            <p><strong>Account type:</strong> ${escapeHtml(accountType)}</p>
+            <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
             <p><strong>Message:</strong></p>
-            <p>${message.replace(/\n/g, "<br/>")}</p>
+            <p>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>
           `,
           replyTo: email,
         }),

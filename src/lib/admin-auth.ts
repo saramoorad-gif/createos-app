@@ -27,6 +27,10 @@ export async function verifyAdminRequest(req: Request): Promise<{ authorized: bo
       return { authorized: false, error: "Invalid token" };
     }
 
+    if (!user.email) {
+      return { authorized: false, error: "No email on user" };
+    }
+
     // Check if user email is in admin list
     if (!isAdmin(user.email)) {
       return { authorized: false, error: "Not an admin" };

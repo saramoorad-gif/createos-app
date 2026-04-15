@@ -9,8 +9,8 @@ const VALID_PLATFORMS = ["tiktok", "instagram", "youtube"];
 export async function POST(req: NextRequest) {
   const { userId, brand_name, estimated_value, deliverables, platform, stage, notes, email_subject, email_from } = await req.json();
 
-  if (!userId || !brand_name) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  if (!userId || typeof userId !== "string" || !userId.trim() || !brand_name) {
+    return NextResponse.json({ error: "Missing or invalid required fields" }, { status: 400 });
   }
 
   const auth = await verifyUserRequest(req, userId);

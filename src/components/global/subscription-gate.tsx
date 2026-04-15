@@ -1,23 +1,48 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { needsCheckout } from "@/lib/feature-gates";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 
 interface SubscriptionGateProps {
   children: React.ReactNode;
 }
 
 export function SubscriptionGate({ children }: SubscriptionGateProps) {
-  const { profile, loading } = useAuth();
+  const { profile, loading, refreshProfile } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const checkoutSuccess = searchParams.get("checkout") === "success";
+  const [waitingForWebhook, setWaitingForWebhook] = useState(false);
+  const [pollAttempts, setPollAttempts] = useState(0);
+
+  // If user just completed checkout, poll for active subscription for up to 15 seconds
+  useEffect(() => {
+    if (!checkoutSuccess || !profile) return;
+    if (profile.subscription_status === "active" || profile.subscription_status === "trialing") {
+      setWaitingForWebhook(false);
+      return;
+    }
+    if (pollAttempts >= 15) {
+      // Give up polling after 15 attempts — let normal flow handle it
+      setWaitingForWebhook(false);
+      return;
+    }
+    setWaitingForWebhook(true);
+    const timer = setTimeout(async () => {
+      await refreshProfile();
+      setPollAttempts(n => n + 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [checkoutSuccess, profile, pollAttempts, refreshProfile]);
 
   useEffect(() => {
     if (loading) return;
     if (!profile) return;
+    if (waitingForWebhook) return; // Don't redirect while we're waiting for webhook
 
     // Paid tier without active subscription → redirect to checkout
     if (needsCheckout(profile)) {
@@ -30,7 +55,24 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
         router.push(`/checkout?plan=${planKey}`);
       }
     }
-  }, [loading, profile, pathname, router]);
+  }, [loading, profile, pathname, router, waitingForWebhook]);
+
+  // Show loading screen while waiting for webhook after checkout
+  if (waitingForWebhook) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <div className="h-14 w-14 rounded-full bg-[#F2F8FB] border-[1.5px] border-[#D8E8EE] mx-auto mb-4 flex items-center justify-center">
+            <RefreshCw className="h-6 w-6 text-[#7BAFC8] animate-spin" />
+          </div>
+          <h2 className="text-[22px] font-serif text-[#1A2C38] mb-2">Activating your account</h2>
+          <p className="text-[14px] font-sans text-[#8AAABB]">
+            Payment confirmed. Setting up your subscription...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // If past_due, show warning banner but allow access
   const showPastDueWarning = profile?.subscription_status === "past_due";

@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       customer_email: email,
       line_items: [{ price: priceId, quantity: 1 }],
       discounts,
-      success_url: successUrl || `${req.nextUrl.origin}/onboarding?checkout=success`,
+      success_url: successUrl || `${req.nextUrl.origin}/dashboard?checkout=success`,
       cancel_url: cancelUrl || `${req.nextUrl.origin}/checkout?plan=${priceKey.split("_")[0]}&cancelled=1`,
       metadata: {
         userId,
