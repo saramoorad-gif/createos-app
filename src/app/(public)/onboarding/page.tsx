@@ -2,11 +2,14 @@
 
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
+import { getSupabase } from "@/lib/supabase";
 import { Copy, Check } from "lucide-react";
 
 // ─── Creator Onboarding (4 steps) ────────────────────────────────
 
 function CreatorOnboarding() {
+  const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(1);
   const [tiktok, setTiktok] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -14,6 +17,34 @@ function CreatorOnboarding() {
   const [niche, setNiche] = useState("");
   const [hasAgency, setHasAgency] = useState<boolean | null>(null);
   const [agencyCode, setAgencyCode] = useState("");
+  const [launching, setLaunching] = useState(false);
+
+  async function handleLaunch() {
+    if (!user) {
+      window.location.href = "/dashboard";
+      return;
+    }
+    setLaunching(true);
+    try {
+      const sb = getSupabase();
+      await sb
+        .from("profiles")
+        .update({
+          tiktok_handle: tiktok || null,
+          instagram_handle: instagram || null,
+          youtube_handle: youtube || null,
+          primary_niche: niche || null,
+          has_agency: hasAgency === true,
+        })
+        .eq("id", user.id);
+      await refreshProfile();
+      window.location.href = "/dashboard";
+    } catch (e) {
+      console.error("Failed to save onboarding:", e);
+      // Still redirect — don't block user from accessing the app
+      window.location.href = "/dashboard";
+    }
+  }
 
   const totalSteps = 4;
   const inputClass =
@@ -96,7 +127,7 @@ function CreatorOnboarding() {
             <div className="w-12 h-12 rounded-full bg-[#E8F4EE] flex items-center justify-center mx-auto mb-2"><span className="text-[#3D7A58] text-xl">&#10003;</span></div>
             <h2 className="text-[20px] font-serif text-[#1A2C38]">You&apos;re all <em className="italic text-[#7BAFC8]">set</em></h2>
             <p className="text-[13px] font-sans text-[#8AAABB]">Your creator dashboard is ready.</p>
-            <button onClick={() => { window.location.href = "/dashboard"; }} className="w-full bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB]">Launch my CreateOS &rarr;</button>
+            <button onClick={handleLaunch} disabled={launching} className="w-full bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] disabled:opacity-50">{launching ? "Setting up..." : "Launch my Create Suite →"}</button>
           </div>
         )}
       </div>
@@ -107,6 +138,7 @@ function CreatorOnboarding() {
 // ─── Agency Onboarding (3 steps) ─────────────────────────────────
 
 function AgencyOnboarding() {
+  const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(1);
   const [agencyName, setAgencyName] = useState("");
   const [role, setRole] = useState("");
@@ -114,6 +146,33 @@ function AgencyOnboarding() {
   const [emails, setEmails] = useState("");
   const [copied, setCopied] = useState(false);
   const [agencyPlan, setAgencyPlan] = useState<"starter" | "growth" | null>(null);
+  const [launching, setLaunching] = useState(false);
+
+  async function handleLaunchAgency() {
+    if (!user) {
+      window.location.href = "/dashboard";
+      return;
+    }
+    setLaunching(true);
+    try {
+      const sb = getSupabase();
+      await sb
+        .from("profiles")
+        .update({
+          agency_name: agencyName || null,
+          agency_role: role || null,
+          roster_size: rosterSize || null,
+          agency_plan: agencyPlan || "starter",
+          has_agency: true,
+        })
+        .eq("id", user.id);
+      await refreshProfile();
+      window.location.href = "/dashboard";
+    } catch (e) {
+      console.error("Failed to save agency onboarding:", e);
+      window.location.href = "/dashboard";
+    }
+  }
 
   const inviteLink = "createsuite.co/join/BRIGHT-2026";
   const inputClass =
@@ -208,7 +267,7 @@ function AgencyOnboarding() {
                 </button>
               ))}
             </div>
-            <button disabled={!agencyPlan} onClick={() => { window.location.href = "/dashboard"; }} className="w-full bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] disabled:opacity-50">Launch agency dashboard &rarr;</button>
+            <button disabled={!agencyPlan || launching} onClick={handleLaunchAgency} className="w-full bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] disabled:opacity-50">{launching ? "Setting up..." : "Launch agency dashboard →"}</button>
           </div>
         )}
       </div>

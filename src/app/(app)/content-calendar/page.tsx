@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
+import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 
@@ -53,9 +55,11 @@ function getMonthDays(year: number, month: number) {
 // No seed data — content is user-created only
 
 export default function ContentCalendarPage() {
-  const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(3); // April = 3 (0-indexed)
-  const [items, setItems] = useState<ContentItem[]>([]);
+  const { user } = useAuth();
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const { data: items, setData: setItems } = useSupabaseQuery<ContentItem>("content_calendar");
+  const { insert, update, remove } = useSupabaseMutation("content_calendar");
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [editItem, setEditItem] = useState<ContentItem | null>(null);
@@ -102,32 +106,45 @@ export default function ContentCalendarPage() {
     setShowModal(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!formTitle.trim()) { toast("error", "Title is required"); return; }
-    if (editItem) {
-      setItems(prev => prev.map(i => i.id === editItem.id ? { ...i, title: formTitle, type: formType, platform: formPlatform, brand: formBrand, notes: formNotes } : i));
-      toast("success", "Content updated");
-    } else {
-      const newItem: ContentItem = {
-        id: Date.now().toString(),
-        date: selectedDate,
-        title: formTitle,
-        type: formType,
-        platform: formPlatform,
-        brand: formBrand,
-        notes: formNotes,
-      };
-      setItems(prev => [...prev, newItem]);
-      toast("success", "Content added to calendar");
+    if (!user) { toast("error", "Please sign in"); return; }
+
+    const payload = {
+      title: formTitle,
+      type: formType,
+      platform: formPlatform,
+      brand: formBrand,
+      notes: formNotes,
+    };
+
+    try {
+      if (editItem) {
+        await update(editItem.id, payload);
+        setItems(prev => prev.map(i => i.id === editItem.id ? { ...i, ...payload } : i));
+        toast("success", "Content updated");
+      } else {
+        const newItem = await insert({ ...payload, date: selectedDate, creator_id: user.id });
+        if (newItem) setItems(prev => [...prev, newItem as ContentItem]);
+        toast("success", "Content added to calendar");
+      }
+      setShowModal(false);
+    } catch (e) {
+      console.error("Failed to save calendar item:", e);
+      toast("error", "Failed to save. Please try again.");
     }
-    setShowModal(false);
   }
 
-  function handleDelete() {
-    if (editItem) {
+  async function handleDelete() {
+    if (!editItem) return;
+    try {
+      await remove(editItem.id);
       setItems(prev => prev.filter(i => i.id !== editItem.id));
       toast("success", "Content removed");
       setShowModal(false);
+    } catch (e) {
+      console.error("Failed to delete:", e);
+      toast("error", "Failed to delete");
     }
   }
 

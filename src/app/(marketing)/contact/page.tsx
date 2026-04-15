@@ -12,9 +12,39 @@ export default function ContactPage() {
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitted(true);
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: "hello@createsuite.co",
+          subject: `[Contact Form] ${subject}`,
+          body: `
+            <h3>New contact form submission</h3>
+            <p><strong>From:</strong> ${name} &lt;${email}&gt;</p>
+            <p><strong>Account type:</strong> ${accountType}</p>
+            <p><strong>Subject:</strong> ${subject}</p>
+            <p><strong>Message:</strong></p>
+            <p>${message.replace(/\n/g, "<br/>")}</p>
+          `,
+          replyTo: email,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to send");
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Contact form error:", err);
+      setError("Failed to send message. Please email us directly at hello@createsuite.co");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -138,12 +168,19 @@ export default function ContactPage() {
                   />
                 </div>
 
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-[10px]">
+                    <p className="text-[13px] font-sans text-red-700">{error}</p>
+                  </div>
+                )}
+
                 {/* Submit */}
                 <button
                   type="submit"
-                  className="w-full bg-[#1E3F52] text-white text-[15px] font-sans font-500 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors"
+                  disabled={loading}
+                  className="w-full bg-[#1E3F52] text-white text-[15px] font-sans font-500 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors disabled:opacity-50"
                 >
-                  Send message
+                  {loading ? "Sending..." : "Send message"}
                 </button>
               </form>
             )}

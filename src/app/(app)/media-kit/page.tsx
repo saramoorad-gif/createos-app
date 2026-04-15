@@ -1,17 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
+import { useSupabaseMutation } from "@/lib/hooks";
 import { useToast } from "@/components/global/toast";
 import { Copy, Check, ExternalLink, Edit3 } from "lucide-react";
 
 export default function MediaKitPage() {
-  const { profile, loading } = useAuth();
+  const { profile, loading, refreshProfile } = useAuth();
   const { toast } = useToast();
+  const { update } = useSupabaseMutation("profiles");
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
   const [niche, setNiche] = useState("");
+  const [tiktokHandle, setTiktokHandle] = useState("");
+  const [instagramHandle, setInstagramHandle] = useState("");
+  const [youtubeHandle, setYoutubeHandle] = useState("");
+
+  // Populate from profile
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name || "");
+      setBio((profile as any).bio || "");
+      setNiche((profile as any).primary_niche || "");
+      setTiktokHandle((profile as any).tiktok_handle || "");
+      setInstagramHandle((profile as any).instagram_handle || "");
+      setYoutubeHandle((profile as any).youtube_handle || "");
+    }
+  }, [profile]);
+
+  async function handleSave() {
+    if (!profile?.id) return;
+    setSaving(true);
+    try {
+      await update(profile.id, {
+        full_name: fullName,
+        bio,
+        primary_niche: niche,
+        tiktok_handle: tiktokHandle,
+        instagram_handle: instagramHandle,
+        youtube_handle: youtubeHandle,
+      });
+      await refreshProfile();
+      toast("success", "Media kit saved");
+    } catch (err) {
+      console.error("Failed to save media kit:", err);
+      toast("error", "Failed to save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (loading) return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading...</p></div>;
 
@@ -54,7 +95,7 @@ export default function MediaKitPage() {
 
           <div>
             <label className={labelClass} style={{ fontWeight: 600 }}>Full Name</label>
-            <input type="text" defaultValue={displayName} className={inputClass} />
+            <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className={inputClass} />
           </div>
 
           <div>
@@ -69,19 +110,19 @@ export default function MediaKitPage() {
 
           <div>
             <label className={labelClass} style={{ fontWeight: 600 }}>TikTok Handle</label>
-            <input type="text" placeholder="@yourhandle" className={inputClass} />
+            <input type="text" value={tiktokHandle} onChange={e => setTiktokHandle(e.target.value)} placeholder="@yourhandle" className={inputClass} />
           </div>
           <div>
             <label className={labelClass} style={{ fontWeight: 600 }}>Instagram Handle</label>
-            <input type="text" placeholder="@yourhandle" className={inputClass} />
+            <input type="text" value={instagramHandle} onChange={e => setInstagramHandle(e.target.value)} placeholder="@yourhandle" className={inputClass} />
           </div>
           <div>
             <label className={labelClass} style={{ fontWeight: 600 }}>YouTube Channel</label>
-            <input type="text" placeholder="@yourchannel" className={inputClass} />
+            <input type="text" value={youtubeHandle} onChange={e => setYoutubeHandle(e.target.value)} placeholder="@yourchannel" className={inputClass} />
           </div>
 
-          <button onClick={() => toast("success", "Media kit saved")} className="w-full bg-[#1E3F52] text-white rounded-btn px-4 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
-            Save changes
+          <button onClick={handleSave} disabled={saving} className="w-full bg-[#1E3F52] text-white rounded-btn px-4 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors disabled:opacity-50" style={{ fontWeight: 600 }}>
+            {saving ? "Saving..." : "Save changes"}
           </button>
         </div>
 
