@@ -121,23 +121,21 @@ export default function IntegrationsPage() {
                   >
                     {int.oauthType === "ical" ? "Download .ics" : "Connect"}
                   </button>
+                ) : notified.has(int.name) ? (
+                  <span className="flex items-center gap-1.5 text-[12px] font-sans text-[#3D7A58]" style={{ fontWeight: 500 }}>
+                    <Bell className="h-3.5 w-3.5" /> You&apos;ll be notified
+                  </span>
                 ) : (
-                  {notified.has(int.name) ? (
-                    <span className="flex items-center gap-1.5 text-[12px] font-sans text-[#3D7A58]" style={{ fontWeight: 500 }}>
-                      <Bell className="h-3.5 w-3.5" /> You&apos;ll be notified
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setNotified(prev => new Set(prev).add(int.name));
-                        toast("success", `We'll notify you when ${int.name} is available!`);
-                      }}
-                      className="border-[1.5px] border-[#D8E8EE] text-[#4A6070] rounded-btn px-4 py-2 text-[12px] font-sans hover:border-[#7BAFC8] hover:text-[#1E3F52] transition-colors cursor-pointer"
-                      style={{ fontWeight: 500 }}
-                    >
-                      Notify me
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setNotified(prev => new Set(prev).add(int.name));
+                      toast("success", `We'll notify you when ${int.name} is available!`);
+                    }}
+                    className="border-[1.5px] border-[#D8E8EE] text-[#4A6070] rounded-btn px-4 py-2 text-[12px] font-sans hover:border-[#7BAFC8] hover:text-[#1E3F52] transition-colors cursor-pointer"
+                    style={{ fontWeight: 500 }}
+                  >
+                    Notify me
+                  </button>
                 )}
               </div>
             </div>
