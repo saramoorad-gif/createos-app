@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { isAdmin } from "@/lib/admin";
 import { logError } from "@/lib/error-logger";
 
 type AccountType = "free" | "ugc" | "ugc_influencer" | "agency";
@@ -153,7 +154,8 @@ function SignUpContent() {
     setLoading(false);
 
     // Route based on tier selection
-    if (accountType === "free") {
+    // Admin emails bypass checkout entirely
+    if (accountType === "free" || isAdmin(email)) {
       router.push("/onboarding");
     } else {
       // Paid tiers → go to checkout first

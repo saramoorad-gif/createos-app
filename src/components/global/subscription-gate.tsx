@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { needsCheckout } from "@/lib/feature-gates";
+import { isAdmin } from "@/lib/admin";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 interface SubscriptionGateProps {
@@ -12,13 +13,16 @@ interface SubscriptionGateProps {
 
 // Inner component that uses useSearchParams — wrapped in Suspense below
 function SubscriptionGateInner({ children }: SubscriptionGateProps) {
-  const { profile, loading, refreshProfile } = useAuth();
+  const { user, profile, loading, refreshProfile } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const checkoutSuccess = searchParams.get("checkout") === "success";
   const [waitingForWebhook, setWaitingForWebhook] = useState(false);
   const [pollAttempts, setPollAttempts] = useState(0);
+
+  // Admin users bypass all subscription checks
+  const userIsAdmin = isAdmin(user?.email);
 
   // If user just completed checkout, poll for active subscription for up to 15 seconds
   useEffect(() => {
@@ -43,6 +47,7 @@ function SubscriptionGateInner({ children }: SubscriptionGateProps) {
     if (loading) return;
     if (!profile) return;
     if (waitingForWebhook) return;
+    if (userIsAdmin) return; // Admin bypass
 
     if (needsCheckout(profile)) {
       if (!pathname.startsWith("/checkout") && !pathname.startsWith("/onboarding")) {
