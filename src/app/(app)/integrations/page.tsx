@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
 
-const GOOGLE_CLIENT_ID = "62122287732-0uci7fsvqctoqte3mlt9vno588hj74ag.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "854619861848-ck0ldn040uojlec0jpqkbpeoo9adhnm6.apps.googleusercontent.com";
 import { Mail, CreditCard, Video, Camera, Calendar, FileText, Palette, Check, Bell } from "lucide-react";
 
 const integrations = [
