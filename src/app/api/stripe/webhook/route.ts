@@ -172,6 +172,18 @@ export async function POST(req: NextRequest) {
     }
   } catch (err: any) {
     console.error(`[Stripe Webhook] Handler error for ${event.type}:`, err);
+
+    // Log to admin error logs
+    try {
+      await getSupabaseAdmin().from("error_logs").insert({
+        level: "error",
+        source: `api/stripe/webhook/${event.type}`,
+        message: err.message || "Webhook handler failed",
+        stack: err.stack,
+        metadata: { eventType: event.type, eventId: event.id },
+      });
+    } catch {}
+
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 

@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { logError } from "@/lib/error-logger";
 
 type AccountType = "free" | "ugc" | "ugc_influencer" | "agency";
 type Step = "credentials" | "tier";
@@ -105,7 +106,16 @@ function SignUpContent() {
       options: { data: { full_name: fullName, account_type: accountType } },
     });
 
-    if (signUpError) { setError(signUpError.message); setLoading(false); return; }
+    if (signUpError) {
+      logError({
+        source: "signup.auth.signUp",
+        message: signUpError.message,
+        metadata: { email, accountType },
+      });
+      setError(signUpError.message);
+      setLoading(false);
+      return;
+    }
 
     if (data.user) {
       // Generate a unique referral code for this user (8-char uppercase)

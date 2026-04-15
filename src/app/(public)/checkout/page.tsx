@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { logError } from "@/lib/error-logger";
 import { CheckCircle2, ArrowRight, Shield, Lock, CreditCard } from "lucide-react";
 
 interface PlanDetail {
@@ -143,6 +144,14 @@ function CheckoutContent() {
       }
     } catch (err: any) {
       console.error("Checkout error:", err);
+      logError({
+        source: "checkout.handleCheckout",
+        message: err.message || "Checkout failed",
+        stack: err.stack,
+        userId: user?.id,
+        userEmail: user?.email,
+        metadata: { planKey, billingCycle, hasReferralDiscount },
+      });
       setError(err.message || "Failed to start checkout. Please try again.");
       setLoading(false);
     }

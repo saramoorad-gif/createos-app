@@ -6,6 +6,7 @@ import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
 import { TableSkeleton } from "@/components/global/skeleton";
+import { logError } from "@/lib/error-logger";
 import { Plus, X, CheckCircle2, Circle, Clock, Flag, Calendar, Briefcase, ChevronDown, Filter, Trash2, Edit3 } from "lucide-react";
 
 interface Task {
@@ -126,6 +127,12 @@ export default function TasksPage() {
       setShowModal(false);
     } catch (e) {
       console.error("Failed to save task:", e);
+      logError({
+        source: "tasks.handleSave",
+        message: e instanceof Error ? e.message : "Failed to save task",
+        stack: e instanceof Error ? e.stack : undefined,
+        metadata: { editingExisting: !!editTask, title: formTitle },
+      });
       toast("error", "Failed to save task");
     }
   }

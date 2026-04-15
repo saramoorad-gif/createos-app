@@ -5,6 +5,8 @@ import { ToastProvider } from "@/components/global/toast";
 import { LoadingBar } from "@/components/global/loading-bar";
 import { KeyboardShortcuts } from "@/components/global/keyboard-shortcuts";
 import { SubscriptionGate } from "@/components/global/subscription-gate";
+import { ErrorBoundary } from "@/components/global/error-boundary";
+import { ErrorTracker } from "@/components/global/error-tracker";
 
 export default function AppLayout({
   children,
@@ -14,12 +16,15 @@ export default function AppLayout({
   return (
     <AuthProvider>
       <ToastProvider>
+        <ErrorTracker />
         <div className="min-h-screen bg-[#FAF8F4]">
           <LoadingBar />
           <NavBar />
           <SubscriptionGate>
             <main className="max-w-[1200px] mx-auto px-12 pb-16">
-              {children}
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
             </main>
           </SubscriptionGate>
           <CommandPalette />

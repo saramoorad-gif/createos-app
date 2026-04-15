@@ -9,6 +9,7 @@ import { useToast } from "@/components/global/toast";
 import { TableSkeleton } from "@/components/global/skeleton";
 import { ContextMenu } from "@/components/global/context-menu";
 import { FREE_TIER_DEAL_LIMIT } from "@/lib/feature-gates";
+import { logError } from "@/lib/error-logger";
 import Link from "next/link";
 import { X, ChevronRight, FileText, Eye, Plus, Edit3, Trash2, Save, Lock, Sparkles } from "lucide-react";
 
@@ -120,6 +121,12 @@ export default function DealsPage() {
       setEditDeal(null);
     } catch (e) {
       console.error("Failed to save deal:", e);
+      logError({
+        source: "deals.handleSave",
+        message: e instanceof Error ? e.message : "Failed to save deal",
+        stack: e instanceof Error ? e.stack : undefined,
+        metadata: { editingExisting: !!editDeal, brandName: fBrand },
+      });
       toast("error", "Failed to save deal");
     }
   }

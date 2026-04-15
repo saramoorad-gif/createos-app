@@ -14,6 +14,7 @@ import {
   clearAuthCookie,
   type Profile,
 } from "@/lib/supabase";
+import { logError } from "@/lib/error-logger";
 import type { User } from "@supabase/supabase-js";
 
 type AuthContextType = {
@@ -90,10 +91,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error("Profile fetch error:", error);
+        logError({
+          source: "auth-context.fetchProfile",
+          message: error.message,
+          metadata: { userId, code: error.code },
+        });
       }
       setProfile(data as Profile | null);
     } catch (e) {
       console.error("Failed to fetch profile:", e);
+      logError({
+        source: "auth-context.fetchProfile",
+        message: e instanceof Error ? e.message : "Unknown error",
+        stack: e instanceof Error ? e.stack : undefined,
+        metadata: { userId },
+      });
       setProfile(null);
     } finally {
       setLoading(false);

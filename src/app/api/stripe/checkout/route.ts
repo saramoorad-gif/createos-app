@@ -76,6 +76,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error("[Stripe Checkout] Error:", error);
+
+    // Log to admin error logs
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const sb = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+        process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+      );
+      await sb.from("error_logs").insert({
+        level: "error",
+        source: "api/stripe/checkout",
+        message,
+        stack,
+        metadata: {},
+      });
+    } catch {}
+
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

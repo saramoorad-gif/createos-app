@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabase, isSupabaseConfigured, setAuthCookie } from "@/lib/supabase";
+import { logError } from "@/lib/error-logger";
 
 function LoginContent() {
   const router = useRouter();
@@ -40,6 +41,14 @@ function LoginContent() {
     setLoading(false);
 
     if (signInError) {
+      // Log non-credential errors (credentials errors are user mistakes, not bugs)
+      if (!signInError.message.includes("Invalid login credentials") && !signInError.message.includes("Email not confirmed")) {
+        logError({
+          source: "login.handlePasswordLogin",
+          message: signInError.message,
+          metadata: { email },
+        });
+      }
       if (signInError.message.includes("Invalid login credentials")) {
         setError("Wrong email or password. Please try again.");
       } else if (signInError.message.includes("Email not confirmed")) {
