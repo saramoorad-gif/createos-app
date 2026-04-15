@@ -188,7 +188,11 @@ export default function CreatorInboxPage() {
           email_from: deal.email_from,
         }),
       });
-      if (!res.ok) throw new Error("Failed to create deal");
+      const result = await res.json();
+      if (!res.ok) {
+        console.error("Create deal failed:", result);
+        throw new Error(result.error || "Failed to create deal");
+      }
       setCreatedDeals(prev => new Set(prev).add(deal.email_id));
       toast("success", `Deal "${deal.brand_name}" added to your pipeline`);
     } catch (err) {

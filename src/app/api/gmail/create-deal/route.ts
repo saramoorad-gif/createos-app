@@ -12,17 +12,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const sb = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-  // Clean platform — must match check constraint or be null
+  if (!supabaseUrl || !serviceKey) {
+    return NextResponse.json({ error: "Server configuration missing" }, { status: 500 });
+  }
+
+  const sb = createClient(supabaseUrl, serviceKey);
+
+  // Clean platform
   const cleanPlatform = platform && VALID_PLATFORMS.includes(platform.toLowerCase())
     ? platform.toLowerCase()
     : null;
 
-  // Clean value — must be a number
+  // Clean value
   const cleanValue = typeof estimated_value === "number" && estimated_value > 0
     ? estimated_value
     : 0;
@@ -34,6 +38,32 @@ export async function POST(req: NextRequest) {
   if (email_subject) noteLines.push(`Subject: ${email_subject}`);
 
   try {
+    // First ensure user exists in public.users (deals table has FK to public.users)
+    const { data: existingUser } = await sb
+      .from("users")
+      .select("id")
+      .eq("id", userId)
+      .single();
+
+    if (!existingUser) {
+      // Get user info from profiles to create a public.users row
+      const { data: profile } = await sb
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", userId)
+        .single();
+
+      if (profile) {
+        await sb.from("users").upsert({
+          id: userId,
+          full_name: profile.full_name || "Creator",
+          email: profile.email || "",
+          tier: "ugc_creator",
+        }, { onConflict: "id" });
+      }
+    }
+
+    // Now insert the deal
     const insertData: Record<string, any> = {
       user_id: userId,
       brand_name: brand_name.trim(),
@@ -42,7 +72,6 @@ export async function POST(req: NextRequest) {
       notes: noteLines.join("\n"),
     };
 
-    // Only include optional fields if they have valid values
     if (deliverables) insertData.deliverables = deliverables;
     if (cleanPlatform) insertData.platform = cleanPlatform;
 
@@ -54,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error("Supabase insert error:", JSON.stringify(error));
-      return NextResponse.json({ error: error.message || "Database insert failed", details: error }, { status: 500 });
+      return NextResponse.json({ error: error.message, code: error.code, details: error.details }, { status: 500 });
     }
 
     return NextResponse.json({ deal: data });
