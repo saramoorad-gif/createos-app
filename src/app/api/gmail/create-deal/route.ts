@@ -6,7 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 const VALID_PLATFORMS = ["tiktok", "instagram", "youtube"];
 
 export async function POST(req: NextRequest) {
-  const { userId, brand_name, estimated_value, deliverables, platform, notes, email_subject, email_from } = await req.json();
+  const { userId, brand_name, estimated_value, deliverables, platform, stage, notes, email_subject, email_from } = await req.json();
 
   if (!userId || !brand_name) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -64,10 +64,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Now insert the deal
+    const validStages = ["lead", "negotiating", "contracted", "in_progress", "delivered", "paid"];
+    const cleanStage = stage && validStages.includes(stage) ? stage : "lead";
+
     const insertData: Record<string, any> = {
       user_id: userId,
       brand_name: brand_name.trim(),
-      stage: "lead",
+      stage: cleanStage,
       value: cleanValue,
       notes: noteLines.join("\n"),
     };

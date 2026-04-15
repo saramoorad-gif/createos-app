@@ -108,6 +108,15 @@ export default function CreatorInboxPage() {
   const [creatingDeal, setCreatingDeal] = useState<string | null>(null);
   const [createdDeals, setCreatedDeals] = useState<Set<string>>(new Set());
 
+  // Deal review modal state
+  const [reviewDeal, setReviewDeal] = useState<DetectedDeal | null>(null);
+  const [formBrand, setFormBrand] = useState("");
+  const [formValue, setFormValue] = useState("");
+  const [formDeliverables, setFormDeliverables] = useState("");
+  const [formPlatform, setFormPlatform] = useState("");
+  const [formStage, setFormStage] = useState("lead");
+  const [formNotes, setFormNotes] = useState("");
+
   const { toast } = useToast();
   const loading = threadsLoading || messagesLoading;
 
@@ -169,23 +178,37 @@ export default function CreatorInboxPage() {
     }
   }
 
-  // Create deal from detected opportunity
-  async function createDealFromEmail(deal: DetectedDeal) {
-    if (!user) return;
-    setCreatingDeal(deal.email_id);
+  // Open review modal with AI-detected data pre-filled
+  function openDealReview(deal: DetectedDeal) {
+    setReviewDeal(deal);
+    setFormBrand(deal.brand_name || "");
+    setFormValue(deal.estimated_value ? String(deal.estimated_value) : "");
+    setFormDeliverables(deal.deliverables || "");
+    setFormPlatform(deal.platform || "");
+    setFormStage("lead");
+    setFormNotes(deal.notes || "");
+  }
+
+  // Create deal after user reviews/edits
+  async function submitDeal() {
+    if (!user || !reviewDeal) return;
+    if (!formBrand.trim()) { toast("error", "Brand name is required"); return; }
+
+    setCreatingDeal(reviewDeal.email_id);
     try {
       const res = await fetch("/api/gmail/create-deal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
-          brand_name: deal.brand_name,
-          estimated_value: deal.estimated_value,
-          deliverables: deal.deliverables,
-          platform: deal.platform,
-          notes: deal.notes,
-          email_subject: deal.email_subject,
-          email_from: deal.email_from,
+          brand_name: formBrand.trim(),
+          estimated_value: parseFloat(formValue) || 0,
+          deliverables: formDeliverables.trim(),
+          platform: formPlatform || null,
+          stage: formStage,
+          notes: formNotes.trim(),
+          email_subject: reviewDeal.email_subject,
+          email_from: reviewDeal.email_from,
         }),
       });
       const result = await res.json();
@@ -193,11 +216,12 @@ export default function CreatorInboxPage() {
         console.error("Create deal failed:", result);
         throw new Error(result.error || "Failed to create deal");
       }
-      setCreatedDeals(prev => new Set(prev).add(deal.email_id));
-      toast("success", `Deal "${deal.brand_name}" added to your pipeline`);
-    } catch (err) {
+      setCreatedDeals(prev => new Set(prev).add(reviewDeal.email_id));
+      toast("success", `Deal "${formBrand.trim()}" added to your pipeline`);
+      setReviewDeal(null);
+    } catch (err: any) {
       console.error("Create deal error:", err);
-      toast("error", "Failed to create deal");
+      toast("error", err.message || "Failed to create deal");
     } finally {
       setCreatingDeal(null);
     }
@@ -382,16 +406,11 @@ export default function CreatorInboxPage() {
                           </span>
                         ) : (
                           <button
-                            onClick={() => createDealFromEmail(deal)}
-                            disabled={isCreating}
-                            className="flex items-center gap-1.5 bg-[#1E3F52] text-white rounded-[8px] px-3 py-2 text-[12px] font-sans hover:bg-[#2a5269] transition-colors disabled:opacity-50"
+                            onClick={() => openDealReview(deal)}
+                            className="flex items-center gap-1.5 bg-[#1E3F52] text-white rounded-[8px] px-3 py-2 text-[12px] font-sans hover:bg-[#2a5269] transition-colors"
                             style={{ fontWeight: 600 }}
                           >
-                            {isCreating ? (
-                              <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Adding...</>
-                            ) : (
-                              <><Plus className="h-3.5 w-3.5" /> Add to pipeline</>
-                            )}
+                            <Plus className="h-3.5 w-3.5" /> Add to pipeline
                           </button>
                         )}
                       </div>
@@ -658,6 +677,120 @@ export default function CreatorInboxPage() {
           <Megaphone className="h-8 w-8 text-[#D8E8EE] mx-auto mb-3" />
           <p className="text-[16px] font-serif italic text-[#8AAABB]">No announcements yet</p>
           <p className="text-[13px] font-sans text-[#8AAABB] mt-1">Updates from your agency will appear here.</p>
+        </div>
+      )}
+
+      {/* ─── Deal Review Modal ──────────────────────────── */}
+      {reviewDeal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(26,44,56,.4)", backdropFilter: "blur(4px)" }}>
+          <div className="relative bg-white rounded-[10px] border-[1.5px] border-[#D8E8EE] w-full max-w-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-[#1E3F52] to-[#2a5269] px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-[#7BAFC8]" />
+                <h2 className="text-[18px] font-serif text-white">Review deal</h2>
+              </div>
+              <button onClick={() => setReviewDeal(null)} className="text-white/60 hover:text-white"><X className="h-5 w-5" /></button>
+            </div>
+
+            {/* Source info */}
+            <div className="px-6 py-3 bg-[#F2F8FB] border-b border-[#D8E8EE]">
+              <p className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] mb-1" style={{ fontWeight: 600 }}>Detected from email</p>
+              <p className="text-[12px] font-sans text-[#4A6070] truncate">{reviewDeal.email_subject}</p>
+              <p className="text-[11px] font-mono text-[#8AAABB] truncate">{reviewDeal.email_from}</p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Brand name *</label>
+                <input
+                  type="text"
+                  value={formBrand}
+                  onChange={e => setFormBrand(e.target.value)}
+                  placeholder="e.g., Glow Recipe"
+                  className="w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Deal value ($)</label>
+                  <input
+                    type="number"
+                    value={formValue}
+                    onChange={e => setFormValue(e.target.value)}
+                    placeholder="0"
+                    className="w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Platform</label>
+                  <select
+                    value={formPlatform}
+                    onChange={e => setFormPlatform(e.target.value)}
+                    className="w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]"
+                  >
+                    <option value="">Not specified</option>
+                    <option value="tiktok">TikTok</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="youtube">YouTube</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Deliverables</label>
+                <input
+                  type="text"
+                  value={formDeliverables}
+                  onChange={e => setFormDeliverables(e.target.value)}
+                  placeholder="e.g., 2 TikTok videos + 1 Instagram reel"
+                  className="w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Stage</label>
+                <select
+                  value={formStage}
+                  onChange={e => setFormStage(e.target.value)}
+                  className="w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]"
+                >
+                  <option value="lead">Lead</option>
+                  <option value="negotiating">Negotiating</option>
+                  <option value="contracted">Contracted</option>
+                  <option value="in_progress">In Progress</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5" style={{ fontWeight: 600 }}>Notes</label>
+                <textarea
+                  value={formNotes}
+                  onChange={e => setFormNotes(e.target.value)}
+                  rows={2}
+                  placeholder="Additional details..."
+                  className="w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8] resize-none"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => setReviewDeal(null)}
+                  className="flex-1 border-[1.5px] border-[#D8E8EE] rounded-[8px] px-4 py-2.5 text-[13px] font-sans text-[#1A2C38]"
+                  style={{ fontWeight: 500 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitDeal}
+                  disabled={creatingDeal === reviewDeal.email_id}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#1E3F52] text-white rounded-[8px] px-4 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors disabled:opacity-50"
+                  style={{ fontWeight: 600 }}
+                >
+                  {creatingDeal === reviewDeal.email_id ? (
+                    <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Adding...</>
+                  ) : (
+                    <><Plus className="h-3.5 w-3.5" /> Add to pipeline</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
