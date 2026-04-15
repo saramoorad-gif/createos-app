@@ -88,17 +88,26 @@ export default function SignUpPage() {
     if (signUpError) { setError(signUpError.message); setLoading(false); return; }
 
     if (data.user) {
+      // Everyone starts as "free" in the database.
+      // Paid tiers get upgraded by Stripe webhook after successful checkout.
       await sb.from("profiles").insert({
         id: data.user.id,
         full_name: fullName,
         email,
-        account_type: accountType,
+        account_type: "free",
         agency_name: accountType === "agency" ? agencyName : null,
       });
     }
 
     setLoading(false);
-    router.push(accountType === "agency" ? "/onboarding?flow=agency" : "/onboarding");
+
+    // Route based on tier selection
+    if (accountType === "free") {
+      router.push("/onboarding");
+    } else {
+      // Paid tiers → go to checkout first
+      router.push(`/checkout?plan=${accountType}`);
+    }
   }
 
   return (

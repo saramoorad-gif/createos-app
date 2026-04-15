@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
+import { useAuth } from "@/contexts/auth-context";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
 import { TableSkeleton } from "@/components/global/skeleton";
 import { ContextMenu } from "@/components/global/context-menu";
-import { X, ChevronRight, FileText, Eye, Plus, Edit3, Trash2, Save } from "lucide-react";
+import { FREE_TIER_DEAL_LIMIT } from "@/lib/feature-gates";
+import Link from "next/link";
+import { X, ChevronRight, FileText, Eye, Plus, Edit3, Trash2, Save, Lock, Sparkles } from "lucide-react";
 
 interface Deal {
   id: string;
@@ -37,10 +40,13 @@ const stageProgress: Record<string, number> = { lead: 5, pitched: 15, negotiatin
 const stageOrder = ["lead", "pitched", "negotiating", "contracted", "in_progress", "delivered", "paid"];
 
 export default function DealsPage() {
+  const { profile } = useAuth();
   const [filter, setFilter] = useState<Filter>("all");
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
   const [showNew, setShowNew] = useState(false);
   const { toast } = useToast();
+
+  const isFreeTier = profile?.account_type === "free";
 
   const { data: deals, loading, setData: setDeals } = useSupabaseQuery<Deal>("deals", { order: { column: "created_at", ascending: false } });
   const { insert, update, remove } = useSupabaseMutation("deals");
@@ -59,6 +65,11 @@ export default function DealsPage() {
   const [fExclCat, setFExclCat] = useState("");
 
   function openNew() {
+    // Check free tier deal limit
+    if (isFreeTier && deals.length >= FREE_TIER_DEAL_LIMIT) {
+      toast("error", `Free plan limited to ${FREE_TIER_DEAL_LIMIT} deals. Upgrade to add more.`);
+      return;
+    }
     setEditDeal(null);
     setFBrand(""); setFValue(""); setFDeliv(""); setFPlat("tiktok"); setFType("ugc");
     setFDue(""); setFStage("lead"); setFNotes(""); setFExclDays(""); setFExclCat("");
@@ -152,6 +163,44 @@ export default function DealsPage() {
   return (
     <div>
       <PageHeader headline={<>Your deal <em className="italic text-[#7BAFC8]">pipeline</em></>} subheading="Track every brand partnership from pitch to payment." stats={[{ value: String(deals.length), label: "Total deals" }, { value: String(activeCount), label: "Active" }, { value: formatCurrency(totalValue), label: "Pipeline value" }]} />
+
+      {/* Free tier usage banner */}
+      {isFreeTier && (
+        <div className={`mb-6 rounded-[10px] p-4 flex items-center gap-3 ${
+          deals.length >= FREE_TIER_DEAL_LIMIT
+            ? "bg-[#F4EAEA] border-[1.5px] border-[#A03D3D]/20"
+            : "bg-gradient-to-r from-[#1E3F52] to-[#2a5269]"
+        }`}>
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+            deals.length >= FREE_TIER_DEAL_LIMIT ? "bg-[#A03D3D]/10" : "bg-white/10"
+          }`}>
+            {deals.length >= FREE_TIER_DEAL_LIMIT ? (
+              <Lock className="h-4 w-4 text-[#A03D3D]" />
+            ) : (
+              <Sparkles className="h-4 w-4 text-[#7BAFC8]" />
+            )}
+          </div>
+          <div className="flex-1">
+            <p className={`text-[13px] font-sans ${deals.length >= FREE_TIER_DEAL_LIMIT ? "text-[#A03D3D]" : "text-white"}`} style={{ fontWeight: 600 }}>
+              {deals.length >= FREE_TIER_DEAL_LIMIT ? "You've reached your deal limit" : `Free plan: ${deals.length} of ${FREE_TIER_DEAL_LIMIT} deals used`}
+            </p>
+            <p className={`text-[12px] font-sans ${deals.length >= FREE_TIER_DEAL_LIMIT ? "text-[#A03D3D]/70" : "text-white/60"}`}>
+              Upgrade to UGC Creator for unlimited deals, AI features, and more.
+            </p>
+          </div>
+          <Link
+            href="/checkout?plan=ugc"
+            className={`flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-[12px] font-sans transition-colors ${
+              deals.length >= FREE_TIER_DEAL_LIMIT
+                ? "bg-[#A03D3D] text-white hover:bg-[#8B2F2F]"
+                : "bg-white/15 text-white hover:bg-white/25"
+            }`}
+            style={{ fontWeight: 600 }}
+          >
+            Upgrade — $27/mo <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      )}
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-1">

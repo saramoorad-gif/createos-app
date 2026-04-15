@@ -58,6 +58,9 @@ export type Profile = {
   google_access_token?: string | null;
   google_refresh_token?: string | null;
   docusign_connected?: boolean;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  subscription_status?: "active" | "past_due" | "cancelled" | "trialing" | null;
 };
 
 export function isSupabaseConfigured(): boolean {

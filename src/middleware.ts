@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const publicRoutes = [
-  "/login", "/signup", "/onboarding", "/kit", "/pricing",
+  "/login", "/signup", "/checkout", "/onboarding", "/kit", "/pricing",
   "/for-creators", "/for-agencies", "/features", "/faq",
   "/help", "/contact", "/privacy", "/terms", "/team-onboarding",
 ];
