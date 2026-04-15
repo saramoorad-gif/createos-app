@@ -9,7 +9,128 @@ import { TableSkeleton } from "@/components/global/skeleton";
 import {
   Upload, FileText, Shield, AlertTriangle, CheckCircle2, XCircle,
   Sparkles, RefreshCw, X, DollarSign, Clock, Lock, Eye, ChevronRight,
+  Copy, Download,
 } from "lucide-react";
+
+interface CreatorTemplate {
+  id: string;
+  name: string;
+  description: string;
+  variables: string[];
+  body: string;
+}
+
+const creatorTemplates: CreatorTemplate[] = [
+  {
+    id: "ct_1", name: "UGC Content Agreement", description: "Standard UGC agreement — use when a brand sends you a deal with no contract.",
+    variables: ["creator_name", "brand_name", "deliverables", "payment_amount", "payment_terms", "usage_rights", "revision_limit", "content_deadline"],
+    body: `CONTENT CREATION AGREEMENT
+
+This Content Creation Agreement ("Agreement") is entered into as of the date of last signature below.
+
+CREATOR: {{creator_name}}
+BRAND/CLIENT: {{brand_name}}
+
+1. SCOPE OF WORK
+Creator agrees to produce the following deliverables: {{deliverables}}
+All content must be delivered by: {{content_deadline}}
+
+2. COMPENSATION
+Brand agrees to pay Creator {{payment_amount}} under the following terms: {{payment_terms}}
+Payment is due within 30 days of content delivery unless otherwise specified above.
+
+3. USAGE RIGHTS
+Brand is granted the following usage rights: {{usage_rights}}
+All usage rights begin upon full payment. Creator retains ownership of all original content.
+
+4. REVISIONS
+Creator will provide up to {{revision_limit}} rounds of revisions at no additional cost. Additional revisions will be billed at Creator's standard hourly rate.
+
+5. CONTENT APPROVAL
+Brand must approve or request revisions within 5 business days of delivery. Failure to respond constitutes approval.
+
+6. CANCELLATION
+If Brand cancels after signing, a kill fee of 50% of the total compensation is due. If Creator has begun work, full compensation is due.
+
+7. CONFIDENTIALITY
+Both parties agree to keep the terms of this agreement confidential unless mutually agreed otherwise.
+
+8. INDEPENDENT CONTRACTOR
+Creator is an independent contractor and not an employee of Brand.
+
+SIGNATURES:
+Creator: _____________________ Date: _________
+Brand:   _____________________ Date: _________`,
+  },
+  {
+    id: "ct_2", name: "Influencer Partnership", description: "Full influencer campaign agreement with exclusivity and kill fee protections.",
+    variables: ["creator_name", "brand_name", "deliverables", "payment_amount", "exclusivity_category", "exclusivity_duration", "kill_fee", "content_deadline"],
+    body: `INFLUENCER PARTNERSHIP AGREEMENT
+
+This Influencer Partnership Agreement ("Agreement") is entered into as of the date of last signature.
+
+INFLUENCER: {{creator_name}}
+BRAND: {{brand_name}}
+
+1. CAMPAIGN DELIVERABLES
+Influencer agrees to create and publish the following: {{deliverables}}
+Content delivery deadline: {{content_deadline}}
+
+2. COMPENSATION
+Brand shall pay Influencer {{payment_amount}} within 30 days of campaign completion.
+
+3. EXCLUSIVITY
+Influencer agrees to an exclusivity period of {{exclusivity_duration}} in the {{exclusivity_category}} category. During this period, Influencer will not promote competing brands in this category.
+
+4. KILL FEE
+If Brand cancels this agreement after execution, Brand shall pay Influencer a kill fee of {{kill_fee}}.
+
+5. CONTENT OWNERSHIP & LICENSING
+Influencer retains ownership of all content created. Brand receives a license to repost, reshare, and use content on Brand's owned channels for 12 months unless otherwise negotiated.
+
+6. WHITELISTING / PAID AMPLIFICATION
+Any paid amplification (whitelisting, dark posting, boosting) of Influencer's content by Brand requires separate written approval and additional compensation.
+
+7. FTC COMPLIANCE
+Influencer agrees to comply with all FTC disclosure guidelines, including proper use of #ad or #sponsored tags.
+
+8. APPROVAL PROCESS
+Brand must approve all content within 3 business days of submission. Silence constitutes approval.
+
+SIGNATURES:
+Influencer: _____________________ Date: _________
+Brand:      _____________________ Date: _________`,
+  },
+  {
+    id: "ct_3", name: "Usage Rights Extension", description: "Extend usage rights on existing content — use when a brand wants to keep using your content longer.",
+    variables: ["creator_name", "brand_name", "original_agreement_date", "extension_duration", "payment_amount", "usage_rights"],
+    body: `USAGE RIGHTS EXTENSION AGREEMENT
+
+CREATOR: {{creator_name}}
+BRAND: {{brand_name}}
+ORIGINAL AGREEMENT DATE: {{original_agreement_date}}
+
+1. EXTENSION OF RIGHTS
+The usage rights granted in the original agreement are hereby extended for an additional period of {{extension_duration}}.
+
+2. EXTENDED RIGHTS SCOPE
+The following usage rights are granted for the extension period: {{usage_rights}}
+
+3. COMPENSATION
+Brand agrees to pay Creator {{payment_amount}} for this extension. Payment is due within 15 days of signing.
+
+4. ALL OTHER TERMS
+All other terms and conditions of the original agreement remain in full force and effect.
+
+SIGNATURES:
+Creator: _____________________ Date: _________
+Brand:   _____________________ Date: _________`,
+  },
+];
+
+function variableLabel(v: string): string {
+  return v.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+}
 
 interface ContractAnalysis {
   overall_score: string;
@@ -45,10 +166,13 @@ export default function ContractsPage() {
   const { toast } = useToast();
   const { data: deals } = useSupabaseQuery<any>("deals");
 
+  const [view, setView] = useState<"review" | "templates">("templates");
   const [contractText, setContractText] = useState("");
   const [analysis, setAnalysis] = useState<ContractAnalysis | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [activeTemplate, setActiveTemplate] = useState<CreatorTemplate | null>(null);
+  const [templateValues, setTemplateValues] = useState<Record<string, string>>({});
 
   // Exclusivity conflicts
   const activeExclusivities = deals.filter((d: any) =>
@@ -69,6 +193,32 @@ export default function ContractsPage() {
       // For PDF/DOC, we can't parse client-side — show paste option
       toast("info", "For best results, paste the contract text below");
     }
+  }
+
+  function openTemplate(tpl: CreatorTemplate) {
+    setActiveTemplate(tpl);
+    setTemplateValues(Object.fromEntries(tpl.variables.map(v => [v, ""])));
+  }
+
+  function getFilledTemplate(): string {
+    if (!activeTemplate) return "";
+    return activeTemplate.body.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+      return templateValues[key] || `[${variableLabel(key)}]`;
+    });
+  }
+
+  function copyTemplate() {
+    const text = getFilledTemplate();
+    navigator.clipboard.writeText(text);
+    toast("success", "Contract copied to clipboard");
+  }
+
+  function sendToReview() {
+    const text = getFilledTemplate();
+    setContractText(text);
+    setActiveTemplate(null);
+    setView("review");
+    toast("info", "Template loaded — click AI Review to analyze");
   }
 
   async function analyzeContract() {
@@ -103,14 +253,121 @@ export default function ContractsPage() {
   return (
     <div>
       <PageHeader
-        headline={<>Contract <em className="italic text-[#7BAFC8]">review</em></>}
-        subheading="Upload or paste a contract for AI-powered analysis."
+        headline={<>Your <em className="italic text-[#7BAFC8]">contracts</em></>}
+        subheading="Templates, AI review, and exclusivity tracking."
         stats={[
-          { value: String(activeExclusivities.length), label: "Active exclusivities" },
+          { value: String(creatorTemplates.length), label: "Templates" },
+          { value: String(activeExclusivities.length), label: "Exclusivities" },
           { value: String(deals.length), label: "Total deals" },
         ]}
       />
 
+      {/* View toggle */}
+      <div className="flex items-center gap-1 mb-6">
+        {([
+          { key: "templates" as const, label: "Templates", icon: FileText },
+          { key: "review" as const, label: "AI Review", icon: Sparkles },
+        ]).map(v => (
+          <button
+            key={v.key}
+            onClick={() => setView(v.key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-sans uppercase tracking-[1.5px] rounded-full transition-colors ${
+              view === v.key ? "bg-[#1A2C38] text-[#FAF8F4]" : "text-[#8AAABB] hover:bg-[#F2F8FB]"
+            }`}
+            style={{ fontWeight: 500 }}
+          >
+            <v.icon className="h-3 w-3" />
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ─── Templates View ──────────────────────────── */}
+      {view === "templates" && !activeTemplate && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {creatorTemplates.map(tpl => (
+            <div key={tpl.id} className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-5 flex flex-col hover:border-[#7BAFC8] transition-colors">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="h-10 w-10 rounded-[10px] bg-[#F2F8FB] flex items-center justify-center flex-shrink-0">
+                  <FileText className="h-5 w-5 text-[#7BAFC8]" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>{tpl.name}</h3>
+                  <p className="text-[12px] font-sans text-[#8AAABB] mt-0.5">{tpl.description}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {tpl.variables.slice(0, 5).map(v => (
+                  <span key={v} className="text-[10px] font-mono text-[#8AAABB] bg-[#FAF8F4] rounded px-1.5 py-0.5">{variableLabel(v)}</span>
+                ))}
+                {tpl.variables.length > 5 && <span className="text-[10px] font-mono text-[#8AAABB]">+{tpl.variables.length - 5}</span>}
+              </div>
+              <button
+                onClick={() => openTemplate(tpl)}
+                className="mt-auto w-full flex items-center justify-center gap-1.5 bg-[#1E3F52] text-white rounded-[8px] px-3 py-2.5 text-[12px] font-sans hover:bg-[#2a5269] transition-colors"
+                style={{ fontWeight: 600 }}
+              >
+                <Copy className="h-3.5 w-3.5" /> Use Template
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ─── Template Editor ─────────────────────────── */}
+      {view === "templates" && activeTemplate && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setActiveTemplate(null)} className="text-[12px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>← Back to templates</button>
+              <span className="text-[#D8E8EE]">|</span>
+              <h3 className="text-[16px] font-serif text-[#1A2C38]">{activeTemplate.name}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={copyTemplate} className="flex items-center gap-1.5 border-[1.5px] border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[11px] font-sans text-[#4A6070] hover:border-[#7BAFC8] transition-colors" style={{ fontWeight: 500 }}>
+                <Copy className="h-3 w-3" /> Copy
+              </button>
+              <button onClick={sendToReview} className="flex items-center gap-1.5 bg-[#1E3F52] text-white rounded-[8px] px-3 py-2 text-[11px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
+                <Sparkles className="h-3 w-3" /> Send to AI Review
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
+            {/* Variables form */}
+            <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-5">
+              <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>FILL IN DETAILS</p>
+              <div className="space-y-3">
+                {activeTemplate.variables.map(v => (
+                  <div key={v}>
+                    <label className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-1 block" style={{ fontWeight: 600 }}>{variableLabel(v)}</label>
+                    <input
+                      type="text"
+                      value={templateValues[v] || ""}
+                      onChange={e => setTemplateValues(prev => ({ ...prev, [v]: e.target.value }))}
+                      placeholder={variableLabel(v)}
+                      className="w-full border-[1.5px] border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] font-sans text-[#1A2C38] placeholder:text-[#8AAABB]/40 focus:outline-none focus:border-[#7BAFC8]"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Live preview */}
+            <div className="bg-[#FDFBF9] border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6 overflow-y-auto" style={{ maxHeight: "600px" }}>
+              <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>LIVE PREVIEW</p>
+              <div className="bg-white border border-[#D8E8EE] rounded-[8px] p-6">
+                <pre className="text-[12px] font-sans text-[#1A2C38] whitespace-pre-wrap leading-relaxed" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                  {getFilledTemplate()}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── AI Review View ──────────────────────────── */}
+      {view === "review" && (
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
         {/* Main area */}
         <div className="space-y-6">
@@ -364,6 +621,7 @@ The AI will analyze payment terms, usage rights, exclusivity clauses, red flags,
           </div>
         </aside>
       </div>
+      )}
     </div>
   );
 }
