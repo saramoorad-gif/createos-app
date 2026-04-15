@@ -1,5 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Star, Sparkles, TrendingUp, Search, Bell } from "lucide-react";
+import { Star, Sparkles, TrendingUp, Search, Bell, Check } from "lucide-react";
 
 const upcomingFeatures = [
   { icon: Search, title: "AI Brand Matching", desc: "Get matched with brands hiring creators in your niche based on your content style and engagement." },
@@ -10,6 +13,7 @@ const upcomingFeatures = [
 ];
 
 export default function BrandRadarPage() {
+  const [notified, setNotified] = useState(false);
   return (
     <div>
       <PageHeader
@@ -44,9 +48,15 @@ export default function BrandRadarPage() {
           <p className="text-[13px] font-sans text-[#3D6E8A]" style={{ fontWeight: 500 }}>
             Want early access? We&apos;ll notify you when Brand Radar launches.
           </p>
-          <button className="mt-3 bg-[#1E3F52] text-white rounded-[8px] px-6 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
-            Notify me when it launches
-          </button>
+          {notified ? (
+            <span className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-sans text-[#3D7A58]" style={{ fontWeight: 500 }}>
+              <Check className="h-4 w-4" /> You&apos;ll be notified when Brand Radar launches
+            </span>
+          ) : (
+            <button onClick={() => setNotified(true)} className="mt-3 bg-[#1E3F52] text-white rounded-[8px] px-6 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
+              Notify me when it launches
+            </button>
+          )}
         </div>
       </div>
     </div>

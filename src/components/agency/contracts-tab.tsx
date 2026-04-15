@@ -302,7 +302,7 @@ function ContractPanel({ contract, onClose, onUpdate }: { contract: AgencyContra
                     {sig.status === "signed" && sig.signedAt ? (
                       <span className="text-[11px] font-mono text-[#3D7A58]">{formatDate(sig.signedAt)}</span>
                     ) : (
-                      <button className="flex items-center gap-1 text-[11px] font-sans font-500 text-[#7BAFC8] hover:text-[#6AA0BB]">
+                      <button onClick={() => toast("success", "Signature request sent")} className="flex items-center gap-1 text-[11px] font-sans font-500 text-[#7BAFC8] hover:text-[#6AA0BB]">
                         <Send className="h-3 w-3" /> Send
                       </button>
                     )}
@@ -623,7 +623,7 @@ export function ContractsTab() {
             </button>
           ))}
         </div>
-        <button className="flex items-center gap-1.5 bg-[#7BAFC8] text-white rounded-[10px] px-3.5 py-2 text-[12px] font-sans font-500 hover:bg-[#6AA0BB]">
+        <button onClick={() => toast("info", "Contract upload coming soon — use the contract builder to create new contracts")} className="flex items-center gap-1.5 bg-[#7BAFC8] text-white rounded-[10px] px-3.5 py-2 text-[12px] font-sans font-500 hover:bg-[#6AA0BB]">
           <Upload className="h-3.5 w-3.5" /> Upload Contract
         </button>
       </div>

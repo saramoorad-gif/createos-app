@@ -887,7 +887,7 @@ export function PipelineTab() {
               ))}
             </div>
           </div>
-          <button className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#D8E8EE] px-3 py-1 text-[11px] text-[#8AAABB] hover:border-[#1A2C38] hover:text-[#1A2C38]">
+          <button onClick={() => toast("info", "CSV export coming soon")} className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#D8E8EE] px-3 py-1 text-[11px] text-[#8AAABB] hover:border-[#1A2C38] hover:text-[#1A2C38]">
             <Download size={10} />
             Export
           </button>

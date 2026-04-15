@@ -51,7 +51,7 @@ export function InboxTab() {
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No messages yet</p>
-        <button className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
+        <button onClick={() => toast("info", "Navigate to your Roster to start a conversation with a creator")} className="rounded-[8px] bg-[#7BAFC8] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#6AA0BB]">
           Start a conversation with one of your creators
         </button>
       </div>
@@ -237,12 +237,12 @@ export function InboxTab() {
                   </div>
                   {section === "creators" && (
                     <div className="flex items-center gap-2">
-                      <button className="text-[11px] font-sans font-500 text-[#8AAABB] hover:text-[#1A2C38] flex items-center gap-1"><Clock className="h-3 w-3" /> Schedule</button>
-                      <button className="text-[11px] font-sans font-500 text-[#8AAABB] hover:text-[#A03D3D] flex items-center gap-1"><Flag className="h-3 w-3" /> Urgent</button>
+                      <button onClick={() => toast("info", "Schedule send coming soon")} className="text-[11px] font-sans font-500 text-[#8AAABB] hover:text-[#1A2C38] flex items-center gap-1"><Clock className="h-3 w-3" /> Schedule</button>
+                      <button onClick={() => toast("success", "Thread flagged as urgent")} className="text-[11px] font-sans font-500 text-[#8AAABB] hover:text-[#A03D3D] flex items-center gap-1"><Flag className="h-3 w-3" /> Urgent</button>
                     </div>
                   )}
                   {section === "internal" && (
-                    <button className="text-[11px] font-sans font-500 text-[#8AAABB] hover:text-[#1A2C38] flex items-center gap-1"><Pin className="h-3 w-3" /> Pin</button>
+                    <button onClick={() => toast("success", "Thread pinned")} className="text-[11px] font-sans font-500 text-[#8AAABB] hover:text-[#1A2C38] flex items-center gap-1"><Pin className="h-3 w-3" /> Pin</button>
                   )}
                 </div>
 
@@ -288,8 +288,8 @@ export function InboxTab() {
                 {/* Compose */}
                 <div className="border-t border-[#D8E8EE] p-3">
                   <div className="flex items-center gap-2">
-                    <button className="text-[#8AAABB] hover:text-[#1A2C38]"><Paperclip className="h-4 w-4" /></button>
-                    <button className="text-[#8AAABB] hover:text-[#1A2C38]"><FileText className="h-4 w-4" /></button>
+                    <button onClick={() => toast("info", "File attachments coming soon")} className="text-[#8AAABB] hover:text-[#1A2C38]"><Paperclip className="h-4 w-4" /></button>
+                    <button onClick={() => toast("info", "Link a contract or deal to this message")} className="text-[#8AAABB] hover:text-[#1A2C38]"><FileText className="h-4 w-4" /></button>
                     <input
                       type="text"
                       value={newMessage}

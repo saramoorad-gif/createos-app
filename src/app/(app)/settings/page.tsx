@@ -345,12 +345,26 @@ function NotificationsSection() {
 }
 
 function TeamSection() {
+  const [showInvite, setShowInvite] = useState(false);
+  const [email, setEmail] = useState("");
+  const { toast } = useToast();
+
   return (
     <div className="space-y-6">
       <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>TEAM</p>
-      <div className="text-center py-12 bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px]">
+      <div className="text-center py-12 bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] px-6">
         <p className="text-[16px] font-serif italic text-[#8AAABB] mb-3">No team members yet</p>
-        <button className="bg-[#1E3F52] text-white rounded-[8px] px-5 py-2.5 text-[13px] font-sans" style={{ fontWeight: 600 }}>Invite team member</button>
+        {showInvite ? (
+          <div className="max-w-sm mx-auto space-y-3">
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="team@example.com" className="w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] focus:outline-none focus:border-[#7BAFC8]" />
+            <div className="flex gap-2">
+              <button onClick={() => { if (email) { toast("success", `Invite sent to ${email}`); setEmail(""); setShowInvite(false); } }} className="flex-1 bg-[#1E3F52] text-white rounded-[8px] px-4 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>Send invite</button>
+              <button onClick={() => setShowInvite(false)} className="border-[1.5px] border-[#D8E8EE] text-[#8AAABB] rounded-[8px] px-4 py-2.5 text-[13px] font-sans hover:border-[#7BAFC8] transition-colors" style={{ fontWeight: 500 }}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setShowInvite(true)} className="bg-[#1E3F52] text-white rounded-[8px] px-5 py-2.5 text-[13px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>Invite team member</button>
+        )}
       </div>
     </div>
   );

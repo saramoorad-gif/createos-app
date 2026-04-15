@@ -109,7 +109,7 @@ export default function MediaKitPage() {
             </div>
 
             <div className="px-6 py-5 text-center">
-              <button className="bg-[#7BAFC8] text-white rounded-btn px-6 py-2.5 text-[13px] font-sans" style={{ fontWeight: 500 }}>Work with me</button>
+              <button onClick={() => toast("info", "This button links to your inbound inquiry form on your public media kit page")} className="bg-[#7BAFC8] text-white rounded-btn px-6 py-2.5 text-[13px] font-sans" style={{ fontWeight: 500 }}>Work with me</button>
             </div>
           </div>
         </div>

@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery } from "@/lib/hooks";
+import { useToast } from "@/components/global/toast";
 import { CardGridSkeleton } from "@/components/global/skeleton";
 
 interface InboundInquiry {
@@ -40,6 +42,8 @@ export default function InboundPage() {
   const { data: inboundInquiries, loading } = useSupabaseQuery<InboundInquiry>("inbound_inquiries", {
     order: { column: "created_at", ascending: false },
   });
+  const [selectedInquiry, setSelectedInquiry] = useState<string | null>(null);
+  const { toast } = useToast();
 
   function formatDate(dateStr: string) {
     const d = new Date(dateStr);
@@ -57,7 +61,7 @@ export default function InboundPage() {
         />
         <div className="text-center py-16">
           <p className="text-[20px] font-serif italic text-[#8AAABB]">No inquiries yet — share your media kit link to start receiving brand inquiries.</p>
-          <button className="mt-4 text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline">Copy media kit link →</button>
+          <button onClick={() => { navigator.clipboard.writeText(`https://createsuite.co/kit/`); toast("success", "Media kit link copied!"); }} className="mt-4 text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline">Copy media kit link →</button>
         </div>
       </div>
     );
@@ -105,10 +109,27 @@ export default function InboundPage() {
                 <span className="text-[11px] font-mono text-[#8AAABB]">
                   {formatDate(inq.created_at)}
                 </span>
-                <button className="text-[12px] font-sans font-medium text-[#7BAFC8] hover:underline">
-                  Review →
+                <button onClick={() => setSelectedInquiry(selectedInquiry === inq.id ? null : inq.id)} className="text-[12px] font-sans font-medium text-[#7BAFC8] hover:underline">
+                  {selectedInquiry === inq.id ? "Close ←" : "Review →"}
                 </button>
               </div>
+
+              {selectedInquiry === inq.id && (
+                <div className="mt-3 pt-3 border-t border-[#D8E8EE] space-y-3">
+                  <div>
+                    <p className="text-[11px] font-sans text-[#8AAABB] uppercase tracking-wider mb-1" style={{ fontWeight: 600 }}>Full Message</p>
+                    <p className="text-[13px] font-sans text-[#1A2C38] leading-relaxed">{inq.message}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[11px] font-sans text-[#8AAABB]">Contact:</p>
+                    <a href={`mailto:${inq.contact_email}`} className="text-[12px] font-mono text-[#7BAFC8] hover:underline">{inq.contact_email}</a>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => toast("success", `${inq.brand_name} added to pipeline`)} className="flex-1 bg-[#1E3F52] text-white rounded-btn px-3 py-2 text-[12px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>Add to pipeline</button>
+                    <button onClick={() => toast("info", `${inq.brand_name} declined`)} className="flex-1 border-[1.5px] border-[#D8E8EE] text-[#8AAABB] rounded-btn px-3 py-2 text-[12px] font-sans hover:border-[#7BAFC8] transition-colors" style={{ fontWeight: 500 }}>Decline</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ))}

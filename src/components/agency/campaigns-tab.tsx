@@ -659,7 +659,7 @@ function ReportSubTab({ campaign }: { campaign: Campaign }) {
               <h3 className="font-serif text-lg text-[#1A2C38]">
                 Campaign Report: {campaign.name}
               </h3>
-              <button className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-sans font-600 text-[#8AAABB] border border-[#D8E8EE] rounded-lg hover:text-[#1A2C38] hover:border-[#1A2C38] transition-colors">
+              <button onClick={() => toast("info", "PDF export coming soon")} className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-sans font-600 text-[#8AAABB] border border-[#D8E8EE] rounded-lg hover:text-[#1A2C38] hover:border-[#1A2C38] transition-colors">
                 <Download size={12} />
                 Export PDF
               </button>
