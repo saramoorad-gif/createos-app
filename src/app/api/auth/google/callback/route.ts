@@ -15,7 +15,10 @@ export async function GET(req: NextRequest) {
   try {
     // Exchange code for tokens
     console.log("[Google Callback] Exchanging code for tokens...");
+    console.log("[Google Callback] Using client_id prefix:", (process.env.GOOGLE_CLIENT_ID || "").substring(0, 20));
+    console.log("[Google Callback] Using redirect_uri:", process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/google/callback` : "https://createsuite.co/api/auth/google/callback");
     const tokens = await exchangeGoogleCode(code);
+    console.log("[Google Callback] Full token response:", JSON.stringify(tokens));
     console.log("[Google Callback] Token response:", {
       hasAccessToken: !!tokens.access_token,
       hasRefreshToken: !!tokens.refresh_token,
