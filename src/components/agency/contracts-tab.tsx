@@ -804,7 +804,7 @@ Agency: _____________________ Date: _________`
     return <TableSkeleton rows={6} cols={8} />;
   }
 
-  if (!loading && agencyContracts.length === 0) {
+  if (!loading && agencyContracts.length === 0 && view === "contracts") {
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">No contracts yet</p>
