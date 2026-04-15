@@ -50,19 +50,12 @@ function getMonthDays(year: number, month: number) {
   return cells;
 }
 
-const seedItems: ContentItem[] = [
-  { id: "1", date: "2026-04-03", title: "Morning routine GRWM", type: "organic", platform: "TikTok", brand: "", notes: "" },
-  { id: "2", date: "2026-04-07", title: "Glow Recipe serum review", type: "sponsored", platform: "Instagram", brand: "Glow Recipe", notes: "Deliverable: 1 Reel + 3 Stories" },
-  { id: "3", date: "2026-04-12", title: "Spring outfit haul", type: "organic", platform: "YouTube", brand: "", notes: "Film on Saturday" },
-  { id: "4", date: "2026-04-15", title: "Canva tutorial collab", type: "collab", platform: "TikTok", brand: "Canva", notes: "Joint video with @designwithlex" },
-  { id: "5", date: "2026-04-21", title: "Aritzia try-on haul", type: "sponsored", platform: "Instagram", brand: "Aritzia", notes: "2 Reels, must tag @aritzia" },
-  { id: "6", date: "2026-04-28", title: "Day in my life vlog", type: "organic", platform: "YouTube", brand: "", notes: "" },
-];
+// No seed data — content is user-created only
 
 export default function ContentCalendarPage() {
   const [currentYear, setCurrentYear] = useState(2026);
   const [currentMonth, setCurrentMonth] = useState(3); // April = 3 (0-indexed)
-  const [items, setItems] = useState<ContentItem[]>(seedItems);
+  const [items, setItems] = useState<ContentItem[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [editItem, setEditItem] = useState<ContentItem | null>(null);

@@ -11,6 +11,7 @@ import { NotificationBell } from "@/components/global/notification-panel";
 const creatorLinks = [
   { name: "Today", href: "/dashboard" },
   { name: "Deals", href: "/deals" },
+  { name: "Tasks", href: "/tasks" },
   { name: "Invoices", href: "/invoices" },
   { name: "Income", href: "/income" },
   { name: "Inbox", href: "/inbox" },
