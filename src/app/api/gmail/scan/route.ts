@@ -66,17 +66,25 @@ export async function POST(req: NextRequest) {
 
     // Refresh token if needed
     if (res.status === 401 && tokens.google_refresh_token) {
-      const newTokens = await refreshGoogleToken(tokens.google_refresh_token);
-      accessToken = newTokens.access_token;
-      const sb = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-        process.env.SUPABASE_SERVICE_ROLE_KEY || ""
-      );
-      await sb.from("profiles").update({ google_access_token: accessToken }).eq("id", userId);
-      res = await fetch(
-        "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=30&q=is:inbox newer_than:7d",
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+      try {
+        const newTokens = await refreshGoogleToken(tokens.google_refresh_token);
+        if (!newTokens.access_token) {
+          return NextResponse.json({ error: "Gmail token expired — please reconnect" }, { status: 401 });
+        }
+        accessToken = newTokens.access_token;
+        const sb = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+          process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+        );
+        await sb.from("profiles").update({ google_access_token: accessToken }).eq("id", userId);
+        res = await fetch(
+          "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=30&q=is:inbox newer_than:7d",
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+      } catch (refreshErr) {
+        console.error("[Gmail Scan] Token refresh failed:", refreshErr);
+        return NextResponse.json({ error: "Gmail token expired — please reconnect" }, { status: 401 });
+      }
     }
 
     if (!res.ok) {

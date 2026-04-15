@@ -162,10 +162,16 @@ export async function POST(req: NextRequest) {
         // Auto-clear past_due status when payment succeeds
         if (customerId) {
           const sb = getSupabaseAdmin();
-          await sb
+          const { error } = await sb
             .from("profiles")
             .update({ subscription_status: "active" })
             .eq("stripe_customer_id", customerId);
+
+          if (error) {
+            console.error("[Stripe Webhook] payment_succeeded update failed:", error);
+            return NextResponse.json({ error: "Status update failed" }, { status: 500 });
+          }
+          console.log(`[Stripe Webhook] Marked customer ${customerId} as active after successful payment`);
         }
         break;
       }

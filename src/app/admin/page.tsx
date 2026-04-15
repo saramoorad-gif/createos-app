@@ -65,7 +65,8 @@ export default function AdminPortal() {
       return;
     }
     fetchData();
-  }, [authLoading, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user, router]);
 
   async function getAuthHeader() {
     const { getSupabase } = await import("@/lib/supabase");

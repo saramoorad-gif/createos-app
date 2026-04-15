@@ -239,11 +239,12 @@ export default function CreatorInboxPage() {
     }
   }
 
-  // Load Gmail on tab switch
+  // Load Gmail on tab switch (only once when first viewing Gmail tab)
   useEffect(() => {
     if (view === "gmail" && isGmailConnected && emails.length === 0 && !emailsLoading) {
       fetchGmail();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, isGmailConnected]);
 
   if (loading) return <TableSkeleton rows={5} cols={3} />;

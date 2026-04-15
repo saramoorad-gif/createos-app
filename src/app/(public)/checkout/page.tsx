@@ -98,19 +98,22 @@ function CheckoutContent() {
   // Show referral discount if applicable
   const hasReferralDiscount = refCode && planKey === "ugc_influencer" && billingCycle === "monthly";
 
-  // If user is already subscribed, redirect to dashboard
+  // Single effect to avoid race conditions between multiple router.push calls
   useEffect(() => {
-    if (!authLoading && profile && (profile.subscription_status === "active" || profile.subscription_status === "trialing")) {
-      router.push("/dashboard");
-    }
-  }, [authLoading, profile, router]);
+    if (authLoading) return;
 
-  // If not signed in, redirect to signup
-  useEffect(() => {
-    if (!authLoading && !user && isSupabaseConfigured()) {
+    // Not signed in → signup
+    if (!user && isSupabaseConfigured()) {
       router.push("/signup");
+      return;
     }
-  }, [authLoading, user, router]);
+
+    // Already subscribed → dashboard
+    if (profile && (profile.subscription_status === "active" || profile.subscription_status === "trialing")) {
+      router.push("/dashboard");
+      return;
+    }
+  }, [authLoading, user, profile, router]);
 
   async function handleCheckout() {
     if (!user) {
