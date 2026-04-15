@@ -453,7 +453,10 @@ function DealDefaultsSection({ inputClass, labelClass, labelStyle, sectionClass 
           </button>
         </div>
       </div>
-      <button onClick={() => { setSaving(true); setTimeout(() => { setSaving(false); toast("success", "Saved"); }, 500); }} disabled={saving} className="bg-[#1E3F52] text-white rounded-[8px] px-6 py-3 text-[14px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{saving ? "Saving..." : "Save defaults"}</button>
+      <div className="bg-[#FFF8E8] border border-[#A07830]/20 rounded-[8px] p-3 flex items-center gap-2">
+        <span className="text-[11px] font-sans text-[#A07830]" style={{ fontWeight: 500 }}>⏳ Agency defaults persistence coming soon — these settings won&apos;t save across sessions yet.</span>
+      </div>
+      <button disabled className="bg-[#D8E8EE] text-[#8AAABB] rounded-[8px] px-6 py-3 text-[14px] font-sans cursor-not-allowed" style={{ fontWeight: 600 }}>Save defaults — Coming soon</button>
     </div>
   );
 }
@@ -583,7 +586,10 @@ function LegalSection({ inputClass, labelClass, labelStyle, sectionClass }) {
           </select>
         </div>
       </div>
-      <button onClick={() => { setSaving(true); setTimeout(() => { setSaving(false); toast("success", "Saved"); }, 500); }} disabled={saving} className="bg-[#1E3F52] text-white rounded-[8px] px-6 py-3 text-[14px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{saving ? "Saving..." : "Save legal settings"}</button>
+      <div className="bg-[#FFF8E8] border border-[#A07830]/20 rounded-[8px] p-3 flex items-center gap-2">
+        <span className="text-[11px] font-sans text-[#A07830]" style={{ fontWeight: 500 }}>⏳ Legal settings persistence coming soon — custom templates won&apos;t save across sessions yet.</span>
+      </div>
+      <button disabled className="bg-[#D8E8EE] text-[#8AAABB] rounded-[8px] px-6 py-3 text-[14px] font-sans cursor-not-allowed" style={{ fontWeight: 600 }}>Save legal settings — Coming soon</button>
     </div>
   );
 }

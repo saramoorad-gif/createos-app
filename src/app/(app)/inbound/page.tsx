@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
+import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
 import { CardGridSkeleton } from "@/components/global/skeleton";
 
@@ -39,6 +40,7 @@ const platformLabel: Record<string, string> = {
 };
 
 export default function InboundPage() {
+  const { profile } = useAuth();
   const { data: inboundInquiries, loading, setData: setInquiries } = useSupabaseQuery<InboundInquiry>("inbound_inquiries", {
     order: { column: "created_at", ascending: false },
   });
@@ -46,6 +48,8 @@ export default function InboundPage() {
   const { insert: insertDeal } = useSupabaseMutation("deals");
   const [selectedInquiry, setSelectedInquiry] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const slug = (profile?.full_name || "creator").toLowerCase().replace(/\s+/g, "");
 
   async function handleAddToPipeline(inq: InboundInquiry) {
     try {
@@ -96,7 +100,7 @@ export default function InboundPage() {
         />
         <div className="text-center py-16">
           <p className="text-[20px] font-serif italic text-[#8AAABB]">No inquiries yet — share your media kit link to start receiving brand inquiries.</p>
-          <button onClick={() => { navigator.clipboard.writeText(`https://createsuite.co/kit/`); toast("success", "Media kit link copied!"); }} className="mt-4 text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline">Copy media kit link →</button>
+          <button onClick={() => { navigator.clipboard.writeText(`https://createsuite.co/kit/${slug}`); toast("success", "Media kit link copied!"); }} className="mt-4 text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline">Copy media kit link →</button>
         </div>
       </div>
     );

@@ -1,16 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 type AccountType = "" | "creator" | "agency" | "other";
 
-export default function ContactPage() {
+function ContactContent() {
+  const searchParams = useSearchParams();
+  const topic = searchParams.get("topic");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [accountType, setAccountType] = useState<AccountType>("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  // Pre-fill subject and account type from query param
+  useEffect(() => {
+    if (topic === "demo") {
+      setSubject("Demo request");
+      setAccountType("agency");
+      setMessage("Hi! I'd like to book a demo to see how Create Suite can work for my agency.\n\nAgency name: \nTeam size: \nPreferred demo time: ");
+    }
+  }, [topic]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -326,5 +338,13 @@ export default function ContactPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FAF8F4] flex items-center justify-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading...</p></div>}>
+      <ContactContent />
+    </Suspense>
   );
 }

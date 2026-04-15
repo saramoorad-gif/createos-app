@@ -21,8 +21,8 @@ const shortcutSections: ShortcutSection[] = [
     title: "Navigation",
     shortcuts: [
       { keys: ["g", "d"], description: "Go to Deals" },
-      { keys: ["g", "r"], description: "Go to Brand Radar" },
-      { keys: ["g", "c"], description: "Go to Campaigns" },
+      { keys: ["g", "t"], description: "Go to Tasks" },
+      { keys: ["g", "c"], description: "Go to Contracts" },
       { keys: ["g", "i"], description: "Go to Inbox" },
       { keys: ["g", "s"], description: "Go to Settings" },
     ],
@@ -46,8 +46,8 @@ const shortcutSections: ShortcutSection[] = [
 
 const navSequences: Record<string, string> = {
   d: "/deals",
-  r: "/brand-radar",
-  c: "/campaigns",
+  t: "/tasks",
+  c: "/contracts",
   i: "/inbox",
   s: "/settings",
 };
