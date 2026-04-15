@@ -141,7 +141,18 @@ function CheckoutContent() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Checkout failed");
+      if (!res.ok) {
+        // Surface the server's actionable hint when available so the real
+        // cause (e.g. missing STRIPE_SECRET_KEY) is visible in the UI.
+        const combined = data.hint
+          ? `${data.error || "Checkout failed"} — ${data.hint}`
+          : data.error || "Checkout failed";
+        const err = new Error(combined);
+        (err as any).type = data.type;
+        (err as any).code = data.code;
+        (err as any).requestId = data.requestId;
+        throw err;
+      }
 
       if (data.url) {
         window.location.href = data.url;
@@ -156,7 +167,14 @@ function CheckoutContent() {
         stack: err.stack,
         userId: user?.id,
         userEmail: user?.email,
-        metadata: { planKey, billingCycle, hasReferralDiscount },
+        metadata: {
+          planKey,
+          billingCycle,
+          hasReferralDiscount,
+          type: err.type,
+          code: err.code,
+          requestId: err.requestId,
+        },
       });
       setError(err.message || "Failed to start checkout. Please try again.");
       setLoading(false);

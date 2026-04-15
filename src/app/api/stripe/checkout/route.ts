@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, PRICE_IDS, isStripeConfigured } from "@/lib/stripe";
+import { getStripe, PRICE_IDS, isStripeConfigured } from "@/lib/stripe";
 
 // Cache for referral coupon ID so we don't create a new one every request
 let CACHED_REFERRAL_COUPON_ID: string | null = null;
 
 async function getOrCreateReferralCoupon(): Promise<string> {
   if (CACHED_REFERRAL_COUPON_ID) return CACHED_REFERRAL_COUPON_ID;
+  const stripe = getStripe();
 
   // Try to find existing coupon
   const existingCoupons = await stripe.coupons.list({ limit: 100 });
@@ -30,7 +31,13 @@ async function getOrCreateReferralCoupon(): Promise<string> {
 
 export async function POST(req: NextRequest) {
   if (!isStripeConfigured()) {
-    return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Stripe is not configured on the server.",
+        detail: "STRIPE_SECRET_KEY is missing, empty, or does not start with 'sk_'. Set it in the Vercel project environment variables and redeploy.",
+      },
+      { status: 500 }
+    );
   }
 
   try {
@@ -39,10 +46,15 @@ export async function POST(req: NextRequest) {
     const priceId = PRICE_IDS[priceKey as keyof typeof PRICE_IDS];
     if (!priceId || priceId === "") {
       return NextResponse.json(
-        { error: `Price ID not configured for ${priceKey}. Check STRIPE_PRICE_* env vars.` },
+        {
+          error: `Price ID not configured for ${priceKey}.`,
+          detail: `The environment variable for this plan is missing. Create the price in the Stripe Dashboard and set STRIPE_PRICE_${priceKey.toUpperCase()} in Vercel.`,
+        },
         { status: 400 }
       );
     }
+
+    const stripe = getStripe();
 
     // Apply referral discount only for ugc_influencer plan
     const shouldApplyDiscount = referralCode && priceKey.startsWith("ugc_influencer");
@@ -74,12 +86,36 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    const stack = error instanceof Error ? error.stack : undefined;
-    console.error("[Stripe Checkout] Error:", error);
+  } catch (error: any) {
+    // Extract every useful field Stripe's error object exposes.
+    const type: string = error?.type || error?.name || "UnknownError";
+    const code: string = error?.code || "";
+    const statusCode: number = error?.statusCode || error?.raw?.statusCode || 500;
+    const requestId: string = error?.requestId || error?.raw?.requestId || "";
+    const message: string = error?.message || "Unknown error";
+    const stack: string | undefined = error?.stack;
 
-    // Log to admin error logs
+    console.error("[Stripe Checkout] Error:", {
+      type,
+      code,
+      statusCode,
+      requestId,
+      message,
+    });
+
+    // Map the common Stripe SDK error types to a more helpful user-facing hint.
+    let hint = "";
+    if (type === "StripeAuthenticationError" || message.includes("Invalid API Key")) {
+      hint = "Stripe rejected the API key. Check STRIPE_SECRET_KEY in Vercel — it may be wrong, expired, or pointing at the wrong account (test vs. live).";
+    } else if (type === "StripeConnectionError" || message.includes("connection to Stripe")) {
+      hint = "Could not connect to api.stripe.com from the server. This is usually a missing or malformed STRIPE_SECRET_KEY in Vercel. Verify the key is set (starts with 'sk_live_' or 'sk_test_'), has no extra whitespace, and redeploy.";
+    } else if (type === "StripeInvalidRequestError") {
+      hint = `Stripe rejected the request: ${message}. Check that STRIPE_PRICE_* env vars point to valid price IDs in the same Stripe account as STRIPE_SECRET_KEY (test keys need test prices, live keys need live prices).`;
+    } else if (type === "StripePermissionError") {
+      hint = "The API key does not have permission for this operation. Use a full-access secret key, not a restricted one.";
+    }
+
+    // Log to admin error logs (fire-and-forget, never blocks the response)
     try {
       const { createClient } = await import("@supabase/supabase-js");
       const sb = createClient(
@@ -91,10 +127,19 @@ export async function POST(req: NextRequest) {
         source: "api/stripe/checkout",
         message,
         stack,
-        metadata: {},
+        metadata: { type, code, statusCode, requestId, hint },
       });
     } catch {}
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: message,
+        type,
+        code,
+        requestId,
+        hint,
+      },
+      { status: 500 }
+    );
   }
 }
