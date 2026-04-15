@@ -7,12 +7,12 @@ import { timeAgo } from "@/lib/utils";
 
 type NotificationType = "info" | "success" | "urgent";
 
+// Note: read status is tracked locally via readIds (table has no 'read' column)
 interface Notification {
   id: string;
-  type: NotificationType;
+  type?: NotificationType;
   message: string;
   created_at: string;
-  read: boolean;
 }
 
 const dotColors: Record<NotificationType, string> = {
@@ -63,7 +63,7 @@ export function NotificationPanel({ open, onClose }: NotificationPanelProps) {
 
   if (!open) return null;
 
-  const isRead = (n: Notification) => n.read || readIds.has(n.id);
+  const isRead = (n: Notification) => readIds.has(n.id);
 
   return (
     <div

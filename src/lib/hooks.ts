@@ -17,27 +17,36 @@ export function useSupabaseQuery<T>(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Stringify options so the effect only re-runs when actual values change
+  // (prevents infinite loops from new object references each render)
+  const optionsKey = JSON.stringify(options || {});
+
   useEffect(() => {
     if (!isSupabaseConfigured()) {
       setLoading(false);
       return;
     }
 
+    let cancelled = false;
+
     async function fetch() {
       const sb = getSupabase();
-      let query = sb.from(table).select(options?.select || "*");
+      const opts = JSON.parse(optionsKey);
+      let query = sb.from(table).select(opts?.select || "*");
 
-      if (options?.eq) {
-        query = query.eq(options.eq.column, options.eq.value);
+      if (opts?.eq) {
+        query = query.eq(opts.eq.column, opts.eq.value);
       }
-      if (options?.order) {
-        query = query.order(options.order.column, { ascending: options.order.ascending ?? false });
+      if (opts?.order) {
+        query = query.order(opts.order.column, { ascending: opts.order.ascending ?? false });
       }
-      if (options?.limit) {
-        query = query.limit(options.limit);
+      if (opts?.limit) {
+        query = query.limit(opts.limit);
       }
 
       const { data: result, error: err } = await query;
+
+      if (cancelled) return;
 
       if (err) {
         setError(err.message);
@@ -48,7 +57,11 @@ export function useSupabaseQuery<T>(
     }
 
     fetch();
-  }, [table]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [table, optionsKey]);
 
   return { data, loading, error, setData };
 }
