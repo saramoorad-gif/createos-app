@@ -32,11 +32,11 @@ interface AffiliateLink {
 
 interface AffiliateEarning {
   id: string;
-  affiliate_link_id: string;
+  link_id: string;
   month: string; // YYYY-MM
   amount: number;
   notes: string;
-  created_at: string;
+  logged_at: string;
 }
 
 interface StanStoreEarning {
@@ -224,7 +224,7 @@ function AffiliateTab() {
   function earningsForLink(linkId: string, month?: string) {
     return earnings
       .filter(
-        (e) => e.affiliate_link_id === linkId && (!month || e.month === month)
+        (e) => e.link_id === linkId && (!month || e.month === month)
       )
       .reduce((s, e) => s + e.amount, 0);
   }
@@ -273,7 +273,7 @@ function AffiliateTab() {
       return;
     }
     const created = await insertEarning({
-      affiliate_link_id: showLogEarning,
+      link_id: showLogEarning,
       month: earningMonth,
       amount: parsedAmount,
       notes: earningNotes,

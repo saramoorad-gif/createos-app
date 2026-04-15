@@ -710,11 +710,89 @@ function EmptyState({ message }: { message: string }) {
 /* ─── Main Export ─────────────────────────────────────────────── */
 
 export function RosterTab() {
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [selectedCreator, setSelectedCreator] = useState<CreatorProfile | null>(null);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const { data: agencyRoster, loading } = useSupabaseQuery<CreatorProfile>("agency_creator_links");
+
+  // Query raw agency_creator_links (real table)
+  const { data: rawLinks, loading: linksLoading } = useSupabaseQuery<any>("agency_creator_links");
+  // Query profiles to get creator display data
+  const { data: rawProfiles, loading: profilesLoading } = useSupabaseQuery<any>("profiles");
+  // Query deals to build aggregates
+  const { data: rawDeals, loading: dealsLoading } = useSupabaseQuery<any>("deals");
+
+  const loading = linksLoading || profilesLoading || dealsLoading;
+
+  // Build CreatorProfile[] by joining agency_creator_links + profiles + deals
+  const agencyRoster: CreatorProfile[] = useMemo(() => {
+    const profileById = new Map((rawProfiles || []).map((p: any) => [p.id, p]));
+    const activeLinks = (rawLinks || []).filter((l: any) => l.status === "active");
+
+    return activeLinks.map((link: any): CreatorProfile => {
+      const profile = profileById.get(link.creator_id) as any;
+      const creatorDeals = (rawDeals || []).filter((d: any) => d.creator_id === link.creator_id);
+      const activeDealsList = creatorDeals.filter((d: any) =>
+        ["lead", "pitched", "negotiating", "contracted", "in_progress"].includes(d.stage)
+      );
+      const completedDealsList = creatorDeals.filter((d: any) =>
+        ["delivered", "paid"].includes(d.stage)
+      );
+      const totalEarned = completedDealsList
+        .filter((d: any) => d.stage === "paid")
+        .reduce((s: number, d: any) => s + (d.value || 0), 0);
+      const totalDealValue = creatorDeals.reduce((s: number, d: any) => s + (d.value || 0), 0);
+      const avgDealValue = creatorDeals.length > 0 ? Math.round(totalDealValue / creatorDeals.length) : 0;
+      const uniqueBrands = new Set(creatorDeals.map((d: any) => d.brand_name).filter(Boolean));
+
+      // Build platforms array from profile handles
+      const platforms: CreatorProfile["platforms"] = [];
+      if (profile?.tiktok_handle || profile?.tiktok_followers) {
+        platforms.push({ name: "TikTok", followers: profile?.tiktok_followers || 0, engagement: 0 });
+      }
+      if (profile?.instagram_handle || profile?.instagram_followers) {
+        platforms.push({ name: "Instagram", followers: profile?.instagram_followers || 0, engagement: 0 });
+      }
+      if (profile?.youtube_handle || profile?.youtube_followers) {
+        platforms.push({ name: "YouTube", followers: profile?.youtube_followers || 0, engagement: 0 });
+      }
+
+      return {
+        id: link.creator_id,
+        name: profile?.full_name || "Unknown creator",
+        handle: profile?.instagram_handle || profile?.tiktok_handle || profile?.youtube_handle || "",
+        avatar: profile?.avatar_url || "",
+        tier: profile?.account_type || "creator",
+        platforms,
+        healthScore: 0,
+        commissionRate: Number(link.commission_rate) || 15,
+        dealsActive: activeDealsList.length,
+        dealsCompleted: completedDealsList.length,
+        totalEarned,
+        avgDealValue,
+        brandsWorkedWith: uniqueBrands.size,
+        repeatBrandRate: 0,
+        joinedDate: link.linked_at,
+        monthlyEarnings: [],
+        rateCard: [],
+        dealHistory: creatorDeals.map((d: any) => ({
+          brand: d.brand_name || "",
+          type: d.deal_type || "",
+          value: d.value || 0,
+          date: d.created_at || "",
+          stage: d.stage || "",
+          commission: Math.round((d.value || 0) * ((Number(link.commission_rate) || 15) / 100)),
+          outcome: d.stage === "paid" ? "completed" : d.stage === "cancelled" ? "cancelled" : "active",
+        })),
+        brandRelationships: [],
+        contentPerformance: [],
+        rateHistory: [],
+        followerGrowth: [],
+        notes: [],
+      };
+    });
+  }, [rawLinks, rawProfiles, rawDeals]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return agencyRoster;

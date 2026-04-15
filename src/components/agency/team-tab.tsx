@@ -51,53 +51,73 @@ interface ActivityEntry {
 
 interface Task {
   id: string;
+  agency_id?: string;
   title: string;
   description: string;
-  assigned_to: string;
-  assignee_name?: string;
+  assigned_to: string | null;
+  created_by?: string;
   due_date: string;
   priority: "urgent" | "high" | "medium" | "low";
   status: "todo" | "in_progress" | "done";
-  linked_deal?: string;
-  linked_creator?: string;
-  linked_campaign?: string;
+  linked_deal_id?: string | null;
+  linked_creator_id?: string | null;
+  linked_campaign_id?: string | null;
+  created_at?: string;
+  // Derived for display (joined via profiles map):
+  assignee_name?: string;
 }
 
 interface InboxThread {
   id: string;
-  creator_name: string;
-  last_message_preview: string;
+  agency_id?: string;
+  creator_id: string;
+  assigned_to: string | null;
   status: "open" | "in_progress" | "resolved";
-  assigned_to: string;
+  last_message_at: string;
+  created_at: string;
+  // Derived for display (joined from profiles + agency_inbox_messages):
+  creator_name?: string;
   assignee_name?: string;
-  updated_at: string;
+  last_message_preview?: string;
 }
 
 interface InboxMessage {
   id: string;
   thread_id: string;
-  sender_name: string;
+  sender_id: string;
+  sender_type?: "creator" | "agency";
   content: string;
   created_at: string;
-  internal_note: boolean;
+  internal_note?: boolean;
+  // Derived for display:
+  sender_name?: string;
 }
 
 interface Channel {
   id: string;
+  agency_id?: string;
   name: string;
-  description: string;
+  description?: string;
   visibility: "all" | "managers" | "custom";
-  unread_count: number;
+  created_by?: string | null;
+  archived?: boolean;
+  created_at?: string;
+  // Derived for display:
+  unread_count?: number;
 }
 
 interface ChannelMessage {
   id: string;
   channel_id: string;
-  sender_name: string;
+  agency_id?: string;
+  sender_id: string;
   content: string;
-  created_at: string;
   pinned: boolean;
-  parent_id?: string;
+  parent_message_id?: string | null;
+  created_at: string;
+  edited_at?: string | null;
+  // Derived for display:
+  sender_name?: string;
 }
 
 type SubView = "home" | "inbox" | "tasks" | "channels";
@@ -213,18 +233,18 @@ function TeamHome({ userId }: { userId: string }) {
     created_at: a.created_at,
   }));
 
-  // Map raw tasks → Task (with _id → readable field mapping)
-  const myTasks: Task[] = (rawTasks || []).map((t: any) => ({
+  // Map raw tasks → Task (schema already matches — just cast)
+  const myTasks: Task[] = (rawTasks || []).map((t: any): Task => ({
     id: t.id,
     title: t.title,
     description: t.description || "",
     assigned_to: t.assigned_to,
-    due_date: t.due_date,
+    due_date: t.due_date || "",
     priority: t.priority,
     status: t.status,
-    linked_deal: t.linked_deal_id || undefined,
-    linked_creator: t.linked_creator_id || undefined,
-    linked_campaign: t.linked_campaign_id || undefined,
+    linked_deal_id: t.linked_deal_id,
+    linked_creator_id: t.linked_creator_id,
+    linked_campaign_id: t.linked_campaign_id,
   }));
 
   const sortedTasks = [...myTasks].sort(
@@ -307,9 +327,9 @@ function TeamHome({ userId }: { userId: string }) {
                   <PriorityPill priority={task.priority} />
                 </div>
                 <div className="flex items-center gap-4">
-                  {(task.linked_deal || task.linked_creator) && (
+                  {(task.linked_deal_id || task.linked_creator_id) && (
                     <span className="text-[12px] text-[#7BAFC8]">
-                      {task.linked_deal || task.linked_creator}
+                      Linked
                     </span>
                   )}
                   <span className="text-[12px] font-mono text-[#8AAABB]">
@@ -333,14 +353,82 @@ function TeamInbox({ userId, role }: { userId: string; role: string }) {
   const [isInternal, setIsInternal] = useState(false);
   const { toast } = useToast();
 
-  const { data: threads, loading: threadsLoading, setData: setThreads } =
-    useSupabaseQuery<InboxThread>("agency_inbox_threads");
-  const { data: messages, loading: messagesLoading, setData: setMessages } =
-    useSupabaseQuery<InboxMessage>("agency_inbox_messages");
-  const { data: team } = useSupabaseQuery<TeamMember>("agency_team");
+  const { data: rawThreads, loading: threadsLoading, setData: setRawThreads } =
+    useSupabaseQuery<any>("agency_inbox_threads");
+  const { data: rawMessages, loading: messagesLoading, setData: setRawMessages } =
+    useSupabaseQuery<any>("agency_inbox_messages");
+  const { data: rawTeam } = useSupabaseQuery<any>("agency_team");
+  const { data: profiles } = useSupabaseQuery<any>("profiles");
+  const { update: updateThread } = useSupabaseMutation("agency_inbox_threads");
   const { insert: insertMessage, loading: sending } = useSupabaseMutation("agency_inbox_messages");
 
   const loading = threadsLoading || messagesLoading;
+
+  // Build a profile lookup for joins
+  const profileById = useMemo(
+    () => new Map((profiles || []).map((p: any) => [p.id, p])),
+    [profiles]
+  );
+
+  // Transform raw team rows → TeamMember[]
+  const team: TeamMember[] = useMemo(() => {
+    return (rawTeam || []).map((t: any) => {
+      const profile = profileById.get(t.user_id) as any;
+      return {
+        id: t.id,
+        name: profile?.full_name || "Unknown",
+        avatar: profile?.avatar_url || "",
+        role: t.role,
+        email: profile?.email || "",
+      };
+    });
+  }, [rawTeam, profileById]);
+
+  // Helper: map a raw message row → InboxMessage with sender_name
+  function enrichMessage(m: any): InboxMessage {
+    const senderProfile = profileById.get(m.sender_id) as any;
+    return {
+      id: m.id,
+      thread_id: m.thread_id,
+      sender_id: m.sender_id,
+      sender_type: m.sender_type,
+      content: m.content,
+      created_at: m.created_at,
+      internal_note: m.internal_note,
+      sender_name: senderProfile?.full_name || (m.sender_type === "creator" ? "Creator" : "Team"),
+    };
+  }
+
+  // Transform raw threads → InboxThread[] with derived display fields
+  const threads: InboxThread[] = useMemo(() => {
+    return (rawThreads || []).map((t: any) => {
+      const creatorProfile = profileById.get(t.creator_id) as any;
+      const assigneeProfile = t.assigned_to ? (profileById.get(t.assigned_to) as any) : null;
+      // Find the most recent message for this thread for a preview
+      const threadMsgs = (rawMessages || [])
+        .filter((m: any) => m.thread_id === t.id)
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const latest = threadMsgs[0];
+      return {
+        id: t.id,
+        agency_id: t.agency_id,
+        creator_id: t.creator_id,
+        assigned_to: t.assigned_to,
+        status: t.status,
+        last_message_at: t.last_message_at,
+        created_at: t.created_at,
+        creator_name: creatorProfile?.full_name || "Creator",
+        assignee_name: assigneeProfile?.full_name || undefined,
+        last_message_preview: latest?.content?.slice(0, 80) || "No messages yet",
+      };
+    });
+  }, [rawThreads, rawMessages, profileById]);
+
+  const messages: InboxMessage[] = useMemo(
+    () => (rawMessages || []).map(enrichMessage),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rawMessages, profileById]
+  );
 
   if (loading) return <Spinner />;
   if (threads.length === 0) return <EmptyState text="No creator messages yet." />;
@@ -352,26 +440,30 @@ function TeamInbox({ userId, role }: { userId: string; role: string }) {
     if (!newMessage.trim() || !selectedThread) return;
     const msg = await insertMessage({
       thread_id: selectedThread,
-      sender_name: "You",
+      sender_id: userId,
+      sender_type: "agency",
       content: newMessage.trim(),
       internal_note: isInternal,
-      created_at: new Date().toISOString(),
     });
     if (msg) {
-      setMessages((prev) => [...prev, msg as InboxMessage]);
+      setRawMessages((prev) => [...prev, msg]);
       toast("success", "Message sent");
     }
     setNewMessage("");
     setIsInternal(false);
   }
 
-  async function handleAssign(threadId: string, memberId: string) {
-    const member = team.find((t) => t.id === memberId);
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === threadId ? { ...t, assigned_to: memberId, assignee_name: member?.name } : t
-      )
-    );
+  async function handleAssign(threadId: string, memberUserId: string) {
+    // In our team list, each row's id is the agency_team.id but we need user_id.
+    // The select below passes the TeamMember.id (agency_team row id), so look it up.
+    const teamRow = (rawTeam || []).find((t: any) => t.id === memberUserId);
+    const assigneeUserId = teamRow?.user_id || memberUserId;
+    const updated = await updateThread(threadId, { assigned_to: assigneeUserId });
+    if (updated) {
+      setRawThreads((prev) =>
+        prev.map((t: any) => (t.id === threadId ? { ...t, assigned_to: assigneeUserId } : t))
+      );
+    }
   }
 
   return (
@@ -396,7 +488,7 @@ function TeamInbox({ userId, role }: { userId: string; role: string }) {
             <p className="text-[12px] text-[#4A6070] truncate">{thread.last_message_preview}</p>
             <div className="flex items-center justify-between mt-1.5">
               <span className="text-[11px] text-[#8AAABB]">{thread.assignee_name || "Unassigned"}</span>
-              <span className="text-[10px] font-mono text-[#8AAABB]">{timeAgo(thread.updated_at)}</span>
+              <span className="text-[10px] font-mono text-[#8AAABB]">{timeAgo(thread.last_message_at)}</span>
             </div>
           </button>
         ))}
@@ -516,33 +608,89 @@ function TasksView({ userId, role }: { userId: string; role: string }) {
     assigned_to: "",
     due_date: "",
     priority: "medium" as Task["priority"],
-    linked_deal: "",
-    linked_creator: "",
-    linked_campaign: "",
+    linked_deal_id: "",
+    linked_creator_id: "",
+    linked_campaign_id: "",
   });
 
-  const { data: tasks, loading, setData: setTasks } = useSupabaseQuery<Task>("agency_tasks");
-  const { data: team } = useSupabaseQuery<TeamMember>("agency_team");
+  const { data: rawTasks, loading, setData: setRawTasks } = useSupabaseQuery<any>("agency_tasks");
+  const { data: rawTeam } = useSupabaseQuery<any>("agency_team");
+  const { data: profiles } = useSupabaseQuery<any>("profiles");
   const { insert: insertTask, update: updateTask, loading: mutating } = useSupabaseMutation("agency_tasks");
 
   const now = new Date();
 
+  // Profile lookup
+  const profileById = useMemo(
+    () => new Map((profiles || []).map((p: any) => [p.id, p])),
+    [profiles]
+  );
+
+  // Team members with display info
+  const team: TeamMember[] = useMemo(() => {
+    return (rawTeam || []).map((t: any) => {
+      const profile = profileById.get(t.user_id) as any;
+      return {
+        id: t.id,
+        name: profile?.full_name || "Unknown",
+        avatar: profile?.avatar_url || "",
+        role: t.role,
+        email: profile?.email || "",
+      };
+    });
+  }, [rawTeam, profileById]);
+
+  // Tasks enriched with assignee_name
+  const tasks: Task[] = useMemo(() => {
+    return (rawTasks || []).map((t: any): Task => {
+      const assigneeProfile = t.assigned_to ? (profileById.get(t.assigned_to) as any) : null;
+      return {
+        id: t.id,
+        agency_id: t.agency_id,
+        title: t.title,
+        description: t.description || "",
+        assigned_to: t.assigned_to,
+        created_by: t.created_by,
+        due_date: t.due_date || "",
+        priority: t.priority,
+        status: t.status,
+        linked_deal_id: t.linked_deal_id,
+        linked_creator_id: t.linked_creator_id,
+        linked_campaign_id: t.linked_campaign_id,
+        created_at: t.created_at,
+        assignee_name: assigneeProfile?.full_name || undefined,
+      };
+    });
+  }, [rawTasks, profileById]);
+
   const filtered = useMemo(() => {
     let list = [...tasks];
     if (filter === "mine") list = list.filter((t) => t.assigned_to === userId);
-    if (filter === "overdue") list = list.filter((t) => new Date(t.due_date) < now && t.status !== "done");
-    return list.sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+    if (filter === "overdue") list = list.filter((t) => t.due_date && new Date(t.due_date) < now && t.status !== "done");
+    return list.sort((a, b) => new Date(a.due_date || 0).getTime() - new Date(b.due_date || 0).getTime());
   }, [tasks, filter, userId]);
 
   async function handleAddTask() {
     if (!newTask.title.trim()) return;
-    const result = await insertTask({
-      ...newTask,
+    // Resolve assigned_to — the UI passes the agency_team.id; we need the user_id.
+    const teamRow = (rawTeam || []).find((t: any) => t.id === newTask.assigned_to);
+    const assignedUserId = teamRow?.user_id || null;
+    const payload: Record<string, any> = {
+      title: newTask.title,
+      description: newTask.description || null,
+      assigned_to: assignedUserId,
+      created_by: userId,
+      due_date: newTask.due_date || null,
+      priority: newTask.priority,
       status: "todo",
-      created_at: new Date().toISOString(),
-    });
+    };
+    if (newTask.linked_deal_id) payload.linked_deal_id = newTask.linked_deal_id;
+    if (newTask.linked_creator_id) payload.linked_creator_id = newTask.linked_creator_id;
+    if (newTask.linked_campaign_id) payload.linked_campaign_id = newTask.linked_campaign_id;
+
+    const result = await insertTask(payload);
     if (result) {
-      setTasks((prev) => [...prev, result as Task]);
+      setRawTasks((prev) => [...prev, result]);
       toast("success", "Task created");
     }
     setNewTask({
@@ -551,9 +699,9 @@ function TasksView({ userId, role }: { userId: string; role: string }) {
       assigned_to: "",
       due_date: "",
       priority: "medium",
-      linked_deal: "",
-      linked_creator: "",
-      linked_campaign: "",
+      linked_deal_id: "",
+      linked_creator_id: "",
+      linked_campaign_id: "",
     });
     setShowAddModal(false);
   }
@@ -562,8 +710,8 @@ function TasksView({ userId, role }: { userId: string; role: string }) {
     const nextStatus: Record<string, string> = { todo: "in_progress", in_progress: "done", done: "todo" };
     const newStatus = nextStatus[task.status] || "todo";
     await updateTask(task.id, { status: newStatus });
-    setTasks((prev) =>
-      prev.map((t) => (t.id === task.id ? { ...t, status: newStatus as Task["status"] } : t))
+    setRawTasks((prev) =>
+      prev.map((t: any) => (t.id === task.id ? { ...t, status: newStatus } : t))
     );
     toast("success", `Task moved to ${statusLabel[newStatus] || newStatus}`);
   }
@@ -629,8 +777,8 @@ function TasksView({ userId, role }: { userId: string; role: string }) {
                 {task.assignee_name && (
                   <span className="text-[12px] text-[#4A6070]">{task.assignee_name}</span>
                 )}
-                {(task.linked_deal || task.linked_creator) && (
-                  <span className="text-[12px] text-[#7BAFC8]">{task.linked_deal || task.linked_creator}</span>
+                {(task.linked_deal_id || task.linked_creator_id || task.linked_campaign_id) && (
+                  <span className="text-[12px] text-[#7BAFC8]">Linked</span>
                 )}
                 <span className="text-[12px] font-mono text-[#8AAABB]">{formatDate(task.due_date)}</span>
               </div>
@@ -709,14 +857,10 @@ function TasksView({ userId, role }: { userId: string; role: string }) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Link to</label>
-                  <input
-                    type="text"
-                    value={newTask.linked_deal || newTask.linked_creator || newTask.linked_campaign}
-                    onChange={(e) => setNewTask({ ...newTask, linked_deal: e.target.value })}
-                    placeholder="Deal, creator, or campaign"
-                    className="w-full border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] placeholder:text-[#8AAABB] focus:outline-none focus:border-[#7BAFC8]"
-                  />
+                  <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Link to (optional)</label>
+                  <p className="text-[11px] text-[#8AAABB] italic pt-2">
+                    Link tasks to deals or creators from their detail pages.
+                  </p>
                 </div>
               </div>
             </div>
@@ -744,7 +888,7 @@ function TasksView({ userId, role }: { userId: string; role: string }) {
 
 /* ─── SUB-VIEW 4: CHANNELS ──────────────────────────────────── */
 
-function ChannelsView({ role }: { role: string }) {
+function ChannelsView({ role, userId, agencyId }: { role: string; userId: string; agencyId: string }) {
   const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [pinToggle, setPinToggle] = useState(false);
@@ -752,14 +896,57 @@ function ChannelsView({ role }: { role: string }) {
   const [newChannel, setNewChannel] = useState({ name: "", description: "", visibility: "all" as Channel["visibility"] });
   const { toast } = useToast();
 
-  const { data: channels, loading: channelsLoading, setData: setChannels } =
-    useSupabaseQuery<Channel>("agency_channels");
-  const { data: messages, loading: messagesLoading, setData: setMessages } =
-    useSupabaseQuery<ChannelMessage>("agency_channel_messages");
+  const { data: rawChannels, loading: channelsLoading, setData: setRawChannels } =
+    useSupabaseQuery<any>("agency_channels");
+  const { data: rawMessages, loading: messagesLoading, setData: setRawMessages } =
+    useSupabaseQuery<any>("agency_channel_messages");
+  const { data: profiles } = useSupabaseQuery<any>("profiles");
   const { insert: insertMessage, loading: sending } = useSupabaseMutation("agency_channel_messages");
   const { insert: insertChannel, loading: creating } = useSupabaseMutation("agency_channels");
 
   const loading = channelsLoading || messagesLoading;
+
+  // Profile lookup
+  const profileById = useMemo(
+    () => new Map((profiles || []).map((p: any) => [p.id, p])),
+    [profiles]
+  );
+
+  // Channels (unread_count is client-side placeholder since DB doesn't track it)
+  const channels: Channel[] = useMemo(() => {
+    return (rawChannels || [])
+      .filter((c: any) => !c.archived)
+      .map((c: any): Channel => ({
+        id: c.id,
+        agency_id: c.agency_id,
+        name: c.name,
+        description: c.description,
+        visibility: c.visibility,
+        created_by: c.created_by,
+        archived: c.archived,
+        created_at: c.created_at,
+        unread_count: 0,
+      }));
+  }, [rawChannels]);
+
+  // Messages enriched with sender_name
+  const messages: ChannelMessage[] = useMemo(() => {
+    return (rawMessages || []).map((m: any): ChannelMessage => {
+      const senderProfile = profileById.get(m.sender_id) as any;
+      return {
+        id: m.id,
+        channel_id: m.channel_id,
+        agency_id: m.agency_id,
+        sender_id: m.sender_id,
+        content: m.content,
+        pinned: m.pinned || false,
+        parent_message_id: m.parent_message_id,
+        created_at: m.created_at,
+        edited_at: m.edited_at,
+        sender_name: senderProfile?.full_name || "Team",
+      };
+    });
+  }, [rawMessages, profileById]);
 
   if (loading) return <Spinner />;
 
@@ -792,23 +979,23 @@ function ChannelsView({ role }: { role: string }) {
   }
 
   const channelMessages = messages
-    .filter((m) => m.channel_id === selectedChannel && !m.parent_id)
+    .filter((m) => m.channel_id === selectedChannel && !m.parent_message_id)
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-  const replies = messages.filter((m) => m.channel_id === selectedChannel && m.parent_id);
+  const replies = messages.filter((m) => m.channel_id === selectedChannel && m.parent_message_id);
   const activeChannel = channels.find((c) => c.id === selectedChannel);
 
   async function handleSend() {
     if (!newMessage.trim() || !selectedChannel) return;
     const msg = await insertMessage({
       channel_id: selectedChannel,
-      sender_name: "You",
+      agency_id: agencyId,
+      sender_id: userId,
       content: newMessage.trim(),
       pinned: pinToggle,
-      created_at: new Date().toISOString(),
     });
     if (msg) {
-      setMessages((prev) => [...prev, msg as ChannelMessage]);
+      setRawMessages((prev) => [...prev, msg]);
       toast("success", "Message sent");
     }
     setNewMessage("");
@@ -818,12 +1005,15 @@ function ChannelsView({ role }: { role: string }) {
   async function handleCreateChannel() {
     if (!newChannel.name.trim()) return;
     const result = await insertChannel({
-      ...newChannel,
-      unread_count: 0,
-      created_at: new Date().toISOString(),
+      name: newChannel.name,
+      description: newChannel.description || null,
+      visibility: newChannel.visibility,
+      agency_id: agencyId,
+      created_by: userId,
+      archived: false,
     });
     if (result) {
-      setChannels((prev) => [...prev, result as Channel]);
+      setRawChannels((prev) => [...prev, result]);
       toast("success", "Channel created");
     }
     setNewChannel({ name: "", description: "", visibility: "all" });
@@ -851,7 +1041,7 @@ function ChannelsView({ role }: { role: string }) {
                   <Hash className="w-3.5 h-3.5 text-[#8AAABB]" />
                   <span className="text-[13px] font-medium text-[#1A2C38]">{ch.name}</span>
                 </div>
-                {ch.unread_count > 0 && (
+                {(ch.unread_count ?? 0) > 0 && (
                   <span className="bg-[#7BAFC8] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
                     {ch.unread_count}
                   </span>
@@ -895,7 +1085,7 @@ function ChannelsView({ role }: { role: string }) {
                   <p className="text-[13px] text-[#8AAABB] italic text-center py-8">No messages in this channel yet.</p>
                 ) : (
                   channelMessages.map((msg) => {
-                    const msgReplies = replies.filter((r) => r.parent_id === msg.id);
+                    const msgReplies = replies.filter((r) => r.parent_message_id === msg.id);
                     return (
                       <div key={msg.id}>
                         <div className={`rounded-[8px] px-4 py-3 ${msg.pinned ? "bg-[#FFF8E7] border border-[#E8D5B8]" : "bg-[#F2F8FB] border border-[#D8E8EE]"}`}>
@@ -1068,6 +1258,11 @@ export function TeamTab() {
   const { user, profile } = useAuth();
 
   const userId = user?.id || "";
+  // agency_id resolution: if the current user is the agency owner, their own id is the agency_id.
+  // If they're a team member, their profile should have agency_id set.
+  const agencyId = (profile as any)?.account_type === "agency"
+    ? userId
+    : ((profile as any)?.agency_id || userId);
   // If account_type is agency, they're the owner. Otherwise check agency_role.
   const role = (profile as any)?.account_type === "agency" ? "owner" : ((profile as any)?.agency_role || "assistant");
 
@@ -1104,7 +1299,7 @@ export function TeamTab() {
       {view === "home" && <TeamHome userId={userId} />}
       {view === "inbox" && <TeamInbox userId={userId} role={role} />}
       {view === "tasks" && <TasksView userId={userId} role={role} />}
-      {view === "channels" && <ChannelsView role={role} />}
+      {view === "channels" && <ChannelsView role={role} userId={userId} agencyId={agencyId} />}
     </div>
   );
 }

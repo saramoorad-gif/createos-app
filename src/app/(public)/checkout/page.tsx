@@ -306,12 +306,14 @@ function CheckoutContent() {
 
               <button
                 onClick={handleCheckout}
-                disabled={loading || authLoading}
+                disabled={loading || (authLoading && !user)}
                 className="w-full flex items-center justify-center gap-2 bg-[#1E3F52] text-white rounded-[8px] px-4 py-3 text-[14px] font-sans hover:bg-[#2a5269] transition-colors disabled:opacity-50"
                 style={{ fontWeight: 600 }}
               >
                 {loading ? (
                   "Redirecting to Stripe..."
+                ) : authLoading && !user ? (
+                  "Loading..."
                 ) : (
                   <>
                     <CreditCard className="h-4 w-4" /> Continue to payment

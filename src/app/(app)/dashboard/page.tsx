@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { AgencyDashboard } from "@/components/agency/agency-dashboard";
 import { PageHeader } from "@/components/layout/page-header";
@@ -58,14 +59,44 @@ const stageColors: Record<string, string> = {
   delivered: "bg-[#E8F4EE] text-[#3D7A58]", paid: "bg-[#E8F4EE] text-[#3D7A58]",
 };
 
-export default function DashboardPage() {
-  const { profile, loading: authLoading } = useAuth();
+function DashboardRouter() {
+  const { profile, loading: authLoading, refreshProfile } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Show success toast after checkout completes and clean up the URL
+  // Fires for both creator and agency dashboards.
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success") {
+      const plan = searchParams.get("plan") || "";
+      const planLabel = planLabels[plan] || "your new plan";
+      toast("success", `Subscription activated! Welcome to ${planLabel}.`);
+      refreshProfile?.();
+      router.replace("/dashboard");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (authLoading) return <DashboardSkeleton />;
   if (!profile) return <div className="pt-20 text-center"><p className="text-[14px] font-sans text-[#8AAABB]">Please sign in to access your dashboard.</p></div>;
   if (profile.account_type === "agency") return <AgencyDashboard />;
   return <CreatorDashboard />;
 }
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardRouter />
+    </Suspense>
+  );
+}
+
+const planLabels: Record<string, string> = {
+  ugc: "UGC Creator",
+  ugc_influencer: "UGC + Influencer",
+  agency: "Agency Starter",
+};
 
 function CreatorDashboard() {
   const { user, profile } = useAuth();
