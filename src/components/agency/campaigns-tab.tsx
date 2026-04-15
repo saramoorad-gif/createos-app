@@ -26,26 +26,42 @@ import { useToast } from "@/components/global/toast";
 import { CardGridSkeleton } from "@/components/global/skeleton";
 import { ContextMenu } from "@/components/global/context-menu";
 
-// Type formerly from placeholder-data
+// Matches actual Supabase schema (snake_case)
 interface Campaign {
   id: string;
-  name: string;
-  brand: string;
-  brandContact: string;
-  brief: string;
-  status: string;
-  startDate: string;
-  endDate: string;
+  agency_id: string;
+  brand_name: string;
+  brand_contact: string | null;
+  brief_text: string | null;
+  brief_file_url: string | null;
   budget: number;
-  agencyCommission: number;
-  completionPct: number;
-  creators: {
-    creatorId: string;
-    name: string;
-    allocation: number;
-    status: string;
-    deliverables: string[];
-  }[];
+  commission_rate: number;
+  start_date: string | null;
+  end_date: string | null;
+  status: "planning" | "active" | "completed" | "paused";
+  created_at: string;
+  // Computed client-side — these are NOT from DB
+  creators?: CampaignCreator[];
+}
+
+interface CampaignCreator {
+  id: string;
+  campaign_id: string;
+  creator_id: string;
+  budget_allocation: number;
+  deliverables: any[];
+  status: string;
+}
+
+// Computed helpers (agencyCommission and completionPct are NOT real DB columns)
+function getAgencyCommission(c: { budget: number; commission_rate: number }): number {
+  return Math.round((c.budget || 0) * ((c.commission_rate || 0) / 100));
+}
+
+function getCompletionPct(c: { creators?: CampaignCreator[] }): number {
+  if (!c.creators || c.creators.length === 0) return 0;
+  const done = c.creators.filter(cr => cr.status === "delivered" || cr.status === "approved").length;
+  return Math.round((done / c.creators.length) * 100);
 }
 
 // ---------------------------------------------------------------------------
@@ -297,17 +313,14 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
                   };
                 });
                 const newCampaign = await insertCampaign({
-                  name: campaignName.trim(),
-                  brand: brandName.trim(),
-                  brandContact: "",
-                  brief: brief.trim(),
+                  brand_name: brandName.trim(),
+                  brand_contact: "",
+                  brief_text: brief.trim(),
                   status: "planning",
-                  startDate: startDate || new Date().toISOString().split("T")[0],
-                  endDate: endDate || "",
+                  start_date: startDate || new Date().toISOString().split("T")[0],
+                  end_date: endDate || null,
                   budget: budgetNum,
-                  agencyCommission: Math.round(budgetNum * (commPct / 100)),
-                  completionPct: 0,
-                  creators,
+                  commission_rate: commPct,
                 });
                 if (newCampaign) {
                   onCreated?.(newCampaign);
@@ -316,6 +329,7 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
                 onClose();
               } catch (err) {
                 console.error("Failed to create campaign:", err);
+                toast("error", "Failed to create campaign");
               }
             }}
             disabled={inserting}
@@ -339,8 +353,8 @@ function OverviewSubTab({ campaign }: { campaign: Campaign }) {
   );
 
   // Timeline calculations
-  const start = new Date(campaign.startDate).getTime();
-  const end = new Date(campaign.endDate).getTime();
+  const start = new Date(campaign.start_date).getTime();
+  const end = new Date(campaign.end_date).getTime();
   const now = Date.now();
   const totalDuration = end - start;
   const elapsed = Math.min(Math.max(now - start, 0), totalDuration);
@@ -357,15 +371,15 @@ function OverviewSubTab({ campaign }: { campaign: Campaign }) {
       {/* Brand contact */}
       <div className="bg-white rounded-[10px] border border-[#D8E8EE] p-5">
         <SectionLabel>Brand contact</SectionLabel>
-        <p className="text-sm font-sans text-[#1A2C38]">{campaign.brandContact}</p>
+        <p className="text-sm font-sans text-[#1A2C38]">{campaign.brand_contact}</p>
       </div>
 
       {/* Timeline bar */}
       <div className="bg-white rounded-[10px] border border-[#D8E8EE] p-5">
         <SectionLabel>Timeline</SectionLabel>
         <div className="flex items-center justify-between text-[11px] font-mono text-[#8AAABB] mb-2">
-          <span>{formatDate(campaign.startDate)}</span>
-          <span>{formatDate(campaign.endDate)}</span>
+          <span>{formatDate(campaign.start_date)}</span>
+          <span>{formatDate(campaign.end_date)}</span>
         </div>
         <div className="relative h-3 bg-[#F2F8FB] rounded-full overflow-hidden">
           <div
@@ -388,7 +402,7 @@ function OverviewSubTab({ campaign }: { campaign: Campaign }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Total budget", value: formatCurrency(campaign.budget) },
-          { label: "Agency commission", value: formatCurrency(campaign.agencyCommission) },
+          { label: "Agency commission", value: formatCurrency(getAgencyCommission(campaign)) },
           { label: "Creators", value: campaign.creators.length.toString() },
           { label: "Deliverables", value: totalDeliverables.toString() },
         ].map((s) => (
@@ -572,18 +586,18 @@ function BudgetSubTab({ campaign }: { campaign: Campaign }) {
             <tr className="border-b border-[#D8E8EE] bg-[#FAF8F4]/50">
               <td className="px-5 py-3 text-[#8AAABB] italic">Agency commission</td>
               <td className="px-5 py-3 font-mono text-[#8AAABB]">
-                {formatCurrency(campaign.agencyCommission)}
+                {formatCurrency(getAgencyCommission(campaign))}
               </td>
               <td className="px-5 py-3 font-mono text-[#8AAABB]">
-                {formatCurrency(Math.round(campaign.agencyCommission * 0.5))}
+                {formatCurrency(Math.round(getAgencyCommission(campaign) * 0.5))}
               </td>
               <td className="px-5 py-3 font-mono text-[#8AAABB]">
-                {formatCurrency(Math.round(campaign.agencyCommission * 0.3))}
+                {formatCurrency(Math.round(getAgencyCommission(campaign) * 0.3))}
               </td>
               <td className="px-5 py-3 font-mono text-[#8AAABB]">
                 {formatCurrency(
-                  campaign.agencyCommission -
-                    Math.round(campaign.agencyCommission * 0.3)
+                  getAgencyCommission(campaign) -
+                    Math.round(getAgencyCommission(campaign) * 0.3)
                 )}
               </td>
             </tr>
@@ -592,23 +606,23 @@ function BudgetSubTab({ campaign }: { campaign: Campaign }) {
             <tr className="bg-[#1A2C38] text-[#FAF8F4]">
               <td className="px-5 py-3 font-600">Total</td>
               <td className="px-5 py-3 font-mono font-600">
-                {formatCurrency(totalAllocation + campaign.agencyCommission)}
+                {formatCurrency(totalAllocation + getAgencyCommission(campaign))}
               </td>
               <td className="px-5 py-3 font-mono font-600">
                 {formatCurrency(
-                  totalInvoiced + Math.round(campaign.agencyCommission * 0.5)
+                  totalInvoiced + Math.round(getAgencyCommission(campaign) * 0.5)
                 )}
               </td>
               <td className="px-5 py-3 font-mono font-600">
                 {formatCurrency(
-                  totalPaid + Math.round(campaign.agencyCommission * 0.3)
+                  totalPaid + Math.round(getAgencyCommission(campaign) * 0.3)
                 )}
               </td>
               <td className="px-5 py-3 font-mono font-600">
                 {formatCurrency(
                   totalRemaining +
-                    campaign.agencyCommission -
-                    Math.round(campaign.agencyCommission * 0.3)
+                    getAgencyCommission(campaign) -
+                    Math.round(getAgencyCommission(campaign) * 0.3)
                 )}
               </td>
             </tr>
@@ -628,7 +642,7 @@ function ReportSubTab({ campaign }: { campaign: Campaign }) {
   const totalReach = campaign.creators.length * 185000; // simulated
   const deliverablesCompleted = Math.round(
     campaign.creators.reduce((s, c) => s + c.deliverables.length, 0) *
-      (campaign.completionPct / 100)
+      (getCompletionPct(campaign) / 100)
   );
   const totalDeliverables = campaign.creators.reduce(
     (s, c) => s + c.deliverables.length,
@@ -641,7 +655,7 @@ function ReportSubTab({ campaign }: { campaign: Campaign }) {
         <div className="bg-white rounded-[10px] border border-[#D8E8EE] p-8 text-center">
           <BarChart3 size={32} className="mx-auto text-[#8AAABB] mb-3" />
           <p className="text-sm font-sans text-[#8AAABB] mb-4">
-            Generate a summary report for {campaign.brand}
+            Generate a summary report for {campaign.brand_name}
           </p>
           <button
             onClick={() => setGenerated(true)}
@@ -657,7 +671,7 @@ function ReportSubTab({ campaign }: { campaign: Campaign }) {
           <div className="bg-white rounded-[10px] border border-[#D8E8EE] p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-serif text-lg text-[#1A2C38]">
-                Campaign Report: {campaign.name}
+                Campaign Report: {campaign.brand_name}
               </h3>
               <button onClick={() => toast("info", "PDF export coming soon")} className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-sans font-600 text-[#8AAABB] border border-[#D8E8EE] rounded-lg hover:text-[#1A2C38] hover:border-[#1A2C38] transition-colors">
                 <Download size={12} />
@@ -672,8 +686,8 @@ function ReportSubTab({ campaign }: { campaign: Campaign }) {
                   label: "Deliverables done",
                   value: `${deliverablesCompleted}/${totalDeliverables}`,
                 },
-                { label: "Budget spent", value: formatCurrency(Math.round(campaign.budget * (campaign.completionPct / 100))) },
-                { label: "Completion", value: `${campaign.completionPct}%` },
+                { label: "Budget spent", value: formatCurrency(Math.round(campaign.budget * (getCompletionPct(campaign) / 100))) },
+                { label: "Completion", value: `${getCompletionPct(campaign)}%` },
               ].map((s) => (
                 <div key={s.label} className="bg-[#FAF8F4] rounded-lg p-3">
                   <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] mb-1">
@@ -719,7 +733,7 @@ function ReportSubTab({ campaign }: { campaign: Campaign }) {
                   Creator payouts
                 </p>
                 <p className="text-sm font-mono text-[#1A2C38]">
-                  {formatCurrency(campaign.budget - campaign.agencyCommission)}
+                  {formatCurrency(campaign.budget - getAgencyCommission(campaign))}
                 </p>
               </div>
               <div className="bg-[#FAF8F4] rounded-lg p-3">
@@ -727,7 +741,7 @@ function ReportSubTab({ campaign }: { campaign: Campaign }) {
                   Agency fee
                 </p>
                 <p className="text-sm font-mono text-[#1A2C38]">
-                  {formatCurrency(campaign.agencyCommission)}
+                  {formatCurrency(getAgencyCommission(campaign))}
                 </p>
               </div>
               <div className="bg-[#FAF8F4] rounded-lg p-3">
@@ -859,7 +873,7 @@ function CalendarSubTab({ campaign }: { campaign: Campaign }) {
 function ProfitabilityCard({ campaign }: { campaign: Campaign }) {
   const [estimatedHours, setEstimatedHours] = useState(40);
 
-  const effectiveRate = estimatedHours > 0 ? campaign.agencyCommission / estimatedHours : 0;
+  const effectiveRate = estimatedHours > 0 ? getAgencyCommission(campaign) / estimatedHours : 0;
 
   return (
     <div className="bg-white rounded-[10px] border border-[#D8E8EE] p-5">
@@ -871,7 +885,7 @@ function ProfitabilityCard({ campaign }: { campaign: Campaign }) {
         </div>
         <div className="bg-[#FAF8F4] rounded-lg p-3">
           <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-1">Commission Earned</p>
-          <p className="text-[18px] font-serif text-[#3D7A58]">{formatCurrency(campaign.agencyCommission)}</p>
+          <p className="text-[18px] font-serif text-[#3D7A58]">{formatCurrency(getAgencyCommission(campaign))}</p>
         </div>
         <div className="bg-[#FAF8F4] rounded-lg p-3">
           <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-1">Estimated Hours</p>
@@ -935,8 +949,8 @@ function CampaignDetail({
       <div className="bg-white rounded-[10px] border border-[#D8E8EE] p-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
           <div>
-            <h2 className="font-serif text-xl text-[#1A2C38]">{campaign.name}</h2>
-            <p className="text-sm font-sans text-[#8AAABB]">{campaign.brand}</p>
+            <h2 className="font-serif text-xl text-[#1A2C38]">{campaign.brand_name}</h2>
+            <p className="text-sm font-sans text-[#8AAABB]">Campaign</p>
           </div>
           <StatusPill status={campaign.status} />
         </div>
@@ -944,7 +958,7 @@ function CampaignDetail({
           <span className="flex items-center gap-1">
             <Calendar size={13} />
             <span className="font-mono text-[12px]">
-              {formatDate(campaign.startDate)} &mdash; {formatDate(campaign.endDate)}
+              {formatDate(campaign.start_date)} &mdash; {formatDate(campaign.end_date)}
             </span>
           </span>
           <span className="flex items-center gap-1">
@@ -954,7 +968,7 @@ function CampaignDetail({
             </span>
           </span>
           <span className="text-[11px]">
-            Commission: {formatCurrency(campaign.agencyCommission)}
+            Commission: {formatCurrency(getAgencyCommission(campaign))}
           </span>
         </div>
       </div>
@@ -1088,7 +1102,7 @@ export function CampaignsTab() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                 <div className="min-w-0">
                   <h3 className="font-serif text-base text-[#1A2C38] group-hover:text-[#7BAFC8] transition-colors truncate">
-                    {camp.name}
+                    {camp.brand_name}
                   </h3>
                   <p className="text-[11px] font-sans text-[#8AAABB] mt-0.5">
                     {camp.brand}
@@ -1108,7 +1122,7 @@ export function CampaignsTab() {
                   {formatCurrency(camp.budget)}
                 </span>
                 <span className="font-mono text-[11px] text-[#8AAABB]">
-                  {formatDate(camp.startDate)} &mdash; {formatDate(camp.endDate)}
+                  {formatDate(camp.start_date)} &mdash; {formatDate(camp.end_date)}
                 </span>
               </div>
 
@@ -1118,18 +1132,18 @@ export function CampaignsTab() {
                   <div
                     className="h-full rounded-full transition-all"
                     style={{
-                      width: `${camp.completionPct}%`,
+                      width: `${getCompletionPct(camp)}%`,
                       backgroundColor:
                         camp.status === "completed"
                           ? "#8AAABB"
-                          : camp.completionPct > 50
+                          : getCompletionPct(camp) > 50
                             ? "#4ade80"
                             : "#7BAFC8",
                     }}
                   />
                 </div>
                 <span className="text-[11px] font-mono text-[#8AAABB] w-8 text-right">
-                  {camp.completionPct}%
+                  {getCompletionPct(camp)}%
                 </span>
               </div>
             </button>
@@ -1138,7 +1152,7 @@ export function CampaignsTab() {
                 onClick={(e) => {
                   e.stopPropagation();
                   const template = {
-                    name: camp.name + " (Template)",
+                    name: camp.brand_name + " (Template)",
                     brand: "",
                     brief: camp.brief,
                     creatorCount: camp.creators.length,
@@ -1152,7 +1166,7 @@ export function CampaignsTab() {
                   const existing = JSON.parse(localStorage.getItem("campaign_templates") || "[]");
                   existing.push(template);
                   localStorage.setItem("campaign_templates", JSON.stringify(existing));
-                  toast("success", `Template saved: "${camp.name}"`);
+                  toast("success", `Template saved: "${camp.brand_name}"`);
                 }}
                 className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-sans font-500 text-[#8AAABB] hover:text-[#7BAFC8] hover:bg-[#F2F8FB] rounded-lg transition-colors"
               >
