@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
@@ -47,7 +48,7 @@ const expenseCategories = [
   "Other",
 ];
 
-export default function TaxExportPage() {
+function TaxExportContent() {
   useAuth();
   const { toast } = useToast();
 
@@ -589,5 +590,13 @@ export default function TaxExportPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function TaxExportPage() {
+  return (
+    <UpgradeGate feature="tax-export">
+      <TaxExportContent />
+    </UpgradeGate>
   );
 }

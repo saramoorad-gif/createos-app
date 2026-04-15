@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
@@ -49,7 +50,7 @@ function isThisMonth(dateStr: string | null): boolean {
   return monthKey(dateStr) === currentMonthKey();
 }
 
-export default function ForecastPage() {
+function ForecastContent() {
   useAuth();
   const { toast } = useToast();
   const { data: deals, loading: dealsLoading } = useSupabaseQuery<Deal>(
@@ -406,5 +407,13 @@ export default function ForecastPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function ForecastPage() {
+  return (
+    <UpgradeGate feature="forecast">
+      <ForecastContent />
+    </UpgradeGate>
   );
 }

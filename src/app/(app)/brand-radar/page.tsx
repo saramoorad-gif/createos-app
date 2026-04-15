@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { Star, Sparkles, TrendingUp, Search, Bell, Check } from "lucide-react";
 
 const upcomingFeatures = [
@@ -12,7 +13,7 @@ const upcomingFeatures = [
   { icon: Bell, title: "Brand Alerts", desc: "Get notified when a brand in your niche starts a new campaign or increases their creator budget." },
 ];
 
-export default function BrandRadarPage() {
+function BrandRadarContent() {
   const [notified, setNotified] = useState(false);
   return (
     <div>
@@ -60,5 +61,13 @@ export default function BrandRadarPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BrandRadarPage() {
+  return (
+    <UpgradeGate feature="brand-radar">
+      <BrandRadarContent />
+    </UpgradeGate>
   );
 }

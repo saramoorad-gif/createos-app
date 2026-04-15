@@ -4,21 +4,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
+import { getCreatorNavLinks } from "@/lib/feature-gates";
 import { LogOut, Settings, Search, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { NotificationBell } from "@/components/global/notification-panel";
-
-const creatorLinks = [
-  { name: "Today", href: "/dashboard" },
-  { name: "Deals", href: "/deals" },
-  { name: "Tasks", href: "/tasks" },
-  { name: "Contracts", href: "/contracts" },
-  { name: "Invoices", href: "/invoices" },
-  { name: "Income", href: "/income" },
-  { name: "Inbox", href: "/inbox" },
-  { name: "Calendar", href: "/content-calendar" },
-  { name: "Tools", href: "/rate-calculator" },
-];
 
 const agencyLinks = [
   { name: "Home", param: "home" },
@@ -96,7 +85,7 @@ export function NavBar() {
                 </button>
               );
             })
-          : creatorLinks.map((link) => {
+          : getCreatorNavLinks(profile?.account_type).map((link) => {
               const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
               return (
                 <Link
