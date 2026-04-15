@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/components/global/toast";
 
 const GOOGLE_CLIENT_ID = "62122287732-0uci7fsvqctoqte3mlt9vno588hj74ag.apps.googleusercontent.com";
-import { Mail, CreditCard, Video, Camera, Calendar, FileText, Palette, Check } from "lucide-react";
+import { Mail, CreditCard, Video, Camera, Calendar, FileText, Palette, Check, Bell } from "lucide-react";
 
 const integrations = [
   { name: "Gmail", description: "Import brand emails and detect deal opportunities", icon: Mail, category: "Email", oauthType: "google" as const },
@@ -22,6 +23,8 @@ const integrations = [
 export default function IntegrationsPage() {
   const { user, profile, refreshProfile } = useAuth();
   const [justConnected, setJustConnected] = useState<string | null>(null);
+  const [notified, setNotified] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   // Check URL params for successful connection
   useState(() => {
@@ -119,9 +122,22 @@ export default function IntegrationsPage() {
                     {int.oauthType === "ical" ? "Download .ics" : "Connect"}
                   </button>
                 ) : (
-                  <button className="border-[1.5px] border-[#D8E8EE] text-[#8AAABB] rounded-btn px-4 py-2 text-[12px] font-sans cursor-not-allowed" style={{ fontWeight: 500 }}>
-                    Notify me
-                  </button>
+                  {notified.has(int.name) ? (
+                    <span className="flex items-center gap-1.5 text-[12px] font-sans text-[#3D7A58]" style={{ fontWeight: 500 }}>
+                      <Bell className="h-3.5 w-3.5" /> You&apos;ll be notified
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setNotified(prev => new Set(prev).add(int.name));
+                        toast("success", `We'll notify you when ${int.name} is available!`);
+                      }}
+                      className="border-[1.5px] border-[#D8E8EE] text-[#4A6070] rounded-btn px-4 py-2 text-[12px] font-sans hover:border-[#7BAFC8] hover:text-[#1E3F52] transition-colors cursor-pointer"
+                      style={{ fontWeight: 500 }}
+                    >
+                      Notify me
+                    </button>
+                  )}
                 )}
               </div>
             </div>

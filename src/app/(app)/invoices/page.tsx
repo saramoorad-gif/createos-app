@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -71,6 +72,7 @@ function InvoicePanel({ invoice, onClose, onSendReminder, onMarkPaid }: { invoic
 }
 
 export default function InvoicesPage() {
+  const router = useRouter();
   const { data: invoices, loading, setData: setInvoices } = useSupabaseQuery<Invoice>("invoices", {
     order: { column: "created_at", ascending: false },
   });
@@ -114,7 +116,7 @@ export default function InvoicesPage() {
         />
         <div className="text-center py-16">
           <p className="text-[20px] font-serif italic text-[#8AAABB]">No invoices yet — create one from a deal.</p>
-          <button className="mt-4 text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline">Go to deals →</button>
+          <button onClick={() => router.push("/deals")} className="mt-4 text-[13px] font-sans font-500 text-[#7BAFC8] hover:underline">Go to deals →</button>
         </div>
       </div>
     );
