@@ -407,62 +407,105 @@ function TemplateEditorModal({ template, onClose, onCreateDraft }: { template: C
   const [values, setValues] = useState<Record<string, string>>(
     Object.fromEntries(template.variables.map(v => [v, ""]))
   );
+  const [showPreview, setShowPreview] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  // Generate preview by replacing {{variables}} with values
+  const bodyText = (template as any).body_template || "";
+  const previewText = bodyText.replace(/\{\{(\w+)\}\}/g, (_: string, key: string) => {
+    return values[key] || `[${variableLabel(key)}]`;
+  });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <div className="relative bg-white rounded-[10px] border border-[#D8E8EE] w-full max-w-[480px] max-h-[80vh] overflow-y-auto shadow-lg">
-        <div className="sticky top-0 bg-white border-b border-[#D8E8EE] px-6 py-4 flex items-center justify-between rounded-t-[10px]">
-          <h2 className="text-[18px] font-serif text-[#1A2C38]">{template.name}</h2>
-          <button onClick={onClose} className="text-[#8AAABB] hover:text-[#1A2C38]"><X className="h-5 w-5" /></button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(26,44,56,.4)", backdropFilter: "blur(4px)" }}>
+      <div className="relative bg-white rounded-[10px] border-[1.5px] border-[#D8E8EE] w-full max-w-[900px] max-h-[90vh] overflow-hidden shadow-lg flex flex-col">
+        {/* Header */}
+        <div className="flex-shrink-0 bg-[#F2F8FB] border-b border-[#D8E8EE] px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-[18px] font-serif text-[#1A2C38]">{template.name}</h2>
+            <p className="text-[12px] font-sans text-[#8AAABB] mt-0.5">{template.description}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[11px] font-sans transition-colors ${
+                showPreview ? "bg-[#1E3F52] text-white" : "border border-[#D8E8EE] text-[#4A6070] hover:bg-white"
+              }`}
+              style={{ fontWeight: 500 }}
+            >
+              <Eye className="h-3 w-3" /> {showPreview ? "Hide Preview" : "Show Preview"}
+            </button>
+            <button onClick={onClose} className="text-[#8AAABB] hover:text-[#1A2C38]"><X className="h-5 w-5" /></button>
+          </div>
         </div>
-        <div className="p-6 space-y-4">
-          <p className="text-[13px] font-sans text-[#8AAABB]">{template.description}</p>
-          <div className="space-y-3">
-            {template.variables.map(v => (
-              <div key={v}>
-                <label className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] mb-1 block">{variableLabel(v)}</label>
-                <input
-                  type="text"
-                  value={values[v]}
-                  onChange={e => setValues(prev => ({ ...prev, [v]: e.target.value }))}
-                  placeholder={variableLabel(v)}
-                  className="w-full border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] font-sans text-[#1A2C38] placeholder:text-[#8AAABB]/50 focus:outline-none focus:border-[#7BAFC8] bg-white"
-                />
+
+        {/* Content area */}
+        <div className="flex-1 overflow-hidden flex">
+          {/* Left: Variables form */}
+          <div className={`${showPreview ? "w-[360px]" : "w-full"} overflow-y-auto p-6 border-r border-[#D8E8EE]`}>
+            <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>FILL IN DETAILS</p>
+            <div className="space-y-3">
+              {template.variables.map(v => (
+                <div key={v}>
+                  <label className="text-[10px] font-sans uppercase tracking-[2px] text-[#8AAABB] mb-1 block" style={{ fontWeight: 600 }}>{variableLabel(v)}</label>
+                  <input
+                    type="text"
+                    value={values[v]}
+                    onChange={e => setValues(prev => ({ ...prev, [v]: e.target.value }))}
+                    placeholder={variableLabel(v)}
+                    className="w-full border-[1.5px] border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] font-sans text-[#1A2C38] placeholder:text-[#8AAABB]/40 focus:outline-none focus:border-[#7BAFC8] bg-white"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2 mt-6 pt-4 border-t border-[#D8E8EE]">
+              <button
+                onClick={async () => {
+                  setSaving(true);
+                  try {
+                    await onCreateDraft({
+                      stage: "draft",
+                      type: template.type,
+                      templateId: template.id,
+                      templateValues: values,
+                      creator: values.creator_name || "",
+                      brand: values.brand_name || "",
+                      brand_name: values.brand_name || "",
+                      value: Number(values.payment_amount?.replace(/[^0-9.]/g, "")) || Number(values.monthly_retainer?.replace(/[^0-9.]/g, "")) || 0,
+                      status: "pending_signature",
+                    });
+                    toast("success", "Contract draft created");
+                    onClose();
+                  } catch (err) {
+                    console.error("Failed to create contract draft:", err);
+                    toast("error", "Failed to create contract");
+                  } finally { setSaving(false); }
+                }}
+                disabled={saving}
+                className="flex-1 flex items-center justify-center gap-1.5 bg-[#1E3F52] text-white rounded-[8px] px-3 py-2.5 text-[12px] font-sans hover:bg-[#2a5269] transition-colors disabled:opacity-50"
+                style={{ fontWeight: 600 }}
+              >
+                {saving ? "Creating..." : "Create Draft"}
+              </button>
+              <button onClick={onClose} className="border-[1.5px] border-[#D8E8EE] text-[#4A6070] rounded-[8px] px-4 py-2.5 text-[12px] font-sans hover:bg-[#FAF8F4] transition-colors" style={{ fontWeight: 500 }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          {/* Right: Live preview */}
+          {showPreview && (
+            <div className="flex-1 overflow-y-auto bg-[#FDFBF9] p-6">
+              <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>LIVE PREVIEW</p>
+              <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-8 shadow-sm">
+                <pre className="text-[12px] font-sans text-[#1A2C38] whitespace-pre-wrap leading-relaxed" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                  {previewText}
+                </pre>
               </div>
-            ))}
-          </div>
-          <div className="flex gap-2 pt-2">
-            <button
-              onClick={async () => {
-                try {
-                  await onCreateDraft({
-                    stage: "draft",
-                    type: template.type,
-                    templateId: template.id,
-                    templateValues: values,
-                    creator: values.creator_name || "",
-                    brand: values.brand_name || "",
-                    value: Number(values.deal_value) || 0,
-                    status: "pending_signature",
-                  });
-                  onClose();
-                } catch (err) {
-                  console.error("Failed to create contract draft:", err);
-                }
-              }}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-[#7BAFC8] text-white rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#6AA0BB]"
-            >
-              <Eye className="h-3.5 w-3.5" /> Create Draft
-            </button>
-            <button
-              onClick={() => window.print()}
-              className="flex-1 flex items-center justify-center gap-1.5 border border-[#D8E8EE] text-[#1A2C38] rounded-[10px] px-3 py-2.5 text-[12px] font-sans font-500 hover:bg-[#FAF8F4]"
-            >
-              <FileText className="h-3.5 w-3.5" /> Export PDF
-            </button>
-          </div>
-          <button onClick={onClose} className="w-full text-center text-[12px] font-sans font-500 text-[#8AAABB] hover:text-[#1A2C38] py-1">Cancel</button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -481,13 +524,228 @@ export function ContractsTab() {
   const { data: agencyContracts, loading, setData: setContracts } = useSupabaseQuery<AgencyContract>("contracts");
   const { data: dbTemplates } = useSupabaseQuery<ContractTemplate>("contract_templates");
 
-  // Default templates shown when no custom templates exist
+  // Default templates with full contract body text
   const defaultTemplates: ContractTemplate[] = [
-    { id: "tpl_1", name: "UGC Content Agreement", type: "ugc", description: "Standard agreement for UGC content creation with usage rights and payment terms.", variables: ["creator_name", "brand_name", "deliverables", "payment_amount", "payment_terms", "usage_rights", "revision_limit", "content_deadline"] },
-    { id: "tpl_2", name: "Influencer Partnership", type: "influencer", description: "Full partnership agreement for influencer campaigns with exclusivity and kill fee.", variables: ["creator_name", "brand_name", "deliverables", "payment_amount", "exclusivity_category", "exclusivity_duration", "kill_fee", "content_deadline"] },
-    { id: "tpl_3", name: "Usage Rights Extension", type: "extension", description: "Extend usage rights on existing content beyond the original agreement.", variables: ["creator_name", "brand_name", "extension_duration", "payment_amount", "usage_rights"] },
-    { id: "tpl_4", name: "Ambassador Retainer", type: "ambassador", description: "Long-term brand ambassador retainer with monthly deliverables.", variables: ["creator_name", "brand_name", "monthly_retainer", "deliverables", "exclusivity_category", "term_length"] },
-    { id: "tpl_5", name: "Talent Representation", type: "representation", description: "Agreement between agency and creator for talent representation.", variables: ["creator_name", "agency_name", "commission_rate", "term_length", "termination_notice"] },
+    {
+      id: "tpl_1", name: "UGC Content Agreement", type: "ugc",
+      description: "Standard agreement for UGC content creation with usage rights and payment terms.",
+      variables: ["creator_name", "brand_name", "deliverables", "payment_amount", "payment_terms", "usage_rights", "revision_limit", "content_deadline"],
+      body_template: `CONTENT CREATION AGREEMENT
+
+This Content Creation Agreement ("Agreement") is entered into as of the date of last signature below.
+
+CREATOR: {{creator_name}}
+BRAND/CLIENT: {{brand_name}}
+
+1. SCOPE OF WORK
+Creator agrees to produce the following deliverables: {{deliverables}}
+
+All content must be delivered by: {{content_deadline}}
+
+2. COMPENSATION
+Brand agrees to pay Creator {{payment_amount}} under the following terms: {{payment_terms}}
+
+Payment is due within 30 days of content delivery unless otherwise specified above.
+
+3. USAGE RIGHTS
+Brand is granted the following usage rights: {{usage_rights}}
+
+All usage rights begin upon full payment. Creator retains ownership of all original content.
+
+4. REVISIONS
+Creator will provide up to {{revision_limit}} rounds of revisions at no additional cost. Additional revisions will be billed at Creator's standard hourly rate.
+
+5. CONTENT APPROVAL
+Brand must approve or request revisions within 5 business days of delivery. Failure to respond constitutes approval.
+
+6. CANCELLATION
+If Brand cancels after signing, a kill fee of 50% of the total compensation is due. If Creator has begun work, full compensation is due.
+
+7. CONFIDENTIALITY
+Both parties agree to keep the terms of this agreement confidential unless mutually agreed otherwise.
+
+8. INDEPENDENT CONTRACTOR
+Creator is an independent contractor and not an employee of Brand.
+
+SIGNATURES:
+Creator: _____________________ Date: _________
+Brand:   _____________________ Date: _________`
+    },
+    {
+      id: "tpl_2", name: "Influencer Partnership", type: "influencer",
+      description: "Full partnership agreement for influencer campaigns with exclusivity and kill fee.",
+      variables: ["creator_name", "brand_name", "deliverables", "payment_amount", "exclusivity_category", "exclusivity_duration", "kill_fee", "content_deadline"],
+      body_template: `INFLUENCER PARTNERSHIP AGREEMENT
+
+This Influencer Partnership Agreement ("Agreement") is entered into as of the date of last signature.
+
+INFLUENCER: {{creator_name}}
+BRAND: {{brand_name}}
+
+1. CAMPAIGN DELIVERABLES
+Influencer agrees to create and publish the following: {{deliverables}}
+
+Content delivery deadline: {{content_deadline}}
+
+2. COMPENSATION
+Brand shall pay Influencer {{payment_amount}} within 30 days of campaign completion.
+
+3. EXCLUSIVITY
+Influencer agrees to an exclusivity period of {{exclusivity_duration}} in the {{exclusivity_category}} category. During this period, Influencer will not promote competing brands in this category.
+
+4. KILL FEE
+If Brand cancels this agreement after execution, Brand shall pay Influencer a kill fee of {{kill_fee}}.
+
+5. CONTENT OWNERSHIP & LICENSING
+Influencer retains ownership of all content created. Brand receives a license to repost, reshare, and use content on Brand's owned channels for 12 months unless otherwise negotiated.
+
+6. WHITELISTING / PAID AMPLIFICATION
+Any paid amplification (whitelisting, dark posting, boosting) of Influencer's content by Brand requires separate written approval and additional compensation.
+
+7. FTC COMPLIANCE
+Influencer agrees to comply with all FTC disclosure guidelines, including proper use of #ad or #sponsored tags.
+
+8. APPROVAL PROCESS
+Brand must approve all content within 3 business days of submission. Silence constitutes approval.
+
+9. INDEMNIFICATION
+Each party shall indemnify the other against claims arising from their own breach of this Agreement.
+
+SIGNATURES:
+Influencer: _____________________ Date: _________
+Brand:      _____________________ Date: _________`
+    },
+    {
+      id: "tpl_3", name: "Usage Rights Extension", type: "extension",
+      description: "Extend usage rights on existing content beyond the original agreement.",
+      variables: ["creator_name", "brand_name", "original_agreement_date", "extension_duration", "payment_amount", "usage_rights"],
+      body_template: `USAGE RIGHTS EXTENSION AGREEMENT
+
+This Usage Rights Extension ("Extension") amends the original agreement between the parties.
+
+CREATOR: {{creator_name}}
+BRAND: {{brand_name}}
+ORIGINAL AGREEMENT DATE: {{original_agreement_date}}
+
+1. EXTENSION OF RIGHTS
+The usage rights granted in the original agreement are hereby extended for an additional period of {{extension_duration}}.
+
+2. EXTENDED RIGHTS SCOPE
+The following usage rights are granted for the extension period: {{usage_rights}}
+
+3. COMPENSATION
+Brand agrees to pay Creator {{payment_amount}} for this extension. Payment is due within 15 days of signing.
+
+4. ALL OTHER TERMS
+All other terms and conditions of the original agreement remain in full force and effect.
+
+5. TERMINATION
+This extension may be terminated early by either party with 30 days written notice. No refund is due for the remaining extension period.
+
+SIGNATURES:
+Creator: _____________________ Date: _________
+Brand:   _____________________ Date: _________`
+    },
+    {
+      id: "tpl_4", name: "Ambassador Retainer", type: "ambassador",
+      description: "Long-term brand ambassador retainer with monthly deliverables.",
+      variables: ["creator_name", "brand_name", "monthly_retainer", "deliverables", "exclusivity_category", "term_length"],
+      body_template: `BRAND AMBASSADOR RETAINER AGREEMENT
+
+This Brand Ambassador Agreement ("Agreement") is entered into as of the date of last signature.
+
+AMBASSADOR: {{creator_name}}
+BRAND: {{brand_name}}
+
+1. TERM
+This agreement shall be effective for a period of {{term_length}}, beginning on the date of last signature. It may be renewed by mutual written agreement.
+
+2. MONTHLY DELIVERABLES
+Ambassador agrees to deliver the following each month: {{deliverables}}
+
+3. COMPENSATION
+Brand shall pay Ambassador {{monthly_retainer}} per month, due on the 1st of each month. Late payments incur a 5% monthly penalty.
+
+4. EXCLUSIVITY
+Ambassador agrees to exclusivity in the {{exclusivity_category}} category for the duration of this agreement. Ambassador will not promote, endorse, or create content for competing brands in this category.
+
+5. PRODUCT/GIFTING
+Brand will provide Ambassador with complimentary products as needed for content creation. Ambassador is not required to feature products they do not genuinely use or enjoy.
+
+6. CONTENT RIGHTS
+Brand receives a perpetual license to use Ambassador content on Brand's owned channels. Ambassador retains ownership and may use content on their personal channels.
+
+7. EARLY TERMINATION
+Either party may terminate with 30 days written notice. If Brand terminates early, Ambassador is owed the current month's retainer. If Ambassador terminates, no further payments are due.
+
+8. MORALITY CLAUSE
+Brand may terminate immediately if Ambassador engages in conduct that materially damages Brand's reputation. "Material damage" requires documented evidence.
+
+SIGNATURES:
+Ambassador: _____________________ Date: _________
+Brand:      _____________________ Date: _________`
+    },
+    {
+      id: "tpl_5", name: "Talent Representation", type: "representation",
+      description: "Agreement between agency and creator for talent representation.",
+      variables: ["creator_name", "agency_name", "commission_rate", "term_length", "termination_notice", "agency_contact"],
+      body_template: `TALENT REPRESENTATION AGREEMENT
+
+This Talent Representation Agreement ("Agreement") is entered into as of the date of last signature.
+
+TALENT: {{creator_name}}
+AGENCY: {{agency_name}}
+AGENCY CONTACT: {{agency_contact}}
+
+1. ENGAGEMENT
+Talent engages Agency as their exclusive representative for brand partnerships, sponsorships, and commercial opportunities in the digital content creation space.
+
+2. TERM
+This agreement is effective for {{term_length}}, automatically renewing for successive 6-month periods unless terminated by either party.
+
+3. AGENCY COMMISSION
+Agency shall receive {{commission_rate}} of all gross revenue from deals procured, negotiated, or managed by Agency on behalf of Talent. Commission applies to:
+- Brand deals and sponsorships
+- Affiliate partnerships arranged by Agency
+- Speaking engagements sourced by Agency
+- Licensing deals negotiated by Agency
+
+Commission does NOT apply to:
+- Talent's direct ad revenue (YouTube AdSense, TikTok Creator Fund)
+- Merchandise sales through Talent's own store
+- Pre-existing deals entered before this Agreement
+
+4. AGENCY RESPONSIBILITIES
+Agency agrees to:
+- Actively seek and negotiate brand opportunities for Talent
+- Review all contracts before Talent signs
+- Handle invoicing and payment collection
+- Provide monthly reports of deal pipeline and earnings
+- Protect Talent's interests in all negotiations
+
+5. TALENT RESPONSIBILITIES
+Talent agrees to:
+- Refer all brand inquiries to Agency
+- Not enter into brand deals without Agency's knowledge
+- Deliver contracted work on time and at professional quality
+- Maintain their social media presence and audience engagement
+
+6. PAYMENT PROCESSING
+All brand payments shall flow through Agency. Agency will deduct commission and remit remaining balance to Talent within 10 business days of receipt.
+
+7. TERMINATION
+Either party may terminate with {{termination_notice}} written notice. Upon termination:
+- Agency retains commission rights on deals initiated during the term for 6 months post-termination
+- Talent retains full ownership of all content and accounts
+- Agency must transfer all brand contacts and deal documentation to Talent
+
+8. INTELLECTUAL PROPERTY
+Talent retains full ownership of their name, likeness, brand, content, and social media accounts at all times.
+
+SIGNATURES:
+Talent: _____________________ Date: _________
+Agency: _____________________ Date: _________`
+    },
   ];
 
   const contractTemplates = dbTemplates.length > 0 ? dbTemplates : defaultTemplates;
