@@ -19,20 +19,20 @@ const stats = [
 ];
 
 const creatorFeatures = [
-  { title: "Deal Pipeline", desc: "Track every brand deal from first DM to final payment with inline editing, context menus, and stage management" },
-  { title: "AI Deal Negotiator", desc: "Paste any brand offer — get AI-powered counter-offer advice, copy-paste scripts, and leverage analysis using Claude AI" },
-  { title: "Income Tracking", desc: "Track all revenue streams — brand deals, affiliate links, Stan Store, and passive income in one dashboard" },
+  { title: "AI Deal Scanner (Gmail)", desc: "Connect Gmail and let Claude AI automatically detect brand deal opportunities in your inbox and create deals with one click" },
+  { title: "AI Contract Review", desc: "Paste or upload any contract — get instant analysis with red flags, missing clauses, and specific negotiation tips from Claude AI" },
+  { title: "Contract Templates", desc: "5 professional contract templates (UGC, Influencer, Ambassador, Extensions) with live preview and variable filling" },
+  { title: "Deal Pipeline + Full Editing", desc: "Track every brand deal from first DM to final payment. Click any deal to edit brand, value, deliverables, stage, exclusivity, and more" },
+  { title: "Task Management", desc: "Track deliverables, deadlines, and follow-ups with priorities, categories, due dates, and overdue alerts" },
   { title: "AI Rate Calculator", desc: "Auto-fills from your profile stats. AI suggests rates based on your niche, followers, and engagement" },
-  { title: "Revenue Forecasting", desc: "See projected monthly and annual income, track whether you're on pace, and set income goals" },
-  { title: "Content Calendar", desc: "Plan sponsored vs organic content, track sponsor tolerance, and avoid audience fatigue" },
-  { title: "Tax Prep Export", desc: "One-click export of all income and expenses for tax season. 1099-ready CSV and PDF" },
-  { title: "Content Briefs", desc: "Receive creative briefs from brands, submit drafts for review, and track approval workflows" },
+  { title: "Exclusivity Tracker", desc: "Track active exclusivity clauses with progress bars and get conflict warnings before signing new deals" },
+  { title: "Referral Program", desc: "Share your link with followers — they get $12 off their first month of UGC + Influencer. Track signups and conversions" },
 ];
 
 const agencyFeatures = [
+  { title: "Contract Templates + AI", desc: "5 pre-built templates (UGC, Influencer, Ambassador, Usage Rights, Representation) with live preview and AI analysis" },
   { title: "Roster Dashboard", desc: "Every creator's health score, deals, earnings, and performance at a glance" },
   { title: "Campaign Builder", desc: "Multi-creator campaigns with deliverable boards, calendar view, and profitability tracking" },
-  { title: "Contract Lifecycle", desc: "AI analysis, 5 templates, version tracking, e-signatures, and expiry alerts" },
   { title: "Conflict Detection", desc: "Pre-deal conflict scanning, exclusivity calendar, and resolution workflows" },
   { title: "Team Collaboration", desc: "Internal channels, task management, shared inbox, and @mentions — replaces Slack and Asana" },
   { title: "Commission & Reports", desc: "Auto-calculated commissions, P&L reports, creator comparisons, and annual summaries" },
@@ -41,18 +41,22 @@ const agencyFeatures = [
 ];
 
 const features = [
-  { title: "Deal Pipeline", desc: "Inline editing, context menus, stage management" },
-  { title: "AI Negotiator", desc: "Paste offers, get counter-advice from Claude AI" },
-  { title: "AI Contracts", desc: "Upload contracts, get red flags and counter-clauses" },
-  { title: "Income Tracking", desc: "Brand deals, affiliate links, Stan Store — all in one" },
-  { title: "Revenue Forecast", desc: "Projected income, goal tracking, pipeline analysis" },
+  { title: "AI Deal Scanner", desc: "Gmail integration auto-detects brand deals with Claude AI", isNew: true },
+  { title: "AI Contract Review", desc: "Paste contracts, get red flags and negotiation tips", isNew: true },
+  { title: "Contract Templates", desc: "5 pro templates with live preview editor", isNew: true },
+  { title: "Task Management", desc: "Priorities, due dates, categories, overdue alerts", isNew: true },
+  { title: "Deal Pipeline", desc: "Full editing, stages, exclusivity, deliverables" },
+  { title: "AI Daily Insights", desc: "Personalized business tips on your dashboard", isNew: true },
+  { title: "Referral Program", desc: "Share your link, followers save $12/mo", isNew: true },
+  { title: "Income Tracking", desc: "Brand deals, affiliate links, all streams" },
+  { title: "Revenue Forecast", desc: "Projected income, goal tracking" },
   { title: "AI Rate Card", desc: "Auto-filled rates with AI suggestions" },
   { title: "Content Calendar", desc: "Plan posts, track sponsor tolerance" },
+  { title: "Exclusivity Tracker", desc: "Active clauses with conflict warnings", isNew: true },
   { title: "Tax Prep Export", desc: "1099-ready CSV/PDF with expense tracking" },
-  { title: "Content Briefs", desc: "Receive briefs, submit drafts, approval workflow" },
+  { title: "Gmail Inbox", desc: "Real emails + internal messages in one inbox", isNew: true },
   { title: "Team Channels", desc: "Internal chat, tasks, and @mentions" },
   { title: "Campaign Calendar", desc: "Gantt-style timeline for deliverables" },
-  { title: "Deal Marketplace", desc: "Browse brand campaigns and apply (coming soon)" },
   { title: "Conflict Scanner", desc: "Pre-deal exclusivity checks" },
   { title: "Help Center", desc: "FAQs, troubleshooter, and live support" },
   { title: "⌘K Command Palette", desc: "Search and navigate everything instantly" },
@@ -66,10 +70,10 @@ const testimonials = [
 ];
 
 const tiers = [
-  { name: "Free", price: "$0", period: "", desc: "3 deals, basic invoicing", features: ["3 active deals", "Basic invoicing", "Rate calculator", "Help center"], cta: "Start free", featured: false },
-  { name: "UGC Creator", price: "$27", period: "/mo", desc: "Full pipeline + AI + income tracking", features: ["Unlimited deals", "AI contract analysis", "Income tracking", "Rate calculator", "Media kit", "Invoice tracking", "CSV import"], cta: "Get started", featured: false },
-  { name: "UGC + Influencer", price: "$39", period: "/mo", desc: "Everything + audience analytics", features: ["Everything in UGC", "Audience analytics", "Engagement tracking", "Campaign recaps", "Exclusivity manager", "Gmail integration"], cta: "Get started", featured: true },
-  { name: "Agency Starter", price: "$149", period: "/mo", desc: "Up to 15 creators — replaces Asana + Slack", features: ["Roster dashboard", "Campaign builder + calendar", "Team channels + tasks", "Contract lifecycle", "Conflict scanner", "Commission tracking", "Brand CRM", "P&L reports"], cta: "Start agency plan", featured: false },
+  { name: "Free", price: "$0", period: "", desc: "Try it out", features: ["3 active deals", "Basic invoicing", "Rate calculator", "Help center", "Contract templates"], cta: "Start free", featured: false },
+  { name: "UGC Creator", price: "$27", period: "/mo", desc: "Full creator toolkit", features: ["Unlimited deals", "AI contract review", "AI deal scanner (Gmail)", "Task management", "Content calendar", "Contract templates", "Media kit", "Invoice tracking"], cta: "Get started", featured: false },
+  { name: "UGC + Influencer", price: "$39", period: "/mo", desc: "For creators growing their audience", features: ["Everything in UGC", "Audience analytics", "Revenue forecasting", "Tax export", "Brand Radar", "Campaign recaps", "Exclusivity manager"], cta: "Get started", featured: true },
+  { name: "Agency Starter", price: "$149", period: "/mo", desc: "Up to 15 creators", features: ["Roster dashboard", "Campaign builder", "Team channels + tasks", "5 contract templates", "Conflict scanner", "Commission tracking", "Brand CRM", "P&L reports"], cta: "Start agency plan", featured: false },
 ];
 
 export default function HomePage() {
@@ -89,7 +93,7 @@ export default function HomePage() {
             like a <em className="italic text-[#3D6E8A]">real business</em>
           </h1>
           <p className="text-[18px] font-sans text-[#4A6070] max-w-[600px] mx-auto mb-8 leading-relaxed">
-            AI deal negotiation, revenue forecasting, contract analysis, income tracking, content calendar, team collaboration, and tax prep — for solo creators and the agencies that manage them.
+            AI contract review, Gmail deal scanner, contract templates, task management, exclusivity tracking, and more — powered by Claude AI. Built for UGC creators, influencers, and talent agencies.
           </p>
           <div className="flex items-center justify-center gap-3">
             <a href="/signup" className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors">
@@ -267,11 +271,15 @@ export default function HomePage() {
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-12">
             <p className="text-[12px] font-sans font-600 uppercase tracking-[3px] text-[#7BAFC8] mb-3">FEATURES</p>
-            <h2 className="text-[36px] font-serif text-[#1A2C38]">40+ features to <em className="italic text-[#3D6E8A]">run your business</em></h2>
+            <h2 className="text-[36px] font-serif text-[#1A2C38]">50+ features to <em className="italic text-[#3D6E8A]">run your business</em></h2>
+            <p className="text-[14px] font-sans text-[#4A6070] mt-3">New features shipping every week</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {features.map((f) => (
-              <div key={f.title} className="bg-[#F0EAE0] border border-[#DDD6C8] rounded-[10px] p-5 hover:bg-white hover:border-[#D8E8EE] transition-colors group">
+              <div key={f.title} className="bg-[#F0EAE0] border border-[#DDD6C8] rounded-[10px] p-5 hover:bg-white hover:border-[#D8E8EE] transition-colors group relative">
+                {f.isNew && (
+                  <span className="absolute top-3 right-3 text-[9px] font-sans uppercase tracking-[1px] px-1.5 py-0.5 rounded-full bg-[#3D7A58] text-white" style={{ fontWeight: 600 }}>NEW</span>
+                )}
                 <div className="h-8 w-8 rounded-lg bg-[#F2F8FB] flex items-center justify-center mb-3 group-hover:bg-[#7BAFC8]/10">
                   <div className="h-3 w-3 rounded-full bg-[#7BAFC8]" />
                 </div>
@@ -279,6 +287,98 @@ export default function HomePage() {
                 <p className="text-[13px] font-sans text-[#4A6070] leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ AI SHOWCASE ═══ */}
+      <section className="py-20 px-6 bg-gradient-to-b from-[#1E3F52] to-[#2a5269] text-white relative overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full bg-[#7BAFC8]/10 blur-[120px] pointer-events-none" />
+        <div className="max-w-[1100px] mx-auto relative">
+          <div className="text-center mb-12">
+            <p className="text-[12px] font-sans font-600 uppercase tracking-[3px] text-[#7BAFC8] mb-3">POWERED BY CLAUDE AI</p>
+            <h2 className="text-[36px] font-serif text-white">AI baked into <em className="italic text-[#7BAFC8]">every workflow</em></h2>
+            <p className="text-[15px] font-sans text-white/70 max-w-[600px] mx-auto mt-3">
+              Our AI reads your emails, reviews your contracts, and helps you make smarter business decisions — without you lifting a finger.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { title: "Gmail Deal Scanner", desc: "Connects to your Gmail and auto-detects brand partnership opportunities. One-click adds them to your pipeline." },
+              { title: "Contract AI Review", desc: "Paste any contract and get payment analysis, usage rights breakdown, red flags, and negotiation tips." },
+              { title: "Rate Suggestions", desc: "Based on your followers, engagement, and niche — AI calculates what you should be charging." },
+              { title: "Daily Insights", desc: "Personalized dashboard insights analyze your pipeline and suggest what to focus on today." },
+            ].map((f) => (
+              <div key={f.title} className="bg-white/5 border border-white/10 rounded-[10px] p-5 backdrop-blur-sm">
+                <div className="h-8 w-8 rounded-lg bg-[#7BAFC8]/20 flex items-center justify-center mb-3">
+                  <span className="text-[14px]">✨</span>
+                </div>
+                <h3 className="text-[15px] font-sans text-white mb-1.5" style={{ fontWeight: 600 }}>{f.title}</h3>
+                <p className="text-[13px] font-sans text-white/70 leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ REFERRAL CTA ═══ */}
+      <section className="py-20 px-6">
+        <div className="max-w-[1100px] mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <p className="text-[12px] font-sans font-600 uppercase tracking-[3px] text-[#7BAFC8] mb-3">CREATOR REFERRAL PROGRAM</p>
+              <h2 className="text-[36px] font-serif text-[#1A2C38] leading-tight mb-4">
+                Give your followers a <em className="italic text-[#3D6E8A]">discount</em>
+              </h2>
+              <p className="text-[15px] font-sans text-[#4A6070] mb-6 leading-relaxed">
+                Share your unique affiliate link with your audience. Anyone who signs up with your link gets their first month of UGC + Influencer at the UGC price — $27 instead of $39.
+              </p>
+              <div className="space-y-3 mb-8">
+                {[
+                  "Unique affiliate link per creator",
+                  "$12 off first month auto-applied at checkout",
+                  "Real-time signup and conversion tracking",
+                  "Share via Twitter, Email, SMS, or anywhere",
+                ].map(item => (
+                  <div key={item} className="flex items-start gap-3">
+                    <span className="text-[#3D7A58] mt-0.5">✓</span>
+                    <span className="text-[14px] font-sans text-[#1A2C38]">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <a href="/signup" className="inline-flex items-center gap-2 bg-[#1E3F52] text-white rounded-[10px] px-6 py-3 text-[14px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
+                Get your affiliate link →
+              </a>
+            </div>
+
+            {/* Visual mockup */}
+            <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[16px] p-6 shadow-[0_12px_40px_rgba(30,63,82,.08)]">
+              <div className="bg-gradient-to-br from-[#1E3F52] to-[#2a5269] rounded-[12px] p-5 text-white mb-5">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center text-[20px] flex-shrink-0">🎁</div>
+                  <div>
+                    <p className="text-[14px] font-sans text-white" style={{ fontWeight: 600 }}>Brianna Cole invited you!</p>
+                    <p className="text-[11px] font-sans text-white/70 mt-1">Get your first month of UGC + Influencer for just $27</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mb-4">
+                <p className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-2" style={{ fontWeight: 600 }}>YOUR AFFILIATE LINK</p>
+                <div className="bg-[#F2F8FB] border border-[#D8E8EE] rounded-[8px] px-3 py-2.5 font-mono text-[11px] text-[#1A2C38] truncate">
+                  createsuite.co/signup?ref=ABC12345
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#F2F8FB] rounded-[10px] p-3">
+                  <p className="text-[10px] font-sans uppercase tracking-[1px] text-[#8AAABB]" style={{ fontWeight: 600 }}>SIGNUPS</p>
+                  <p className="text-[20px] font-serif text-[#1A2C38]">47</p>
+                </div>
+                <div className="bg-[#E8F4EE] rounded-[10px] p-3">
+                  <p className="text-[10px] font-sans uppercase tracking-[1px] text-[#3D7A58]" style={{ fontWeight: 600 }}>CONVERTED</p>
+                  <p className="text-[20px] font-serif text-[#3D7A58]">23</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

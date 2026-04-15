@@ -15,24 +15,35 @@ interface Feature {
 }
 
 const features: Feature[] = [
+  // AI Features (NEW section)
+  { name: "AI Deal Scanner (Gmail)", description: "Connects to your Gmail inbox and uses Claude AI to detect brand partnership opportunities automatically. Review and add to pipeline with one click — no more digging through emails.", audience: "creator", tier: "UGC Creator", section: "AI Features", isNew: true } as any,
+  { name: "AI Contract Review", description: "Paste or upload any contract and get instant Claude AI analysis: payment terms, usage rights, exclusivity, red flags, missing clauses, and specific negotiation tips.", audience: "both", tier: "UGC Creator", section: "AI Features", isNew: true } as any,
+  { name: "AI Daily Insights", description: "Personalized daily business insights on your dashboard. Claude analyzes your pipeline, overdue items, and earnings to tell you what to focus on today.", audience: "creator", tier: "UGC Creator", section: "AI Features", isNew: true } as any,
+  { name: "AI Rate Suggestions", description: "Tell the AI your platform stats and niche, and get specific rate recommendations for UGC videos, Instagram reels, TikToks, and YouTube videos with reasoning.", audience: "creator", tier: "UGC Creator", section: "AI Features" } as any,
+
   // Deal Management
-  { name: "Deal Pipeline", description: "Track every brand deal from first DM to final payment. Kanban board with stages for outreach, negotiation, contracted, in-progress, and paid.", audience: "both", tier: "Free (3 deals) / Paid (unlimited)", section: "Deal Management" },
+  { name: "Deal Pipeline", description: "Track every brand deal from first DM to final payment. Click any deal to edit brand, value, deliverables, stage, exclusivity, and more.", audience: "both", tier: "Free (3 deals) / Paid (unlimited)", section: "Deal Management" },
+  { name: "Task Management", description: "Track deliverables, deadlines, and follow-ups with priorities, categories, due dates, and overdue alerts. Built specifically for creator workflows.", audience: "creator", tier: "UGC Creator", section: "Deal Management", isNew: true } as any,
+  { name: "Content Calendar", description: "Plan sponsored vs organic content, track sponsor tolerance across the month, and avoid audience fatigue with visual calendar view.", audience: "creator", tier: "UGC Creator", section: "Deal Management" },
   { name: "Campaign Builder", description: "Create multi-creator campaigns with shared deliverable boards and brand-facing timelines. Assign creators, set deadlines, and track completion in real time.", audience: "agency", tier: "Agency Starter", section: "Deal Management" },
   { name: "Deliverable Tracking", description: "Break each deal into deliverables with due dates, revision counts, and approval status. Never miss a deadline or lose track of what you owe a brand.", audience: "both", tier: "UGC Creator", section: "Deal Management" },
+  { name: "Gmail Inbox Integration", description: "Real Gmail emails alongside your internal agency messages in one unified inbox with refresh, search, and email details.", audience: "creator", tier: "UGC Creator", section: "Deal Management", isNew: true } as any,
 
   // Financial
   { name: "Invoicing", description: "Create, send, and track professional invoices with automatic payment reminders. Supports custom branding, multiple currencies, and partial payments.", audience: "both", tier: "Free (basic) / Paid (full)", section: "Financial" },
   { name: "Rate Calculator", description: "Get market-benchmarked rate recommendations based on your niche, follower count, engagement rate, and deliverable type. Stop undercharging for your work.", audience: "creator", tier: "UGC Creator", section: "Financial" },
+  { name: "Revenue Forecasting", description: "See projected monthly and annual income based on your pipeline. Track whether you're on pace to hit your goals.", audience: "creator", tier: "UGC + Influencer", section: "Financial" },
+  { name: "Tax Export", description: "One-click export of all income and expenses for tax season. 1099-ready CSV and PDF reports.", audience: "creator", tier: "UGC + Influencer", section: "Financial" },
   { name: "Commission Tracking", description: "Auto-calculated commissions per deal with payout tracking, monthly exports, and creator-facing transparency reports. Supports tiered commission structures.", audience: "agency", tier: "Agency Starter", section: "Financial" },
 
   // Contracts & Legal
-  { name: "AI Contract Analysis", description: "Upload any brand contract and get instant analysis of red flags, unfair terms, and missing clauses. Receive AI-generated counter-language suggestions.", audience: "both", tier: "UGC Creator", section: "Contracts & Legal" },
-  { name: "Contract Templates", description: "Start from pre-built, lawyer-reviewed contract templates for common deal types. Customize terms, add clauses, and save your own templates for reuse.", audience: "agency", tier: "Agency Starter", section: "Contracts & Legal" },
+  { name: "Contract Templates (5 Pro)", description: "Pre-built templates for UGC Content Agreement, Influencer Partnership, Usage Rights Extension, Ambassador Retainer, and Talent Representation. Live preview editor with variable filling.", audience: "both", tier: "UGC Creator", section: "Contracts & Legal", isNew: true } as any,
   { name: "E-Signature", description: "Send contracts for electronic signature directly from Create Suite. Track signature status, send reminders, and store fully executed copies automatically.", audience: "agency", tier: "Agency Starter", section: "Contracts & Legal" },
-  { name: "Exclusivity Tracking", description: "Manage exclusivity windows across all your deals. Get real-time alerts when a new deal could conflict with an existing exclusivity clause.", audience: "both", tier: "UGC + Influencer", section: "Contracts & Legal" },
+  { name: "Exclusivity Conflict Detection", description: "Track active exclusivity clauses with progress bars and days remaining. Get real-time conflict warnings before signing new deals in competing categories.", audience: "creator", tier: "UGC Creator", section: "Contracts & Legal", isNew: true } as any,
 
   // Brand & Growth
-  { name: "Brand Radar", description: "Discover brands actively hiring creators in your niche right now. Filter by category, budget range, and content type to find your next opportunity.", audience: "creator", tier: "UGC Creator", section: "Brand & Growth" },
+  { name: "Creator Referral Program", description: "Share your unique affiliate link with followers. Anyone who signs up gets their first month of UGC + Influencer for just $27 instead of $39. Track signups and conversions.", audience: "creator", tier: "UGC Creator", section: "Brand & Growth", isNew: true } as any,
+  { name: "Brand Radar", description: "Discover brands actively hiring creators in your niche right now. Filter by category, budget range, and content type to find your next opportunity.", audience: "creator", tier: "UGC + Influencer", section: "Brand & Growth" },
   { name: "Media Kit Builder", description: "Auto-generated media kit with live audience stats, past brand collaborations, and a shareable public link. Updates automatically as your numbers grow.", audience: "creator", tier: "UGC Creator", section: "Brand & Growth" },
   { name: "Campaign Recaps", description: "Generate professional post-campaign reports with performance metrics, screenshots, and ROI analysis. Share branded PDFs with brands or your team.", audience: "both", tier: "UGC + Influencer", section: "Brand & Growth" },
   { name: "Creator Health Score", description: "A single score combining deal velocity, payment reliability, audience growth, and engagement trends. Identify areas for improvement at a glance.", audience: "both", tier: "UGC Creator", section: "Brand & Growth" },
@@ -46,6 +57,7 @@ const features: Feature[] = [
 ];
 
 const sections = [
+  "AI Features",
   "Deal Management",
   "Financial",
   "Contracts & Legal",
@@ -138,8 +150,11 @@ export default function FeaturesPage() {
                   {sectionFeatures.map((f) => (
                     <div
                       key={f.name}
-                      className="bg-white border border-[#D8E8EE] rounded-[10px] p-5 flex flex-col"
+                      className="bg-white border border-[#D8E8EE] rounded-[10px] p-5 flex flex-col relative"
                     >
+                      {(f as any).isNew && (
+                        <span className="absolute top-3 right-3 text-[9px] font-sans uppercase tracking-[1px] px-1.5 py-0.5 rounded-full bg-[#3D7A58] text-white" style={{ fontWeight: 600 }}>NEW</span>
+                      )}
                       {/* Icon dot + name */}
                       <div className="flex items-center gap-3 mb-3">
                         <div className="h-8 w-8 rounded-lg bg-[#F2F8FB] flex items-center justify-center flex-shrink-0">
