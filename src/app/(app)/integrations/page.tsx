@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
 
 const GOOGLE_CLIENT_ID = "854619861848-ck0ldn040uojlec0jpqkbpeoo9adhnm6.apps.googleusercontent.com";
-import { Mail, CreditCard, Video, Camera, Calendar, FileText, Palette, Check, Bell } from "lucide-react";
+import { Mail, CreditCard, Video, Camera, Calendar, FileText, Palette, Check, Bell, Unplug } from "lucide-react";
 
 const integrations = [
   { name: "Gmail", description: "Import brand emails and detect deal opportunities", icon: Mail, category: "Email", oauthType: "google" as const },
@@ -73,6 +73,28 @@ export default function IntegrationsPage() {
     }
   }
 
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+
+  async function handleDisconnect(oauthType: string) {
+    if (!user) return;
+    setDisconnecting(oauthType);
+    try {
+      const res = await fetch("/api/integrations/disconnect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, type: oauthType }),
+      });
+      if (res.ok) {
+        await refreshProfile();
+        toast("success", "Integration disconnected");
+        setJustConnected(null);
+      } else {
+        toast("error", "Failed to disconnect");
+      }
+    } catch { toast("error", "Failed to disconnect"); }
+    finally { setDisconnecting(null); }
+  }
+
   function getStatus(oauthType: string): "connected" | "available" | "coming_soon" {
     if (oauthType === "coming_soon") return "coming_soon";
     if (oauthType === "stripe") return "connected";
@@ -110,9 +132,21 @@ export default function IntegrationsPage() {
                 </div>
                 <p className="text-[13px] font-sans text-[#4A6070] mb-3">{int.description}</p>
                 {status === "connected" ? (
-                  <span className="flex items-center gap-1.5 text-[12px] font-sans text-[#3D7A58]" style={{ fontWeight: 500 }}>
-                    <Check className="h-3.5 w-3.5" /> Connected
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1.5 text-[12px] font-sans text-[#3D7A58]" style={{ fontWeight: 500 }}>
+                      <Check className="h-3.5 w-3.5" /> Connected
+                    </span>
+                    {int.oauthType !== "stripe" && int.oauthType !== "ical" && (
+                      <button
+                        onClick={() => handleDisconnect(int.oauthType)}
+                        disabled={disconnecting === int.oauthType}
+                        className="flex items-center gap-1 text-[11px] font-sans text-[#8AAABB] hover:text-[#A03D3D] transition-colors"
+                        style={{ fontWeight: 500 }}
+                      >
+                        <Unplug className="h-3 w-3" /> {disconnecting === int.oauthType ? "..." : "Disconnect"}
+                      </button>
+                    )}
+                  </div>
                 ) : status === "available" ? (
                   <button
                     onClick={() => handleConnect(int.oauthType)}
