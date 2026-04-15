@@ -11,32 +11,29 @@ import { Send, Paperclip, Flag, CheckCircle2, Mail, MessageSquare, ListTodo, Meg
 
 interface MessageThread {
   id: string;
-  agencyId: string;
-  creatorId: string | null;
-  creatorName: string | null;
-  creatorAvatar: string | null;
+  agency_id: string;
+  creator_id: string | null;
   topic: string;
-  threadType: "creator_facing" | "internal" | "brand_log";
-  lastMessageAt: string;
-  unreadAgency: number;
-  unreadCreator: number;
+  thread_type: "creator_facing" | "internal" | "brand_log";
+  last_message_at: string;
+  unread_count_agency: number;
+  unread_count_creator: number;
+  created_at: string;
 }
 
 interface Message {
   id: string;
-  threadId: string;
-  senderId: string;
-  senderName: string;
-  senderRole: string;
-  senderType: "creator" | "agency_user";
+  thread_id: string;
+  sender_id: string;
+  sender_type: "creator" | "agency_user";
   body: string;
-  attachments: { name: string; type: string }[];
-  linkedObjectType: "deal" | "invoice" | "contract" | "campaign" | null;
-  linkedObjectName: string | null;
-  isInternal: boolean;
-  isUrgent: boolean;
-  readAt: string | null;
-  createdAt: string;
+  attachments: any[];
+  linked_object_type: "deal" | "invoice" | "contract" | "campaign" | null;
+  linked_object_id: string | null;
+  is_internal: boolean;
+  is_urgent: boolean;
+  read_at: string | null;
+  created_at: string;
 }
 
 interface GmailEmail {
@@ -124,7 +121,7 @@ export default function CreatorInboxPage() {
 
   // Auto-switch to gmail tab if connected and no internal messages
   useEffect(() => {
-    if (isGmailConnected && !loading && allThreads.filter(t => t.threadType === "creator_facing").length === 0) {
+    if (isGmailConnected && !loading && allThreads.filter(t => t.thread_type === "creator_facing").length === 0) {
       setView("gmail");
     }
   }, [isGmailConnected, loading, allThreads]);
@@ -249,11 +246,11 @@ export default function CreatorInboxPage() {
 
   if (loading) return <TableSkeleton rows={5} cols={3} />;
 
-  const myThreads = allThreads.filter((t) => t.threadType === "creator_facing");
-  const unreadCount = myThreads.reduce((s, t) => s + t.unreadCreator, 0);
+  const myThreads = allThreads.filter((t) => t.thread_type === "creator_facing");
+  const unreadCount = myThreads.reduce((s, t) => s + t.unread_count_creator, 0);
 
   const threadMessages = activeThread
-    ? allMessages.filter((m) => m.threadId === activeThread && !m.isInternal)
+    ? allMessages.filter((m) => m.thread_id === activeThread && !m.is_internal)
     : [];
 
   async function handleSendMessage() {
@@ -573,8 +570,8 @@ export default function CreatorInboxPage() {
                 <div className="w-[300px] border-r border-[#D8E8EE] overflow-y-auto">
                   {myThreads.map((thread) => {
                     const lastMsg = allMessages
-                      .filter((m) => m.threadId === thread.id && !m.isInternal)
-                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+                      .filter((m) => m.thread_id === thread.id && !m.is_internal)
+                      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
                     return (
                       <button
                         key={thread.id}
@@ -584,15 +581,15 @@ export default function CreatorInboxPage() {
                         }`}
                       >
                         <div className="flex items-center justify-between mb-0.5">
-                          <span className={`text-[13px] font-sans ${thread.unreadCreator > 0 ? "font-600 text-[#1A2C38]" : "font-500 text-[#1A2C38]"}`}>
+                          <span className={`text-[13px] font-sans ${thread.unread_count_creator > 0 ? "font-600 text-[#1A2C38]" : "font-500 text-[#1A2C38]"}`}>
                             {thread.topic}
                           </span>
-                          {thread.unreadCreator > 0 && <span className="h-2 w-2 rounded-full bg-[#7BAFC8]" />}
+                          {thread.unread_count_creator > 0 && <span className="h-2 w-2 rounded-full bg-[#7BAFC8]" />}
                         </div>
                         {lastMsg && (
                           <>
                             <p className="text-[12px] font-sans text-[#8AAABB] truncate">{lastMsg.body}</p>
-                            <p className="text-[10px] font-mono text-[#8AAABB] mt-0.5">{timeAgo(lastMsg.createdAt)}</p>
+                            <p className="text-[10px] font-mono text-[#8AAABB] mt-0.5">{timeAgo(lastMsg.created_at)}</p>
                           </>
                         )}
                       </button>
@@ -612,27 +609,26 @@ export default function CreatorInboxPage() {
 
                       <div className="flex-1 overflow-y-auto p-5 space-y-4">
                         {threadMessages.map((msg) => (
-                          <div key={msg.id} className={`flex ${msg.senderType === "creator" ? "justify-end" : "justify-start"}`}>
-                            <div className={`max-w-[75%] rounded-[10px] p-3 ${msg.senderType === "creator" ? "bg-[#7BAFC8]/10" : "bg-[#FAF8F4]"}`}>
+                          <div key={msg.id} className={`flex ${msg.sender_type === "creator" ? "justify-end" : "justify-start"}`}>
+                            <div className={`max-w-[75%] rounded-[10px] p-3 ${msg.sender_type === "creator" ? "bg-[#7BAFC8]/10" : "bg-[#FAF8F4]"}`}>
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[11px] font-sans font-500 text-[#1A2C38]">{msg.senderName}</span>
-                                <span className="text-[10px] font-sans text-[#8AAABB]">{msg.senderRole}</span>
-                                {msg.isUrgent && <Flag className="h-3 w-3 text-[#A03D3D]" />}
+                                <span className="text-[11px] font-sans font-500 text-[#1A2C38]">{msg.sender_type === "creator" ? "You" : "Agency"}</span>
+                                {msg.is_urgent && <Flag className="h-3 w-3 text-[#A03D3D]" />}
                               </div>
                               <p className="text-[13px] font-sans text-[#1A2C38] leading-relaxed">{msg.body}</p>
-                              {msg.attachments.length > 0 && (
+                              {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
                                 <div className="flex items-center gap-1.5 mt-2 text-[11px] font-sans text-[#7BAFC8]">
-                                  <Paperclip className="h-3 w-3" /> {msg.attachments[0].name}
+                                  <Paperclip className="h-3 w-3" /> {msg.attachments[0]?.name || "Attachment"}
                                 </div>
                               )}
-                              {msg.linkedObjectName && (
+                              {msg.linked_object_id && (
                                 <div className="mt-2 bg-white border border-[#D8E8EE] rounded-lg p-2 flex items-center gap-2">
                                   <FileText className="h-3.5 w-3.5 text-[#7BAFC8]" />
-                                  <span className="text-[11px] font-sans font-500 text-[#7BAFC8]">{msg.linkedObjectName}</span>
+                                  <span className="text-[11px] font-sans font-500 text-[#7BAFC8]">{msg.linked_object_type}</span>
                                 </div>
                               )}
-                              <p className="text-[10px] font-mono text-[#8AAABB] mt-1.5">{timeAgo(msg.createdAt)}</p>
-                              {msg.readAt && msg.senderType === "creator" && (
+                              <p className="text-[10px] font-mono text-[#8AAABB] mt-1.5">{timeAgo(msg.created_at)}</p>
+                              {msg.read_at && msg.sender_type === "creator" && (
                                 <p className="text-[10px] font-sans text-[#3D7A58] flex items-center gap-1 mt-0.5">
                                   <CheckCircle2 className="h-2.5 w-2.5" /> Read
                                 </p>
