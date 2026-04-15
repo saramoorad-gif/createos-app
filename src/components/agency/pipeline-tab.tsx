@@ -108,17 +108,13 @@ function QuickAddModal({
     if (!brand.trim()) return;
     try {
       const newDeal = await insertDeal({
-        brand: brand.trim(),
+        brand_name: brand.trim(),
         value: Number(value) || 0,
         stage: "lead",
-        creator,
-        creatorId,
-        type: "ugc",
-        commission: 0,
-        deliverables: [],
+        creator_id: creatorId || null,
+        deal_type: "ugc",
         notes: "",
-        due: null,
-        priority: false,
+        due_date: null,
       });
       if (newDeal) {
         onCreated(newDeal);
@@ -127,6 +123,7 @@ function QuickAddModal({
       onClose();
     } catch (err) {
       console.error("Failed to create deal:", err);
+      toast("error", "Failed to create deal");
     }
   }
 
@@ -399,7 +396,24 @@ export function PipelineTab() {
     id: string;
   } | null>(null);
   const { data: rawDeals, loading, setData: setDeals } = useSupabaseQuery<any>("deals");
-  const deals = rawDeals as any[];
+  const { data: profiles } = useSupabaseQuery<any>("profiles");
+
+  // Map raw DB rows (snake_case) to UI-friendly format the component expects.
+  // This bridges the schema mismatch without rewriting every line of UI.
+  const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
+  const deals = (rawDeals || []).map((d: any) => {
+    const creatorProfile = d.creator_id ? profileById.get(d.creator_id) : null;
+    return {
+      ...d,
+      brand: d.brand_name || d.brand || "",
+      type: d.deal_type || d.type || "ugc",
+      due: d.due_date || d.due || null,
+      creator: creatorProfile?.full_name || d.creator || "Unknown",
+      creatorId: d.creator_id || d.creatorId || "",
+      commission: (d.value || 0) * 0.15, // computed, not stored
+      priority: d.priority || false, // not in schema, always false
+    };
+  }) as any[];
   const [openStageDropdown, setOpenStageDropdown] = useState<string | null>(null);
   const { update: updateDeal } = useSupabaseMutation("deals");
   const { toast } = useToast();
@@ -431,7 +445,8 @@ export function PipelineTab() {
   const activeValue = deals
     .filter((d) => activeStages.includes(d.stage))
     .reduce((sum, d) => sum + d.value, 0);
-  const totalCommission = deals.reduce((sum, d) => sum + d.commission, 0);
+  // Commission is computed client-side as 15% of value (actual rates stored in agency_creator_links)
+  const totalCommission = deals.reduce((sum, d) => sum + ((d.value || 0) * 0.15), 0);
 
   // Sort deals
   const sortedDeals = useMemo(() => {
@@ -576,28 +591,30 @@ export function PipelineTab() {
   }
 
   async function handleSave(updated: EditingDeal) {
-    const updateData = {
-      brand: updated.brand,
-      type: updated.type,
+    // Map UI fields (camelCase) back to DB columns (snake_case)
+    const dbUpdateData = {
+      brand_name: updated.brand,
+      deal_type: updated.type,
       value: updated.value,
       stage: updated.stage,
-      due: updated.due || null,
-      deliverables: updated.deliverables.map((dl) => dl.text),
+      due_date: updated.due || null,
+      deliverables: updated.deliverables.map((dl) => dl.text).join(", "),
       notes: updated.notes,
     };
     setDeals((prev) =>
       prev.map((d) =>
         d.id === updated.id
-          ? { ...d, ...updateData }
+          ? { ...d, ...dbUpdateData, brand: updated.brand, type: updated.type, due: updated.due || null }
           : d
       )
     );
     setEditingDeal(null);
     try {
-      await updateDeal(updated.id, updateData);
+      await updateDeal(updated.id, dbUpdateData);
       toast("success", "Deal updated");
     } catch (err) {
       console.error("Failed to save deal:", err);
+      toast("error", "Failed to save deal");
     }
   }
 
@@ -682,9 +699,9 @@ export function PipelineTab() {
           {deal.due ? formatDate(deal.due) : "—"}
         </td>
 
-        {/* Commission */}
+        {/* Commission — computed as 15% of deal value */}
         <td className="px-3 py-3 text-[13px] text-[#8AAABB]">
-          {formatCurrency(deal.commission)}
+          {formatCurrency((deal.value || 0) * 0.15)}
         </td>
 
         {/* Actions */}

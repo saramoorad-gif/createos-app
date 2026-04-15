@@ -39,19 +39,19 @@ interface ContractTemplate {
 interface AgencyContract {
   id: string;
   creator: string;
-  creatorId: string;
+  creator_id: string;
   brand: string;
   type: string;
   value: number;
-  signedDate: string | null;
-  expiryDate: string;
-  exclusivityCategory: string | null;
-  exclusivityDays: number | null;
+  signed_at: string | null;
+  expiry_date: string;
+  exclusivity_category: string | null;
+  exclusivity_days: number | null;
   stage: ContractStage;
   status: "active" | "expired" | "pending_signature" | "disputed";
-  aiAnalysis: any;
+  ai_analysis: any;
   legacyAnalysis: any;
-  fileName: string;
+  file_name: string;
   versions: any[];
   signatures: any[];
   alerts: any[];
@@ -120,7 +120,7 @@ function getNextStage(current: ContractStage): ContractStage | null {
 
 function ContractPanel({ contract, onClose, onUpdate }: { contract: AgencyContract; onClose: () => void; onUpdate: (id: string, data: Partial<AgencyContract>) => Promise<void> }) {
   const stageStyle = contractStageColors[contract.stage];
-  const analysis = contract.aiAnalysis;
+  const analysis = contract.ai_analysis;
   const { toast } = useToast();
 
   return (
@@ -155,11 +155,11 @@ function ContractPanel({ contract, onClose, onUpdate }: { contract: AgencyContra
             </div>
             <div>
               <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] mb-1">Signed</p>
-              <p className="text-[13px] font-mono text-[#1A2C38]">{contract.signedDate ? formatDate(contract.signedDate) : "Not yet"}</p>
+              <p className="text-[13px] font-mono text-[#1A2C38]">{(contract.stage === "fully_executed" || contract.stage === "countersigned") ? "Signed" : "Not yet"}</p>
             </div>
             <div>
               <p className="text-[10px] font-sans font-600 uppercase tracking-[2px] text-[#8AAABB] mb-1">Expires</p>
-              <p className="text-[13px] font-mono text-[#1A2C38]">{formatDate(contract.expiryDate)}</p>
+              <p className="text-[13px] font-mono text-[#1A2C38]">{formatDate(contract.expiry_date)}</p>
             </div>
           </div>
 
@@ -206,7 +206,7 @@ function ContractPanel({ contract, onClose, onUpdate }: { contract: AgencyContra
                   <p className="text-[11px] font-sans font-600 text-[#1A2C38] mb-2">Rights &amp; Exclusivity</p>
                   <div className="space-y-1.5">
                     <div className="flex justify-between"><span className="text-[12px] font-sans text-[#8AAABB]">Usage Rights</span><span className="text-[13px] font-sans font-500 text-[#1A2C38] text-right max-w-[260px]">{analysis.usageRights}</span></div>
-                    <div className="flex justify-between"><span className="text-[12px] font-sans text-[#8AAABB]">Category</span><span className="text-[13px] font-sans font-500 text-[#1A2C38]">{analysis.exclusivityCategory}</span></div>
+                    <div className="flex justify-between"><span className="text-[12px] font-sans text-[#8AAABB]">Category</span><span className="text-[13px] font-sans font-500 text-[#1A2C38]">{analysis.exclusivity_category}</span></div>
                     <div className="flex justify-between"><span className="text-[12px] font-sans text-[#8AAABB]">Duration</span><span className="text-[13px] font-sans font-500 text-[#1A2C38]">{analysis.exclusivityDuration}</span></div>
                     <div className="flex justify-between"><span className="text-[12px] font-sans text-[#8AAABB]">Geographic</span><span className="text-[13px] font-sans font-500 text-[#1A2C38]">{analysis.geographicRestrictions}</span></div>
                     <div className="flex justify-between"><span className="text-[12px] font-sans text-[#8AAABB]">Platforms</span><span className="text-[13px] font-sans font-500 text-[#1A2C38]">{analysis.platformRestrictions}</span></div>
@@ -253,7 +253,7 @@ function ContractPanel({ contract, onClose, onUpdate }: { contract: AgencyContra
           <div>
             <p className="text-[10px] font-sans font-600 uppercase tracking-[3px] text-[#8AAABB] mb-3">Version History</p>
             <div className="space-y-0">
-              {contract.versions.map((v: {id: string; versionNumber: number; fileName: string; notes: string; uploadedAt: string; uploadedBy: string; isFinal: boolean}, i: number) => (
+              {contract.versions.map((v: {id: string; versionNumber: number; file_name: string; notes: string; uploadedAt: string; uploadedBy: string; isFinal: boolean}, i: number) => (
                 <div key={v.id} className="relative pl-5 pb-4 last:pb-0">
                   {/* Timeline line */}
                   {i < contract.versions.length - 1 && (
@@ -266,7 +266,7 @@ function ContractPanel({ contract, onClose, onUpdate }: { contract: AgencyContra
                       <span className="text-[12px] font-sans font-600 text-[#1A2C38]">v{v.versionNumber}</span>
                       {v.isFinal && <span className="text-[9px] font-sans font-600 uppercase tracking-[1.5px] text-[#3D7A58] bg-[#E8F4EE] px-1.5 py-0.5 rounded-full">Final</span>}
                     </div>
-                    <p className="text-[12px] font-mono text-[#8AAABB] mb-0.5">{v.fileName}</p>
+                    <p className="text-[12px] font-mono text-[#8AAABB] mb-0.5">{v.file_name}</p>
                     <p className="text-[13px] font-sans text-[#1A2C38] leading-[1.4] mb-0.5">{v.notes}</p>
                     <p className="text-[11px] font-sans text-[#8AAABB]">{timeAgo(v.uploadedAt)} by {v.uploadedBy}</p>
                   </div>
@@ -966,7 +966,7 @@ Agency: _____________________ Date: _________`
                     <span className={`text-[10px] font-sans font-500 uppercase tracking-[1.5px] px-2 py-0.5 rounded-full w-fit ${stg.bg} ${stg.text}`}>
                       {contractStageLabels[c.stage]}
                     </span>
-                    <span className="text-[11px] font-mono text-[#8AAABB]">{formatDate(c.expiryDate)}</span>
+                    <span className="text-[11px] font-mono text-[#8AAABB]">{formatDate(c.expiry_date)}</span>
                     <div className="flex items-center gap-1">
                       <span className="text-[12px] font-sans text-[#3D7A58]">{signed}</span>
                       <span className="text-[10px] font-sans text-[#8AAABB]">/</span>

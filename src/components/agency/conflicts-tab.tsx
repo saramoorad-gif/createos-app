@@ -210,8 +210,19 @@ export function ConflictsTab() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showScanModal, setShowScanModal] = useState(false);
 
-  const { data: conflicts, loading, setData: setConflicts } = useSupabaseQuery<any>("conflict_log");
-  const { data: exclusivityMap } = useSupabaseQuery<any>("exclusivity_map");
+  const { data: rawConflicts, loading, setData: setConflicts } = useSupabaseQuery<any>("conflict_log");
+  const { data: profiles } = useSupabaseQuery<any>("profiles");
+  // exclusivity_map table doesn't exist yet — use empty array as placeholder
+  const exclusivityMap: any[] = [];
+
+  // Transform raw DB rows to UI format (join creator_ids → names)
+  const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
+  const conflicts = (rawConflicts || []).map((c: any) => ({
+    ...c,
+    creators: (c.creator_ids || []).map((id: string) => profileById.get(id)?.full_name || "Unknown"),
+    detectedAt: c.created_at,
+    type: c.conflict_type,
+  }));
   const { data: agencyRoster } = useSupabaseQuery<any>("agency_creator_links");
   const { update: updateConflict } = useSupabaseMutation("conflict_log");
   const { toast } = useToast();

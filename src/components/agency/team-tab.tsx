@@ -173,13 +173,14 @@ function isOnline(lastSeenAt: string): boolean {
 /* ─── SUB-VIEW 1: TEAM HOME ─────────────────────────────────── */
 
 function TeamHome({ userId }: { userId: string }) {
-  const { data: team, loading: teamLoading } = useSupabaseQuery<TeamMember>("agency_team");
+  const { data: rawTeam, loading: teamLoading } = useSupabaseQuery<any>("agency_team");
+  const { data: profiles } = useSupabaseQuery<any>("profiles");
   const { data: presence, loading: presenceLoading } = useSupabaseQuery<Presence>("agency_presence");
-  const { data: activity, loading: activityLoading } = useSupabaseQuery<ActivityEntry>(
+  const { data: rawActivity, loading: activityLoading } = useSupabaseQuery<any>(
     "agency_activity_log",
     { order: { column: "created_at", ascending: false }, limit: 20 }
   );
-  const { data: myTasks, loading: tasksLoading } = useSupabaseQuery<Task>(
+  const { data: rawTasks, loading: tasksLoading } = useSupabaseQuery<any>(
     "agency_tasks",
     { eq: { column: "assigned_to", value: userId } }
   );
@@ -188,7 +189,43 @@ function TeamHome({ userId }: { userId: string }) {
 
   if (loading) return <Spinner />;
 
+  const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
   const presenceMap = new Map(presence.map((p) => [p.user_id, p.last_seen_at]));
+
+  // Map raw team rows → TeamMember (join with profiles for name/avatar/email)
+  const team: TeamMember[] = (rawTeam || []).map((t: any) => {
+    const profile = profileById.get(t.user_id);
+    return {
+      id: t.id,
+      name: profile?.full_name || "Unknown",
+      avatar: profile?.avatar_url || "",
+      role: t.role,
+      email: profile?.email || "",
+    };
+  });
+
+  // Map raw activity rows → ActivityEntry (join with profiles for actor name)
+  const activity: ActivityEntry[] = (rawActivity || []).map((a: any) => ({
+    id: a.id,
+    actor_name: profileById.get(a.actor_id)?.full_name || "Someone",
+    action: a.action_type || "did something",
+    target: a.target_type || "",
+    created_at: a.created_at,
+  }));
+
+  // Map raw tasks → Task (with _id → readable field mapping)
+  const myTasks: Task[] = (rawTasks || []).map((t: any) => ({
+    id: t.id,
+    title: t.title,
+    description: t.description || "",
+    assigned_to: t.assigned_to,
+    due_date: t.due_date,
+    priority: t.priority,
+    status: t.status,
+    linked_deal: t.linked_deal_id || undefined,
+    linked_creator: t.linked_creator_id || undefined,
+    linked_campaign: t.linked_campaign_id || undefined,
+  }));
 
   const sortedTasks = [...myTasks].sort(
     (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
