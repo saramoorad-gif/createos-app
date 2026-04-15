@@ -2,6 +2,8 @@
 
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
+
+const GOOGLE_CLIENT_ID = "62122287732-0uci7fsvqctoqte3mlt9vno588hj74ag.apps.googleusercontent.com";
 import { Mail, CreditCard, Video, Camera, Calendar, FileText, Palette, Check } from "lucide-react";
 
 const integrations = [
@@ -25,7 +27,7 @@ export default function IntegrationsPage() {
     if (oauthType === "google") {
       // Redirect to Google OAuth
       const params = new URLSearchParams({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "62122287732-0uci7fsvqctoqte3mlt9vno588hj74ag.apps.googleusercontent.com",
+        client_id: GOOGLE_CLIENT_ID,
         redirect_uri: `${window.location.origin}/api/auth/google/callback`,
         response_type: "code",
         scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email",
