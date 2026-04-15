@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -10,7 +11,7 @@ const integrations = [
   { name: "Gmail", description: "Import brand emails and detect deal opportunities", icon: Mail, category: "Email", oauthType: "google" as const },
   { name: "Google Calendar", description: "Sync deal deadlines and campaign timelines", icon: Calendar, category: "Calendar", oauthType: "google" as const },
   { name: "iCal Export", description: "Download all deal deadlines as an .ics file for any calendar app", icon: Calendar, category: "Calendar", oauthType: "ical" as const },
-  { name: "DocuSign", description: "Send contracts for e-signature directly from Create Suite", icon: FileText, category: "Contracts", oauthType: "docusign" as const },
+  { name: "DocuSign", description: "Send contracts for e-signature directly from Create Suite", icon: FileText, category: "Contracts", oauthType: "coming_soon" as const },
   { name: "Stripe", description: "Process payments and manage subscriptions", icon: CreditCard, category: "Payments", oauthType: "stripe" as const },
   { name: "Canva", description: "Import designs and create branded content for your media kit", icon: Palette, category: "Design", oauthType: "coming_soon" as const },
   { name: "TikTok", description: "Pull follower counts and engagement data automatically", icon: Video, category: "Social", oauthType: "coming_soon" as const },
@@ -19,7 +20,22 @@ const integrations = [
 ];
 
 export default function IntegrationsPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
+  const [justConnected, setJustConnected] = useState<string | null>(null);
+
+  // Check URL params for successful connection
+  useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const connected = params.get("connected");
+      if (connected) {
+        setJustConnected(connected);
+        refreshProfile();
+        // Clean URL
+        window.history.replaceState({}, "", "/integrations");
+      }
+    }
+  });
 
   function handleConnect(oauthType: string) {
     if (!user) return;
@@ -56,10 +72,10 @@ export default function IntegrationsPage() {
 
   function getStatus(oauthType: string): "connected" | "available" | "coming_soon" {
     if (oauthType === "coming_soon") return "coming_soon";
-    if (oauthType === "stripe") return "connected"; // Always available via Stripe dashboard
+    if (oauthType === "stripe") return "connected";
     if (oauthType === "ical") return "available";
-    if (oauthType === "google" && profile && "google_connected" in profile && profile.google_connected) return "connected";
-    if (oauthType === "docusign" && profile && "docusign_connected" in profile && profile.docusign_connected) return "connected";
+    if (oauthType === "google" && (justConnected === "google" || (profile && (profile as any).google_connected))) return "connected";
+    if (oauthType === "docusign" && (justConnected === "docusign" || (profile && (profile as any).docusign_connected))) return "connected";
     return "available";
   }
 
