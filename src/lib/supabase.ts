@@ -54,6 +54,10 @@ export type Profile = {
   linked_agency_id: string | null;
   avatar_url: string | null;
   created_at: string;
+  google_connected?: boolean;
+  google_access_token?: string | null;
+  google_refresh_token?: string | null;
+  docusign_connected?: boolean;
 };
 
 export function isSupabaseConfigured(): boolean {
