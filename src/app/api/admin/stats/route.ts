@@ -1,0 +1,116 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { isAdmin } from "@/lib/admin";
+
+// Returns aggregated stats for the admin overview page
+// Requires admin email in the query param (verified against ADMIN_EMAILS)
+
+export async function GET(req: NextRequest) {
+  const email = req.nextUrl.searchParams.get("email");
+
+  if (!email || !isAdmin(email)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+  );
+
+  try {
+    // Fetch all needed data in parallel
+    const [profilesRes, dealsRes, invoicesRes, referralsRes, errorsRes] = await Promise.all([
+      sb.from("profiles").select("id, email, full_name, account_type, subscription_status, stripe_customer_id, created_at, referral_code, referred_by_code"),
+      sb.from("deals").select("id, user_id, value, stage, created_at"),
+      sb.from("invoices").select("id, user_id, amount, status, due_date, created_at"),
+      sb.from("referrals").select("id, referrer_id, referred_id, status, created_at"),
+      sb.from("error_logs").select("id, level, resolved, created_at").eq("resolved", false),
+    ]);
+
+    const profiles = profilesRes.data || [];
+    const deals = dealsRes.data || [];
+    const invoices = invoicesRes.data || [];
+    const referrals = referralsRes.data || [];
+    const errors = errorsRes.data || [];
+
+    // Calculate MRR from active subscriptions
+    const planPricing: Record<string, number> = {
+      ugc: 27,
+      ugc_influencer: 39,
+      agency: 149, // starter default
+    };
+
+    const activeSubscriptions = profiles.filter(p =>
+      p.subscription_status === "active" || p.subscription_status === "trialing"
+    );
+
+    const mrr = activeSubscriptions.reduce((sum, p) => {
+      return sum + (planPricing[p.account_type] || 0);
+    }, 0);
+
+    // User breakdown
+    const userBreakdown = {
+      total: profiles.length,
+      free: profiles.filter(p => p.account_type === "free").length,
+      ugc: profiles.filter(p => p.account_type === "ugc" && p.subscription_status === "active").length,
+      ugc_influencer: profiles.filter(p => p.account_type === "ugc_influencer" && p.subscription_status === "active").length,
+      agency: profiles.filter(p => p.account_type === "agency" && p.subscription_status === "active").length,
+      past_due: profiles.filter(p => p.subscription_status === "past_due").length,
+      cancelled: profiles.filter(p => p.subscription_status === "cancelled").length,
+    };
+
+    // New signups (last 30 days)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
+    const newSignups30d = profiles.filter(p => new Date(p.created_at) >= thirtyDaysAgo).length;
+    const newSignups7d = profiles.filter(p => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
+      return new Date(p.created_at) >= sevenDaysAgo;
+    }).length;
+
+    // Financial stats
+    const totalRevenue = invoices
+      .filter(i => i.status === "paid")
+      .reduce((sum, i) => sum + Number(i.amount || 0), 0);
+
+    const pendingRevenue = invoices
+      .filter(i => i.status === "sent" || i.status === "overdue")
+      .reduce((sum, i) => sum + Number(i.amount || 0), 0);
+
+    // Referral stats
+    const referralSignups = referrals.length;
+    const referralConversions = referrals.filter(r => r.status === "converted").length;
+
+    // Signups by day (last 30 days)
+    const signupsByDay: Record<string, number> = {};
+    for (let i = 29; i >= 0; i--) {
+      const day = new Date(Date.now() - i * 86400000).toISOString().split("T")[0];
+      signupsByDay[day] = 0;
+    }
+    profiles.forEach(p => {
+      const day = new Date(p.created_at).toISOString().split("T")[0];
+      if (signupsByDay[day] !== undefined) signupsByDay[day]++;
+    });
+
+    return NextResponse.json({
+      overview: {
+        mrr,
+        totalUsers: profiles.length,
+        activeSubscriptions: activeSubscriptions.length,
+        newSignups30d,
+        newSignups7d,
+        totalDeals: deals.length,
+        totalRevenue,
+        pendingRevenue,
+        unresolvedErrors: errors.length,
+        referralSignups,
+        referralConversions,
+      },
+      userBreakdown,
+      signupsByDay,
+      planPricing,
+    });
+  } catch (err: any) {
+    console.error("Admin stats error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

@@ -5,6 +5,7 @@ const publicRoutes = [
   "/login", "/signup", "/checkout", "/onboarding", "/kit", "/pricing",
   "/for-creators", "/for-agencies", "/features", "/faq",
   "/help", "/contact", "/privacy", "/terms", "/team-onboarding",
+  "/admin", // /admin has its own auth check inside the page
 ];
 
 export async function middleware(request: NextRequest) {

@@ -1,0 +1,49 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { isAdmin } from "@/lib/admin";
+
+export async function GET(req: NextRequest) {
+  const email = req.nextUrl.searchParams.get("email");
+  if (!email || !isAdmin(email)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+  );
+
+  try {
+    const { data: errors, error } = await sb
+      .from("error_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+    return NextResponse.json({ errors });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const email = req.nextUrl.searchParams.get("email");
+  if (!email || !isAdmin(email)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  const { errorId, resolved } = await req.json();
+
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+  );
+
+  try {
+    await sb.from("error_logs").update({ resolved }).eq("id", errorId);
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
