@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { timeAgo } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
 import { TableSkeleton } from "@/components/global/skeleton";
-import { Send, Paperclip, Flag, CheckCircle2, Mail, MessageSquare, ListTodo, Megaphone, FileText, RefreshCw, ExternalLink } from "lucide-react";
+import { Send, Paperclip, Flag, CheckCircle2, Mail, MessageSquare, ListTodo, Megaphone, FileText, RefreshCw, ExternalLink, Sparkles, Plus, DollarSign, ArrowRight, Zap } from "lucide-react";
 
 interface MessageThread {
   id: string;
@@ -47,6 +47,24 @@ interface GmailEmail {
   snippet: string;
 }
 
+interface DetectedDeal {
+  brand_name: string;
+  estimated_value: number;
+  deliverables: string;
+  platform: "tiktok" | "instagram" | "youtube" | null;
+  notes: string;
+  email_id: string;
+  email_subject: string;
+  email_from: string;
+  confidence: "high" | "medium" | "low";
+}
+
+const confidenceColors = {
+  high: "bg-[#E8F4EE] text-[#3D7A58]",
+  medium: "bg-[#FFF8E8] text-[#A07830]",
+  low: "bg-[#F2F8FB] text-[#8AAABB]",
+};
+
 function parseEmailFrom(from: string): { name: string; email: string } {
   const match = from.match(/^"?([^"<]*)"?\s*<?([^>]*)>?$/);
   if (match) return { name: match[1].trim() || match[2], email: match[2] || from };
@@ -83,6 +101,13 @@ export default function CreatorInboxPage() {
   const [selectedEmail, setSelectedEmail] = useState<GmailEmail | null>(null);
   const [gmailError, setGmailError] = useState<string | null>(null);
 
+  // AI Deal Scanner state
+  const [detectedDeals, setDetectedDeals] = useState<DetectedDeal[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [scanComplete, setScanComplete] = useState(false);
+  const [creatingDeal, setCreatingDeal] = useState<string | null>(null);
+  const [createdDeals, setCreatedDeals] = useState<Set<string>>(new Set());
+
   const { toast } = useToast();
   const loading = threadsLoading || messagesLoading;
 
@@ -113,6 +138,64 @@ export default function CreatorInboxPage() {
       console.error("Gmail fetch error:", err);
     } finally {
       setEmailsLoading(false);
+    }
+  }
+
+  // AI scan emails for deals
+  async function scanForDeals() {
+    if (!user) return;
+    setScanning(true);
+    setScanComplete(false);
+    try {
+      const res = await fetch("/api/gmail/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      if (!res.ok) throw new Error("Scan failed");
+      const data = await res.json();
+      setDetectedDeals(data.deals || []);
+      setScanComplete(true);
+      if (data.deals?.length > 0) {
+        toast("success", `Found ${data.deals.length} potential deal${data.deals.length > 1 ? "s" : ""} in your emails`);
+      } else {
+        toast("info", "No deal opportunities detected in recent emails");
+      }
+    } catch (err) {
+      console.error("Scan error:", err);
+      toast("error", "Failed to scan emails");
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  // Create deal from detected opportunity
+  async function createDealFromEmail(deal: DetectedDeal) {
+    if (!user) return;
+    setCreatingDeal(deal.email_id);
+    try {
+      const res = await fetch("/api/gmail/create-deal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          brand_name: deal.brand_name,
+          estimated_value: deal.estimated_value,
+          deliverables: deal.deliverables,
+          platform: deal.platform,
+          notes: deal.notes,
+          email_subject: deal.email_subject,
+          email_from: deal.email_from,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to create deal");
+      setCreatedDeals(prev => new Set(prev).add(deal.email_id));
+      toast("success", `Deal "${deal.brand_name}" added to your pipeline`);
+    } catch (err) {
+      console.error("Create deal error:", err);
+      toast("error", "Failed to create deal");
+    } finally {
+      setCreatingDeal(null);
     }
   }
 
@@ -220,7 +303,100 @@ export default function CreatorInboxPage() {
             <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-12 text-center">
               <p className="text-[16px] font-serif italic text-[#8AAABB]">Your inbox is empty</p>
             </div>
-          ) : (
+          ) : (<>
+            {/* AI Deal Scanner Banner */}
+            <div className="mb-4 bg-gradient-to-r from-[#1E3F52] to-[#2a5269] rounded-[10px] p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center">
+                  <Sparkles className="h-4.5 w-4.5 text-[#7BAFC8]" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-sans text-white" style={{ fontWeight: 600 }}>AI Deal Scanner</p>
+                  <p className="text-[11px] font-sans text-white/60">
+                    {scanComplete
+                      ? `${detectedDeals.length} deal${detectedDeals.length !== 1 ? "s" : ""} detected in ${emails.length} emails`
+                      : "Scan your emails to automatically detect brand deal opportunities"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={scanForDeals}
+                disabled={scanning}
+                className="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white rounded-[8px] px-4 py-2 text-[12px] font-sans transition-colors disabled:opacity-50"
+                style={{ fontWeight: 600 }}
+              >
+                {scanning ? (
+                  <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Scanning...</>
+                ) : scanComplete ? (
+                  <><RefreshCw className="h-3.5 w-3.5" /> Scan again</>
+                ) : (
+                  <><Zap className="h-3.5 w-3.5" /> Scan for deals</>
+                )}
+              </button>
+            </div>
+
+            {/* Detected Deals */}
+            {detectedDeals.length > 0 && (
+              <div className="mb-4 space-y-2">
+                <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-2" style={{ fontWeight: 600 }}>
+                  DETECTED OPPORTUNITIES
+                </p>
+                {detectedDeals.map((deal) => {
+                  const isCreated = createdDeals.has(deal.email_id);
+                  const isCreating = creatingDeal === deal.email_id;
+                  return (
+                    <div key={deal.email_id} className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-4 flex items-center gap-4 hover:border-[#7BAFC8] transition-colors">
+                      <div className="h-10 w-10 rounded-full bg-[#F2F8FB] border border-[#D8E8EE] flex items-center justify-center flex-shrink-0">
+                        <span className="text-[14px] font-serif text-[#7BAFC8]">{deal.brand_name.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[14px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>{deal.brand_name}</span>
+                          <span className={`text-[9px] font-sans uppercase tracking-[1.5px] px-1.5 py-0.5 rounded-full ${confidenceColors[deal.confidence]}`} style={{ fontWeight: 600 }}>
+                            {deal.confidence}
+                          </span>
+                          {deal.platform && (
+                            <span className="text-[9px] font-mono text-[#8AAABB] border border-[#D8E8EE] rounded px-1.5 py-0.5">{deal.platform}</span>
+                          )}
+                        </div>
+                        <p className="text-[12px] font-sans text-[#4A6070] truncate">{deal.notes || deal.email_subject}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          {deal.estimated_value > 0 && (
+                            <span className="flex items-center gap-1 text-[11px] font-mono text-[#3D7A58]">
+                              <DollarSign className="h-3 w-3" />{deal.estimated_value.toLocaleString()}
+                            </span>
+                          )}
+                          {deal.deliverables && (
+                            <span className="text-[11px] font-sans text-[#8AAABB]">{deal.deliverables}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        {isCreated ? (
+                          <span className="flex items-center gap-1.5 text-[12px] font-sans text-[#3D7A58]" style={{ fontWeight: 500 }}>
+                            <CheckCircle2 className="h-4 w-4" /> In pipeline
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => createDealFromEmail(deal)}
+                            disabled={isCreating}
+                            className="flex items-center gap-1.5 bg-[#1E3F52] text-white rounded-[8px] px-3 py-2 text-[12px] font-sans hover:bg-[#2a5269] transition-colors disabled:opacity-50"
+                            style={{ fontWeight: 600 }}
+                          >
+                            {isCreating ? (
+                              <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Adding...</>
+                            ) : (
+                              <><Plus className="h-3.5 w-3.5" /> Add to pipeline</>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] overflow-hidden" style={{ height: "560px" }}>
               <div className="flex h-full">
                 {/* Email list */}
@@ -329,7 +505,7 @@ export default function CreatorInboxPage() {
                 </div>
               </div>
             </div>
-          )}
+          </>)}
         </>
       )}
 
