@@ -770,13 +770,22 @@ Agency: _____________________ Date: _________`
 
   async function handleCreateDraft(data: any) {
     try {
-      const newContract = await insertContract(data);
+      // Map modal data to actual table columns
+      const insertData: Record<string, any> = {
+        stage: data.stage || "draft",
+        contract_type: data.type || null,
+        brand_name: data.brand_name || data.brand || null,
+        value: data.value || 0,
+      };
+      const newContract = await insertContract(insertData);
       if (newContract) {
         setContracts((prev) => [...prev, newContract as AgencyContract]);
+        toast("success", "Contract draft created");
+        setView("contracts");
       }
     } catch (err) {
       console.error("Failed to create contract draft:", err);
-      throw err;
+      toast("error", "Failed to create contract — check browser console for details");
     }
   }
 

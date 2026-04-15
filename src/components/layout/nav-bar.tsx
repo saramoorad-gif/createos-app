@@ -12,6 +12,7 @@ const creatorLinks = [
   { name: "Today", href: "/dashboard" },
   { name: "Deals", href: "/deals" },
   { name: "Tasks", href: "/tasks" },
+  { name: "Contracts", href: "/contracts" },
   { name: "Invoices", href: "/invoices" },
   { name: "Income", href: "/income" },
   { name: "Inbox", href: "/inbox" },
