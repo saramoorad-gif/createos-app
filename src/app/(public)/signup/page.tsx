@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 type AccountType = "free" | "ugc" | "ugc_influencer" | "agency";
@@ -45,8 +45,10 @@ const tierCards: {
   },
 ];
 
-export default function SignUpPage() {
+function SignUpContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const refCode = searchParams.get("ref");
   const [step, setStep] = useState<Step>("credentials");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -56,6 +58,24 @@ export default function SignUpPage() {
   const [agencyName, setAgencyName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [referrerName, setReferrerName] = useState<string | null>(null);
+
+  // Look up referrer name if ref code is present
+  useEffect(() => {
+    async function lookupReferrer() {
+      if (!refCode || !isSupabaseConfigured()) return;
+      const sb = getSupabase();
+      const { data } = await sb
+        .from("profiles")
+        .select("full_name")
+        .eq("referral_code", refCode.toUpperCase())
+        .single();
+      if (data?.full_name) {
+        setReferrerName(data.full_name);
+      }
+    }
+    lookupReferrer();
+  }, [refCode]);
 
   const inputClass =
     "w-full rounded-[10px] border border-[#D8E8EE] px-3 py-2.5 text-[13px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:ring-2 focus:ring-[#7BAFC8]/20 focus:border-[#7BAFC8]";
@@ -88,6 +108,9 @@ export default function SignUpPage() {
     if (signUpError) { setError(signUpError.message); setLoading(false); return; }
 
     if (data.user) {
+      // Generate a unique referral code for this user (8-char uppercase)
+      const myReferralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+
       // Everyone starts as "free" in the database.
       // Paid tiers get upgraded by Stripe webhook after successful checkout.
       await sb.from("profiles").insert({
@@ -96,7 +119,25 @@ export default function SignUpPage() {
         email,
         account_type: "free",
         agency_name: accountType === "agency" ? agencyName : null,
+        referral_code: myReferralCode,
+        referred_by_code: refCode ? refCode.toUpperCase() : null,
       });
+
+      // Track the referral if one was used
+      if (refCode) {
+        try {
+          await fetch("/api/referrals/track", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              referredId: data.user.id,
+              referralCode: refCode.toUpperCase(),
+            }),
+          });
+        } catch (e) {
+          console.error("Failed to track referral:", e);
+        }
+      }
     }
 
     setLoading(false);
@@ -106,17 +147,38 @@ export default function SignUpPage() {
       router.push("/onboarding");
     } else {
       // Paid tiers → go to checkout first
-      router.push(`/checkout?plan=${accountType}`);
+      // If they came from a referral and picked ugc_influencer, include the ref in checkout URL
+      const checkoutUrl = refCode && accountType === "ugc_influencer"
+        ? `/checkout?plan=${accountType}&ref=${refCode.toUpperCase()}`
+        : `/checkout?plan=${accountType}`;
+      router.push(checkoutUrl);
     }
   }
 
   return (
     <div className="min-h-screen bg-[#FAF8F4] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-2xl">
+        {/* Referral banner */}
+        {refCode && (
+          <div className="mb-6 bg-gradient-to-r from-[#1E3F52] to-[#2a5269] rounded-[10px] p-4 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-[16px]">🎁</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] font-sans text-white" style={{ fontWeight: 600 }}>
+                {referrerName ? `${referrerName} invited you!` : "You've been invited!"}
+              </p>
+              <p className="text-[11px] font-sans text-white/70">
+                Get your first month of <strong>UGC + Influencer ($39/mo)</strong> for just $27 when you sign up.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-[28px] font-serif text-[#1A2C38]">
-            create<em className="italic text-[#7BAFC8]">OS</em>
+            create<em className="italic text-[#7BAFC8]">Suite</em>
           </h1>
           <p className="text-[13px] font-sans text-[#8AAABB] mt-1">
             {step === "credentials" ? "Create your account" : "Choose your plan"}
@@ -227,5 +289,13 @@ export default function SignUpPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FAF8F4] flex items-center justify-center"><p className="text-[14px] font-sans text-[#8AAABB]">Loading...</p></div>}>
+      <SignUpContent />
+    </Suspense>
   );
 }

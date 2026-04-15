@@ -1,11 +1,11 @@
 // @ts-nocheck
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { useSupabaseMutation, useSupabaseQuery } from "@/lib/hooks";
-import { Shield, Check, Lock, CreditCard, Users, Bell, Settings as SettingsIcon, FileText, Star, Plug } from "lucide-react";
+import { Shield, Check, Lock, CreditCard, Users, Bell, Settings as SettingsIcon, FileText, Star, Plug, Copy } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/global/toast";
 
@@ -24,7 +24,7 @@ export default function SettingsPage() {
   const isAgency = profile.account_type === "agency";
   const tabs = isAgency
     ? [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "integrations", label: "Integrations", icon: Plug }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "team", label: "Team", icon: Users }, { key: "deals", label: "Deal Defaults", icon: FileText }, { key: "brands", label: "Brands", icon: Star }, { key: "legal", label: "Legal", icon: Shield }, { key: "agency", label: "Agency Access", icon: Shield }]
-    : [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "integrations", label: "Integrations", icon: Plug }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "agency", label: "Agency Access", icon: Shield }];
+    : [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "refer", label: "Refer Friends", icon: Star }, { key: "integrations", label: "Integrations", icon: Plug }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "agency", label: "Agency Access", icon: Shield }];
 
   const inputClass = "w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]";
   const labelStyle = { fontWeight: 600 };
@@ -50,6 +50,7 @@ export default function SettingsPage() {
         <div className="flex-1 min-w-0">
           {activeTab === "account" && <AccountSection profile={profile} isAgency={isAgency} inputClass={inputClass} labelClass={labelClass} labelStyle={labelStyle} sectionClass={sectionClass} />}
           {activeTab === "billing" && <BillingSection profile={profile} />}
+          {activeTab === "refer" && !isAgency && <ReferralSection profile={profile} />}
           {activeTab === "integrations" && <IntegrationsSection />}
           {activeTab === "notifications" && <NotificationsSection />}
           {activeTab === "team" && isAgency && <TeamSection />}
@@ -583,6 +584,159 @@ function LegalSection({ inputClass, labelClass, labelStyle, sectionClass }) {
         </div>
       </div>
       <button onClick={() => { setSaving(true); setTimeout(() => { setSaving(false); toast("success", "Saved"); }, 500); }} disabled={saving} className="bg-[#1E3F52] text-white rounded-[8px] px-6 py-3 text-[14px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{saving ? "Saving..." : "Save legal settings"}</button>
+    </div>
+  );
+}
+
+function ReferralSection({ profile }) {
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
+  const [referrals, setReferrals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Use the profile's referral code, or generate a fallback one if missing
+  const referralCode = profile?.referral_code || "";
+  const referralLink = referralCode
+    ? `https://createsuite.co/signup?ref=${referralCode}`
+    : "";
+
+  // Fetch referral stats
+  useEffect(() => {
+    async function fetchReferrals() {
+      if (!profile?.id) { setLoading(false); return; }
+      try {
+        const sb = (await import("@/lib/supabase")).getSupabase();
+        const { data } = await sb
+          .from("referrals")
+          .select("*")
+          .eq("referrer_id", profile.id)
+          .order("created_at", { ascending: false });
+        setReferrals(data || []);
+      } catch (e) {
+        console.error("Failed to fetch referrals:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchReferrals();
+  }, [profile?.id]);
+
+  function copyLink() {
+    if (!referralLink) return;
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    toast("success", "Link copied!");
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function shareViaSocial(platform) {
+    const text = `I've been using Create Suite to manage my creator business and it's been a game-changer! Sign up with my link and get your first month of UGC + Influencer at the UGC price ($27 instead of $39):`;
+    const url = referralLink;
+    let shareUrl = "";
+
+    if (platform === "twitter") {
+      shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    } else if (platform === "email") {
+      shareUrl = `mailto:?subject=${encodeURIComponent("Try Create Suite with my link")}&body=${encodeURIComponent(text + " " + url)}`;
+    } else if (platform === "sms") {
+      shareUrl = `sms:?body=${encodeURIComponent(text + " " + url)}`;
+    }
+
+    if (shareUrl) window.open(shareUrl, "_blank");
+  }
+
+  const signupCount = referrals.length;
+  const convertedCount = referrals.filter(r => r.status === "converted").length;
+
+  return (
+    <div className="space-y-6">
+      <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>REFER FRIENDS</p>
+
+      {/* Hero */}
+      <div className="bg-gradient-to-br from-[#1E3F52] to-[#2a5269] rounded-[12px] p-6 text-white">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center text-[20px]">🎁</div>
+          <div>
+            <h3 className="text-[20px] font-serif text-white">Give your followers a discount</h3>
+            <p className="text-[13px] font-sans text-white/70 mt-1">
+              Share your link and anyone who signs up gets their first month of UGC + Influencer for just $27 (normally $39).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Link card */}
+      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6">
+        <p className="text-[11px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-2" style={{ fontWeight: 600 }}>YOUR AFFILIATE LINK</p>
+
+        {referralLink ? (
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex-1 bg-[#F2F8FB] border border-[#D8E8EE] rounded-[8px] px-3 py-2.5 font-mono text-[12px] text-[#1A2C38] truncate">
+              {referralLink}
+            </div>
+            <button
+              onClick={copyLink}
+              className="flex items-center gap-1.5 bg-[#1E3F52] text-white rounded-[8px] px-4 py-2.5 text-[12px] font-sans hover:bg-[#2a5269] transition-colors"
+              style={{ fontWeight: 600 }}
+            >
+              {copied ? <><Check className="h-3.5 w-3.5" /> Copied!</> : <><Copy className="h-3.5 w-3.5" /> Copy link</>}
+            </button>
+          </div>
+        ) : (
+          <div className="bg-[#FFF8E8] border border-[#A07830]/20 rounded-[8px] p-3 mb-4">
+            <p className="text-[12px] font-sans text-[#A07830]">Run the referral SQL migration to generate your referral code.</p>
+          </div>
+        )}
+
+        {/* Quick share buttons */}
+        {referralLink && (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-sans text-[#8AAABB]" style={{ fontWeight: 500 }}>Share via:</span>
+            <button onClick={() => shareViaSocial("twitter")} className="text-[11px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>Twitter</button>
+            <span className="text-[#D8E8EE]">·</span>
+            <button onClick={() => shareViaSocial("email")} className="text-[11px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>Email</button>
+            <span className="text-[#D8E8EE]">·</span>
+            <button onClick={() => shareViaSocial("sms")} className="text-[11px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>Text</button>
+          </div>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-5">
+          <p className="text-[11px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-2" style={{ fontWeight: 600 }}>SIGNUPS</p>
+          <p className="text-[32px] font-serif text-[#1A2C38]">{signupCount}</p>
+          <p className="text-[11px] font-sans text-[#8AAABB] mt-1">People signed up via your link</p>
+        </div>
+        <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-5">
+          <p className="text-[11px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-2" style={{ fontWeight: 600 }}>CONVERTED</p>
+          <p className="text-[32px] font-serif text-[#3D7A58]">{convertedCount}</p>
+          <p className="text-[11px] font-sans text-[#8AAABB] mt-1">Upgraded to a paid plan</p>
+        </div>
+      </div>
+
+      {/* How it works */}
+      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6">
+        <p className="text-[11px] font-sans uppercase tracking-[1.5px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>HOW IT WORKS</p>
+        <div className="space-y-3">
+          {[
+            { num: "1", title: "Share your link", desc: "Post on social, email, or text your followers your unique signup link." },
+            { num: "2", title: "They sign up", desc: "When they create an account using your link, they see your name and the special offer." },
+            { num: "3", title: "They save $12", desc: "At checkout, they get $12 off their first month of UGC + Influencer — $27 instead of $39." },
+            { num: "4", title: "Track results", desc: "See how many have signed up and converted right here in your dashboard." },
+          ].map(step => (
+            <div key={step.num} className="flex items-start gap-3">
+              <div className="h-7 w-7 rounded-full bg-[#F2F8FB] border border-[#D8E8EE] flex items-center justify-center flex-shrink-0">
+                <span className="text-[12px] font-serif text-[#7BAFC8]" style={{ fontWeight: 600 }}>{step.num}</span>
+              </div>
+              <div>
+                <p className="text-[13px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>{step.title}</p>
+                <p className="text-[12px] font-sans text-[#8AAABB]">{step.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

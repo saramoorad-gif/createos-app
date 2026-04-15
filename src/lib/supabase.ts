@@ -61,6 +61,9 @@ export type Profile = {
   stripe_customer_id?: string | null;
   stripe_subscription_id?: string | null;
   subscription_status?: "active" | "past_due" | "cancelled" | "trialing" | null;
+  referral_code?: string | null;
+  referred_by_code?: string | null;
+  referral_applied?: boolean;
 };
 
 export function isSupabaseConfigured(): boolean {

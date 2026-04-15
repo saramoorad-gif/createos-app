@@ -84,11 +84,15 @@ function CheckoutContent() {
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
   const planKey = searchParams.get("plan") || "ugc";
+  const refCode = searchParams.get("ref") || (profile as any)?.referred_by_code || null;
   const plan = plans[planKey] || plans.ugc;
 
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Show referral discount if applicable
+  const hasReferralDiscount = refCode && planKey === "ugc_influencer" && billingCycle === "monthly";
 
   // If user is already subscribed, redirect to dashboard
   useEffect(() => {
@@ -123,8 +127,9 @@ function CheckoutContent() {
           priceKey,
           userId: user.id,
           email: user.email,
+          referralCode: hasReferralDiscount ? refCode : null,
           successUrl: `${window.location.origin}/onboarding?checkout=success&plan=${planKey}`,
-          cancelUrl: `${window.location.origin}/checkout?plan=${planKey}`,
+          cancelUrl: `${window.location.origin}/checkout?plan=${planKey}${refCode ? `&ref=${refCode}` : ""}`,
         }),
       });
 
@@ -159,6 +164,23 @@ function CheckoutContent() {
             Complete your subscription to access your account
           </p>
         </div>
+
+        {/* Referral banner */}
+        {hasReferralDiscount && (
+          <div className="mb-6 bg-gradient-to-r from-[#3D7A58] to-[#2d5c42] rounded-[10px] p-4 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-[18px]">🎁</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] font-sans text-white" style={{ fontWeight: 600 }}>
+                Referral discount applied!
+              </p>
+              <p className="text-[11px] font-sans text-white/80">
+                You&apos;re getting $12 off your first month of UGC + Influencer.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
           {/* Plan details */}
@@ -239,15 +261,26 @@ function CheckoutContent() {
                   <span className="text-[12px] font-sans text-[#8AAABB]">Billing</span>
                   <span className="text-[12px] font-sans text-[#8AAABB]">{billingCycle === "monthly" ? "Monthly" : "Annual"}</span>
                 </div>
+                {hasReferralDiscount && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] font-sans text-[#3D7A58]" style={{ fontWeight: 500 }}>🎁 Referral discount</span>
+                    <span className="text-[12px] font-sans text-[#3D7A58]" style={{ fontWeight: 600 }}>-$12.00</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between pt-4 mb-5">
                 <span className="text-[14px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>
                   {billingCycle === "monthly" ? "Due today" : "Due today (12 months)"}
                 </span>
-                <span className="text-[20px] font-serif text-[#1A2C38]">
-                  {billingCycle === "monthly" ? currentPrice : `$${parseInt(currentPrice.replace("$", "")) * 12}`}
-                </span>
+                <div className="text-right">
+                  {hasReferralDiscount && (
+                    <div className="text-[12px] font-sans text-[#8AAABB] line-through">$39.00</div>
+                  )}
+                  <span className="text-[20px] font-serif text-[#1A2C38]">
+                    {hasReferralDiscount ? "$27.00" : (billingCycle === "monthly" ? currentPrice : `$${parseInt(currentPrice.replace("$", "")) * 12}`)}
+                  </span>
+                </div>
               </div>
 
               {error && (

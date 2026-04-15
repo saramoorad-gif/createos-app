@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       const session = event.data.object;
       const userId = session.metadata?.userId;
       const priceKey = session.metadata?.priceKey;
+      const referralCode = session.metadata?.referralCode;
 
       if (userId && priceKey) {
         // Map price key to account type
@@ -37,14 +38,31 @@ export async function POST(req: NextRequest) {
         else if (priceKey.startsWith("ugc")) accountType = "ugc";
         else if (priceKey.startsWith("agency")) accountType = "agency";
 
-        await getSupabaseAdmin()
+        const sb = getSupabaseAdmin();
+
+        await sb
           .from("profiles")
           .update({
             account_type: accountType,
             stripe_customer_id: session.customer,
             stripe_subscription_id: session.subscription,
+            subscription_status: "active",
+            referral_applied: !!referralCode,
           })
           .eq("id", userId);
+
+        // Mark referral as converted if applicable
+        if (referralCode) {
+          await sb
+            .from("referrals")
+            .update({
+              status: "converted",
+              discount_applied: true,
+              converted_at: new Date().toISOString(),
+            })
+            .eq("referred_id", userId)
+            .eq("referrer_code", referralCode);
+        }
       }
       break;
     }
