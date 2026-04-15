@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
+import { useAuth } from "@/contexts/auth-context";
 import { formatDate } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
 import { X, Plus, ChevronLeft, Check, Clock, Send, AlertCircle, FileText } from "lucide-react";
@@ -111,6 +112,7 @@ const seededSubmissions: Submission[] = [
 ];
 
 export default function BriefsPage() {
+  const { user } = useAuth();
   const { data: dbBriefs, loading } = useSupabaseQuery<Brief>("briefs", { order: { column: "created_at", ascending: false } });
   const { insert: insertBrief } = useSupabaseMutation("briefs");
   const { toast } = useToast();
@@ -164,25 +166,41 @@ export default function BriefsPage() {
   async function handleCreateBrief() {
     if (!formBrand.trim() || !formCampaign.trim()) { toast("error", "Brand and campaign name are required"); return; }
 
-    const newBrief: Brief = {
-      id: Date.now().toString(),
+    const deliverables = formDeliverables.split(",").map(d => d.trim()).filter(Boolean);
+    const due_date = formDueDate || new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0];
+
+    // Payload for Supabase (matches the public.briefs schema in features-migration.sql)
+    const payload: Record<string, unknown> = {
+      creator_id: user?.id,
       brand_name: formBrand,
       campaign_name: formCampaign,
-      status: "received",
-      due_date: formDueDate || new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0],
-      deliverables: formDeliverables.split(",").map(d => d.trim()).filter(Boolean),
       brief_text: formBriefText,
-      assigned_creator: formAssigned,
-      created_at: new Date().toISOString(),
+      deliverables,
+      due_date,
+      status: "received",
     };
 
+    let created: any = null;
     try {
-      await insertBrief(newBrief);
+      created = await insertBrief(payload);
     } catch {
       // Supabase not configured — use local state
     }
 
-    setLocalBriefs(prev => [newBrief, ...prev]);
+    // Local copy for optimistic UI. Use DB id if we got one back, else a temp id.
+    const localCopy: Brief = {
+      id: created?.id || Date.now().toString(),
+      brand_name: formBrand,
+      campaign_name: formCampaign,
+      status: "received",
+      due_date,
+      deliverables,
+      brief_text: formBriefText,
+      assigned_creator: formAssigned,
+      created_at: created?.created_at || new Date().toISOString(),
+    };
+
+    setLocalBriefs(prev => [localCopy, ...prev]);
     toast("success", "Brief created for " + formBrand);
     setShowCreateForm(false);
     setFormBrand(""); setFormCampaign(""); setFormBriefText(""); setFormDeliverables(""); setFormDueDate(""); setFormAssigned("");

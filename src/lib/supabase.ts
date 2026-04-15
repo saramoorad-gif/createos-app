@@ -64,6 +64,33 @@ export type Profile = {
   referral_code?: string | null;
   referred_by_code?: string | null;
   referral_applied?: boolean;
+  // Creator profile expansion (see supabase/creator-profile-migration.sql)
+  bio?: string | null;
+  tiktok_handle?: string | null;
+  instagram_handle?: string | null;
+  youtube_handle?: string | null;
+  tiktok_followers?: number | null;
+  instagram_followers?: number | null;
+  youtube_followers?: number | null;
+  website?: string | null;
+  location?: string | null;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  ethnicity?: string | null;
+  primary_niche?: string | null;
+  secondary_niches?: string[] | null;
+  languages?: string[] | null;
+  engagement_rate?: number | null;
+  content_style?: string | null;
+  phone?: string | null;
+  pronouns?: string | null;
+  rate_ugc_video?: string | null;
+  rate_ig_reel?: string | null;
+  rate_tiktok?: string | null;
+  rate_youtube?: string | null;
+  rate_ig_story?: string | null;
+  brands_worked_with?: string[] | null;
+  media_kit_published?: boolean | null;
 };
 
 export function isSupabaseConfigured(): boolean {

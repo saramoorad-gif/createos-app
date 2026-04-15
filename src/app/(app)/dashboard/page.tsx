@@ -289,7 +289,7 @@ function CreatorDashboard() {
                     <span className="text-[11px] font-sans uppercase tracking-[1px] text-[#3D6E8A]" style={{ fontWeight: 600 }}>Exclusivities</span>
                   </div>
                   <p className="text-[18px] font-serif text-[#3D6E8A]">{activeExclusivities.length}</p>
-                  <p className="text-[11px] font-sans text-[#3D6E8A]/70">{[...new Set(activeExclusivities.map(d => d.exclusivity_category))].join(", ")}</p>
+                  <p className="text-[11px] font-sans text-[#3D6E8A]/70">{Array.from(new Set(activeExclusivities.map(d => d.exclusivity_category))).filter(Boolean).join(", ")}</p>
                 </Link>
               )}
             </div>

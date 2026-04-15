@@ -95,7 +95,7 @@ export default function AINegotiatorPage() {
           type: "pitch",
           context: {
             brand: pitchBrand.trim(),
-            niche: profile?.niche || "",
+            niche: (profile as any)?.primary_niche || "",
           },
         }),
       });

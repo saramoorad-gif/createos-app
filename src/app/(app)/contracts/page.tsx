@@ -593,7 +593,7 @@ The AI will analyze payment terms, usage rights, exclusivity clauses, red flags,
               <div className="mt-3 space-y-1">
                 <p className="text-[10px] font-sans text-[#8AAABB] uppercase tracking-[1px]" style={{ fontWeight: 600 }}>Blocked categories:</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {[...new Set(activeExclusivities.map((d: any) => d.exclusivity_category))].map((cat: string) => (
+                  {Array.from(new Set(activeExclusivities.map((d: any) => d.exclusivity_category))).filter(Boolean).map((cat: any) => (
                     <span key={cat} className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-[#A03D3D]/10 text-[#A03D3D]" style={{ fontWeight: 500 }}>{cat}</span>
                   ))}
                 </div>

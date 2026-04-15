@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { timeAgo } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
 import { TableSkeleton } from "@/components/global/skeleton";
-import { Send, Paperclip, Flag, CheckCircle2, Mail, MessageSquare, ListTodo, Megaphone, FileText, RefreshCw, ExternalLink, Sparkles, Plus, DollarSign, ArrowRight, Zap } from "lucide-react";
+import { Send, Paperclip, Flag, CheckCircle2, Mail, MessageSquare, ListTodo, Megaphone, FileText, RefreshCw, ExternalLink, Sparkles, Plus, DollarSign, ArrowRight, Zap, X } from "lucide-react";
 
 interface MessageThread {
   id: string;

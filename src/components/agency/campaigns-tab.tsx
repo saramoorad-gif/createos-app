@@ -347,14 +347,14 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
 // Overview sub-tab
 // ---------------------------------------------------------------------------
 function OverviewSubTab({ campaign }: { campaign: Campaign }) {
-  const totalDeliverables = campaign.creators.reduce(
-    (sum, c) => sum + c.deliverables.length,
+  const totalDeliverables = (campaign.creators || []).reduce(
+    (sum, c) => sum + (c.deliverables?.length || 0),
     0
   );
 
   // Timeline calculations
-  const start = new Date(campaign.start_date).getTime();
-  const end = new Date(campaign.end_date).getTime();
+  const start = campaign.start_date ? new Date(campaign.start_date).getTime() : 0;
+  const end = campaign.end_date ? new Date(campaign.end_date).getTime() : 0;
   const now = Date.now();
   const totalDuration = end - start;
   const elapsed = Math.min(Math.max(now - start, 0), totalDuration);
