@@ -62,6 +62,20 @@ function getSystemPrompt(type: string): string {
       return "You are a brand outreach specialist for content creators. Write a personalized, compelling pitch email to a brand. Keep it under 150 words, professional but warm.";
     case "dashboard_insight":
       return "You are a business advisor for content creators. Give a brief (2-3 sentence) personalized daily insight based on their stats. Include one specific, actionable tip. Be motivational but practical. Reference their actual numbers.";
+    case "brand_match":
+      return `You are a creator-economy matchmaker. Given a creator's niche, platforms, follower counts, and recent brand history, suggest 10 real brands they should pitch. For each brand return JSON only — no prose:
+{
+  "matches": [
+    {
+      "brand": "Brand Name",
+      "category": "Beauty | Fashion | Tech | Food | Fitness | Lifestyle | Travel | Finance | Health | Other",
+      "match_score": 1-100,
+      "why": "One sentence on why this brand fits this creator.",
+      "pitch_angle": "One sentence on how to open the pitch."
+    }
+  ]
+}
+Pick brands that actively partner with creators at the creator's size, spread across categories relevant to their niche, and avoid brands they already have deals with. Never invent brands that don't exist.`;
     default:
       return "You are a helpful assistant for content creators and their agencies.";
   }
@@ -75,6 +89,8 @@ function getUserMessage(type: string, context: Record<string, string>): string {
       return `Creator stats:\n- Platform: ${context.platform}\n- Followers: ${context.followers}\n- Engagement rate: ${context.engagement}%\n- Niche: ${context.niche}\n- Content type: ${context.content_type}\n\nSuggest a specific rate range and explain why.`;
     case "pitch":
       return `Write a pitch email from a creator to ${context.brand}.\nCreator: ${context.creator_name}, ${context.followers} followers, ${context.niche} niche.\nWhat they want: ${context.goal}`;
+    case "brand_match":
+      return `Creator profile:\n- Niche: ${context.niche || "general lifestyle"}\n- Content style: ${context.content_style || "unspecified"}\n- TikTok: ${context.tiktok_followers || "0"} followers (${context.tiktok_handle || "none"})\n- Instagram: ${context.instagram_followers || "0"} followers (${context.instagram_handle || "none"})\n- YouTube: ${context.youtube_followers || "0"} followers (${context.youtube_handle || "none"})\n- Engagement rate: ${context.engagement_rate || "unknown"}%\n- Brands they've worked with recently: ${context.recent_brands || "none"}\n\nReturn the JSON match list now.`;
     default:
       return context.message || "";
   }
@@ -92,6 +108,24 @@ function getFallbackResponse(type: string, context: Record<string, string>) {
       };
     case "dashboard_insight":
       return { result: "Your creator business is growing! Focus on following up with active deals this week, and check your invoices for any overdue payments. Consistency is key — keep delivering great work and the pipeline will grow." };
+    case "brand_match":
+      // Fallback brand suggestions if the Anthropic API is unreachable.
+      return {
+        result: JSON.stringify({
+          matches: [
+            { brand: "Glossier", category: "Beauty", match_score: 82, why: "Active on TikTok and Instagram with creator-first campaigns.", pitch_angle: "Lead with a product you already use and love." },
+            { brand: "Gymshark", category: "Fitness", match_score: 76, why: "Runs a large creator program with flexible commission tiers.", pitch_angle: "Share a specific fitness goal you're working toward." },
+            { brand: "Glow Recipe", category: "Beauty", match_score: 78, why: "Routinely partners with micro-influencers in the skincare space.", pitch_angle: "Demonstrate the product in a 'get ready with me' format." },
+            { brand: "Vuori", category: "Fashion", match_score: 71, why: "Strong UGC program with lifestyle and activewear creators.", pitch_angle: "Showcase how the clothing fits into your daily routine." },
+            { brand: "Athletic Greens (AG1)", category: "Health", match_score: 68, why: "High-paying creator deals, often long-term.", pitch_angle: "Talk about your morning routine and wellness habits." },
+            { brand: "Notion", category: "Tech", match_score: 65, why: "Creator-focused workflow tools with generous partnership programs.", pitch_angle: "Show a template that solves a real problem for your audience." },
+            { brand: "Fenty Beauty", category: "Beauty", match_score: 74, why: "Inclusive creator roster, active UGC partnerships.", pitch_angle: "Focus on shade-range storytelling in your content." },
+            { brand: "Alo Yoga", category: "Fitness", match_score: 69, why: "Consistent influencer program across tiers.", pitch_angle: "Highlight the studio-to-street wearability of their pieces." },
+            { brand: "HelloFresh", category: "Food", match_score: 62, why: "Runs extensive creator acquisition campaigns with clear CPA.", pitch_angle: "Pitch a specific week-of-meals format your audience would enjoy." },
+            { brand: "Rare Beauty", category: "Beauty", match_score: 75, why: "Selena Gomez brand with a strong creator economy focus.", pitch_angle: "Tie in mental-health or self-care messaging." },
+          ],
+        }),
+      };
     default:
       return { result: "AI feature is available when ANTHROPIC_API_KEY is configured." };
   }
