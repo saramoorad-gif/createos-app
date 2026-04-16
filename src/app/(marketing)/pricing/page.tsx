@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
+import { getSupabase } from "@/lib/supabase";
 
 type Billing = "monthly" | "annual";
 
@@ -263,7 +265,64 @@ function CellDisplay({ value }: { value: CellValue }) {
 export default function PricingPage() {
   const [billing, setBilling] = useState<Billing>("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const { user, profile } = useAuth();
+  const [downgrading, setDowngrading] = useState(false);
+  const { user, profile, refreshProfile } = useAuth();
+  const router = useRouter();
+
+  // "Free" CTA handler for signed-in users. Needs to actually flip their
+  // account_type in the DB (and cancel any live Stripe sub) or the
+  // SubscriptionGate on /dashboard will bounce them right back to /checkout.
+  async function handleFreeClick(e: React.MouseEvent) {
+    if (!user) return; // plain <a> href="/signup" will handle this
+    e.preventDefault();
+
+    // If they're already free with no active paid sub, just go to dashboard.
+    if (profile?.account_type === "free") {
+      router.push("/dashboard");
+      return;
+    }
+
+    // If they have an ACTIVE paid subscription, confirm before downgrading.
+    const hasActivePaid =
+      profile?.subscription_status === "active" || profile?.subscription_status === "trialing";
+    if (hasActivePaid) {
+      const ok = window.confirm(
+        "Switching to Free will cancel your paid subscription at the end of the current billing period. You'll keep your current features until then. Continue?"
+      );
+      if (!ok) return;
+    }
+
+    setDowngrading(true);
+    try {
+      const sb = getSupabase();
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session?.access_token) {
+        router.push("/login");
+        return;
+      }
+      const res = await fetch("/api/account/downgrade-to-free", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Could not switch to Free. Please try again.");
+        setDowngrading(false);
+        return;
+      }
+      // Refresh the auth context so SubscriptionGate sees the new account_type
+      // before we navigate — otherwise it reads the stale profile and bounces.
+      await refreshProfile();
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Downgrade failed:", err);
+      alert("Could not switch to Free. Please try again.");
+      setDowngrading(false);
+    }
+  }
 
   // Smart CTA routing:
   // - Not signed in → /signup?plan=X (signup will route to checkout after account creation)
@@ -434,13 +493,16 @@ export default function PricingPage() {
 
                 <a
                   href={ctaHrefFor(tier.slug)}
+                  onClick={tier.slug === "free" && user ? handleFreeClick : undefined}
                   className={`block text-center rounded-[10px] px-4 py-3 text-[14px] font-sans font-500 transition-colors ${
+                    downgrading && tier.slug === "free" ? "opacity-50 pointer-events-none" : ""
+                  } ${
                     tier.featured
                       ? "bg-[#1E3F52] text-white hover:bg-[#2a5269]"
                       : "border border-[#D8E8EE] text-[#3D6E8A] hover:bg-[#F2F8FB]"
                   }`}
                 >
-                  {ctaLabelFor(tier.slug, tier.cta)}
+                  {downgrading && tier.slug === "free" ? "Switching…" : ctaLabelFor(tier.slug, tier.cta)}
                 </a>
               </div>
             ))}
