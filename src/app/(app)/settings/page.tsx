@@ -500,21 +500,31 @@ function DealDefaultsSection({ inputClass, labelClass, labelStyle, sectionClass 
 }
 
 function BrandsSection({ inputClass, labelClass, labelStyle, sectionClass }) {
+  const { user } = useAuth();
   const { data: brands, loading, refetch } = useSupabaseQuery("agency_brands");
   const mutation = useSupabaseMutation("agency_brands");
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", category: "", contact_name: "", contact_email: "", status: "Active" });
+  const [form, setForm] = useState({ name: "", category: "", contact_name: "", contact_email: "", status: "active" });
   const [submitting, setSubmitting] = useState(false);
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
-  const statusColors = { Active: "bg-green-100 text-green-700", Warm: "bg-amber-100 text-amber-700", Cold: "bg-gray-100 text-gray-500", Blacklisted: "bg-red-100 text-red-700" };
+  // DB uses lowercase status: 'active','warm','cold','blacklisted'
+  const statusColors = { active: "bg-green-100 text-green-700", warm: "bg-amber-100 text-amber-700", cold: "bg-gray-100 text-gray-500", blacklisted: "bg-red-100 text-red-700" };
 
   async function addBrand() {
-    if (!form.name) return;
+    if (!form.name || !user?.id) return;
     setSubmitting(true);
     try {
-      await mutation.insert(form);
-      setForm({ name: "", category: "", contact_name: "", contact_email: "", status: "Active" });
+      // DB column is brand_name (not name), agency_id is required, status must be lowercase
+      await mutation.insert({
+        agency_id: user.id,
+        brand_name: form.name,
+        category: form.category || null,
+        contact_name: form.contact_name || null,
+        contact_email: form.contact_email || null,
+        status: form.status.toLowerCase(),
+      });
+      setForm({ name: "", category: "", contact_name: "", contact_email: "", status: "active" });
       setShowForm(false);
       refetch();
     } catch (e) { console.error(e); }
@@ -546,7 +556,7 @@ function BrandsSection({ inputClass, labelClass, labelStyle, sectionClass }) {
           <div>
             <label className={labelClass} style={labelStyle}>Status</label>
             <select value={form.status} onChange={e => set("status", e.target.value)} className={inputClass} style={{ maxWidth: 200 }}>
-              <option>Active</option><option>Warm</option><option>Cold</option><option>Blacklisted</option>
+              <option value="active">Active</option><option value="warm">Warm</option><option value="cold">Cold</option><option value="blacklisted">Blacklisted</option>
             </select>
           </div>
           <button onClick={addBrand} disabled={submitting || !form.name} className="bg-[#1E3F52] text-white rounded-[8px] px-5 py-2.5 text-[13px] font-sans disabled:opacity-50 hover:bg-[#2a5269]" style={{ fontWeight: 600 }}>{submitting ? "Adding..." : "Add Brand"}</button>
@@ -566,7 +576,7 @@ function BrandsSection({ inputClass, labelClass, labelStyle, sectionClass }) {
           </div>
           {brands.map(brand => (
             <div key={brand.id} className="grid grid-cols-5 gap-4 px-5 py-3 border-b border-[#EEE8E0] last:border-b-0 items-center">
-              <span className="text-[13px] font-sans text-[#1A2C38]" style={{ fontWeight: 500 }}>{brand.name}</span>
+              <span className="text-[13px] font-sans text-[#1A2C38]" style={{ fontWeight: 500 }}>{brand.brand_name || brand.name}</span>
               <span className="text-[13px] font-sans text-[#4A6070]">{brand.category || "—"}</span>
               <span><span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-sans ${statusColors[brand.status] || "bg-gray-100 text-gray-500"}`} style={{ fontWeight: 500 }}>{brand.status}</span></span>
               <span className="text-[13px] font-sans text-[#4A6070]">{brand.contact_name || brand.contact_email || "—"}</span>
