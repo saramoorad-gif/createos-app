@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { useSupabaseMutation, useSupabaseQuery } from "@/lib/hooks";
-import { Shield, Check, Lock, CreditCard, Users, Bell, Settings as SettingsIcon, FileText, Star, Plug, Copy } from "lucide-react";
+import { Shield, Check, Lock, CreditCard, Users, Bell, Settings as SettingsIcon, FileText, Star, Plug, Copy, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/global/toast";
 
@@ -23,8 +23,8 @@ export default function SettingsPage() {
 
   const isAgency = profile.account_type === "agency";
   const tabs = isAgency
-    ? [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "integrations", label: "Integrations", icon: Plug }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "team", label: "Team", icon: Users }, { key: "deals", label: "Deal Defaults", icon: FileText }, { key: "brands", label: "Brands", icon: Star }, { key: "legal", label: "Legal", icon: Shield }, { key: "agency", label: "Agency Access", icon: Shield }]
-    : [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "refer", label: "Refer Friends", icon: Star }, { key: "integrations", label: "Integrations", icon: Plug }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "agency", label: "Agency Access", icon: Shield }];
+    ? [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "integrations", label: "Integrations", icon: Plug }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "team", label: "Team", icon: Users }, { key: "deals", label: "Deal Defaults", icon: FileText }, { key: "brands", label: "Brands", icon: Star }, { key: "legal", label: "Legal", icon: Shield }, { key: "agency", label: "Agency Access", icon: Shield }, { key: "signout", label: "Sign Out", icon: LogOut }]
+    : [{ key: "account", label: "Account", icon: SettingsIcon }, { key: "billing", label: "Billing", icon: CreditCard }, { key: "refer", label: "Refer Friends", icon: Star }, { key: "integrations", label: "Integrations", icon: Plug }, { key: "notifications", label: "Notifications", icon: Bell }, { key: "agency", label: "Agency Access", icon: Shield }, { key: "signout", label: "Sign Out", icon: LogOut }];
 
   const inputClass = "w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]";
   const labelStyle = { fontWeight: 600 };
@@ -58,7 +58,45 @@ export default function SettingsPage() {
           {activeTab === "brands" && isAgency && <BrandsSection inputClass={inputClass} labelClass={labelClass} labelStyle={labelStyle} sectionClass={sectionClass} />}
           {activeTab === "legal" && isAgency && <LegalSection inputClass={inputClass} labelClass={labelClass} labelStyle={labelStyle} sectionClass={sectionClass} />}
           {activeTab === "agency" && <AgencySection profile={profile} />}
+          {activeTab === "signout" && <SignOutSection sectionClass={sectionClass} labelStyle={labelStyle} />}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SignOutSection({ sectionClass, labelStyle }) {
+  const { signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+  async function handleSignOut() {
+    const ok = window.confirm("Sign out of Create Suite? You'll need to log back in to access your account.");
+    if (!ok) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+      // signOut already redirects to /login, but as a safety fallback:
+      window.location.href = "/login";
+    } catch (err) {
+      console.error("Sign out failed:", err);
+      setSigningOut(false);
+    }
+  }
+  return (
+    <div className="space-y-5">
+      <p className={sectionClass} style={labelStyle}>ACCOUNT</p>
+      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-6">
+        <h3 className="text-[16px] font-serif text-[#1A2C38] mb-2">Sign out</h3>
+        <p className="text-[13px] font-sans text-[#8AAABB] mb-5">
+          End your session on this device. You&apos;ll need to log back in next time.
+        </p>
+        <button
+          onClick={handleSignOut}
+          disabled={signingOut}
+          className="bg-[#A03D3D] text-white rounded-[8px] px-5 py-2.5 text-[13px] font-sans hover:bg-[#8B2F2F] transition-colors disabled:opacity-50"
+          style={labelStyle}
+        >
+          {signingOut ? "Signing out…" : "Sign out"}
+        </button>
       </div>
     </div>
   );

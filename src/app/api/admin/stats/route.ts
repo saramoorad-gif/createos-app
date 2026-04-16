@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   try {
     // Fetch all needed data in parallel
     const [profilesRes, dealsRes, invoicesRes, referralsRes, errorsRes] = await Promise.all([
-      sb.from("profiles").select("id, email, full_name, account_type, subscription_status, stripe_customer_id, created_at, referral_code, referred_by_code"),
+      sb.from("profiles").select("id, email, full_name, account_type, subscription_status, created_at, referral_code, referred_by_code"),
       sb.from("deals").select("id, user_id, value, stage, created_at"),
       sb.from("invoices").select("id, user_id, amount, status, due_date, created_at"),
       sb.from("referrals").select("id, referrer_id, referred_id, status, created_at"),

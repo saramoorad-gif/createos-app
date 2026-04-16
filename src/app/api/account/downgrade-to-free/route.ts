@@ -48,40 +48,55 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, alreadyFree: true });
   }
 
-  // If there's a live Stripe subscription, cancel it. We cancel at period
-  // end rather than immediately so the user keeps the paid features until
-  // the current billing cycle ends, but the DB flip below happens now so
-  // they can stop being bounced by SubscriptionGate.
-  let stripeCancelled = false;
-  let stripeError: string | null = null;
-  if (
+  // If there's a live Stripe subscription, cancel it FIRST.
+  // We cancel at period end so the user keeps the paid features until their
+  // current billing cycle ends. If the cancel fails, we refuse to flip the
+  // DB to 'free' — otherwise the user would keep being billed by Stripe while
+  // showing up as a free account in our system (double-bad: charged + no
+  // access to paid features they paid for).
+  const hasLiveStripeSub =
     profile.stripe_subscription_id &&
-    (profile.subscription_status === "active" || profile.subscription_status === "trialing" || profile.subscription_status === "past_due") &&
-    isStripeConfigured()
-  ) {
+    (profile.subscription_status === "active" ||
+      profile.subscription_status === "trialing" ||
+      profile.subscription_status === "past_due");
+
+  if (hasLiveStripeSub) {
+    if (!isStripeConfigured()) {
+      return NextResponse.json(
+        {
+          error: "Cannot downgrade: Stripe is not configured on the server.",
+          hint: "Contact support to cancel manually.",
+        },
+        { status: 500 }
+      );
+    }
     try {
       const stripe = getStripe();
-      await stripe.subscriptions.update(profile.stripe_subscription_id, {
+      await stripe.subscriptions.update(profile.stripe_subscription_id!, {
         cancel_at_period_end: true,
       });
-      stripeCancelled = true;
     } catch (e: any) {
-      // Log but do not block the downgrade — the user's intent is to stop
-      // being a paid tier, and we'd rather flip the DB and let them access
-      // the app than trap them in checkout because Stripe had a hiccup.
-      stripeError = e?.message || "Unknown Stripe error";
-      console.error("[downgrade-to-free] Failed to cancel Stripe subscription:", stripeError);
+      const message = e?.message || "Unknown Stripe error";
+      console.error("[downgrade-to-free] Failed to cancel Stripe subscription:", message);
+      return NextResponse.json(
+        {
+          error: "Could not cancel subscription with Stripe. Please try again or contact support.",
+          detail: message,
+        },
+        { status: 502 }
+      );
     }
   }
 
-  // Flip the profile to free. subscription_status = "cancelled" so the
-  // webhook's subsequent customer.subscription.deleted event is a no-op.
+  // Stripe cancellation succeeded (or there was no live sub). Safe to flip
+  // the profile to free. subscription_status = "cancelled" so the webhook's
+  // subsequent customer.subscription.deleted event is a no-op.
   // We keep stripe_customer_id so the user can easily re-subscribe later.
   const { error: updateError } = await sbUser
     .from("profiles")
     .update({
       account_type: "free",
-      subscription_status: stripeCancelled ? "cancelled" : null,
+      subscription_status: hasLiveStripeSub ? "cancelled" : null,
     })
     .eq("id", user.id);
 
@@ -94,7 +109,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    stripeCancelled,
-    stripeError,
+    stripeCancelled: hasLiveStripeSub,
   });
 }

@@ -14,9 +14,19 @@ export async function GET(req: NextRequest) {
   );
 
   try {
+    // Explicit whitelist — never return stripe_customer_id,
+    // stripe_subscription_id, google_access_token, google_refresh_token,
+    // or other secrets to the admin client.
     const { data: users, error } = await sb
       .from("profiles")
-      .select("*")
+      .select(
+        "id, email, full_name, account_type, agency_name, agency_plan, " +
+          "agency_role, has_agency, linked_agency_id, subscription_status, " +
+          "referral_code, referred_by_code, referral_applied, " +
+          "google_connected, docusign_connected, " +
+          "tiktok_handle, instagram_handle, youtube_handle, " +
+          "primary_niche, location, created_at"
+      )
       .order("created_at", { ascending: false });
 
     if (error) throw error;
