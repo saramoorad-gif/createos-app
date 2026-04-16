@@ -13,14 +13,18 @@ export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
 
-  if (!sig || !process.env.STRIPE_WEBHOOK_SECRET) {
+  // Trim defensively — a stray newline in the Vercel env var is enough
+  // to make signature verification silently fail.
+  const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || "").trim();
+
+  if (!sig || !webhookSecret) {
     console.error("[Stripe Webhook] Missing signature or webhook secret");
     return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (e: any) {
     console.error("[Stripe Webhook] Invalid signature:", e.message);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });

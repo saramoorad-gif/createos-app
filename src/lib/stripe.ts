@@ -39,17 +39,22 @@ export const stripe = new Proxy({} as Stripe, {
 });
 
 // Price IDs — create these in Stripe Dashboard or via API
-// Set these as env vars in Vercel after creating products
+// Set these as env vars in Vercel after creating products.
+// .trim() on every value so a stray newline or whitespace pasted into
+// Vercel can never cause "No such price" — this is exactly what killed
+// checkout in production once.
+const priceEnv = (key: string) => (process.env[key] || "").trim();
+
 export const PRICE_IDS = {
   free: null, // no Stripe price for free tier
-  ugc_monthly: process.env.STRIPE_PRICE_UGC_MONTHLY || "",
-  ugc_annual: process.env.STRIPE_PRICE_UGC_ANNUAL || "",
-  ugc_influencer_monthly: process.env.STRIPE_PRICE_INFLUENCER_MONTHLY || "",
-  ugc_influencer_annual: process.env.STRIPE_PRICE_INFLUENCER_ANNUAL || "",
-  agency_starter_monthly: process.env.STRIPE_PRICE_AGENCY_STARTER_MONTHLY || "",
-  agency_starter_annual: process.env.STRIPE_PRICE_AGENCY_STARTER_ANNUAL || "",
-  agency_growth_monthly: process.env.STRIPE_PRICE_AGENCY_GROWTH_MONTHLY || "",
-  agency_growth_annual: process.env.STRIPE_PRICE_AGENCY_GROWTH_ANNUAL || "",
+  ugc_monthly: priceEnv("STRIPE_PRICE_UGC_MONTHLY"),
+  ugc_annual: priceEnv("STRIPE_PRICE_UGC_ANNUAL"),
+  ugc_influencer_monthly: priceEnv("STRIPE_PRICE_INFLUENCER_MONTHLY"),
+  ugc_influencer_annual: priceEnv("STRIPE_PRICE_INFLUENCER_ANNUAL"),
+  agency_starter_monthly: priceEnv("STRIPE_PRICE_AGENCY_STARTER_MONTHLY"),
+  agency_starter_annual: priceEnv("STRIPE_PRICE_AGENCY_STARTER_ANNUAL"),
+  agency_growth_monthly: priceEnv("STRIPE_PRICE_AGENCY_GROWTH_MONTHLY"),
+  agency_growth_annual: priceEnv("STRIPE_PRICE_AGENCY_GROWTH_ANNUAL"),
 };
 
 export function isStripeConfigured(): boolean {
