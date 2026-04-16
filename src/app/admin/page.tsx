@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
+import { getSupabase } from "@/lib/supabase";
 import { isAdmin } from "@/lib/admin";
 import { useToast } from "@/components/global/toast";
 import {
@@ -566,13 +567,67 @@ function ReferralsTab({ data }: any) {
 // ─── ERRORS TAB ─────────────────────────────
 function ErrorsTab({ errors, onResolve }: any) {
   const unresolvedCount = errors.filter((e: any) => !e.resolved).length;
+  const [testStatus, setTestStatus] = useState<"idle" | "firing" | "ok" | "error">("idle");
+  const [testMessage, setTestMessage] = useState<string>("");
+
+  async function handleTestAlert() {
+    setTestStatus("firing");
+    setTestMessage("");
+    try {
+      // Grab the user's auth token from the active Supabase session
+      // so the admin endpoint can authenticate the request.
+      const sb = getSupabase();
+      const { data: { session } } = await sb.auth.getSession();
+      const res = await fetch("/api/admin/test-error-alert", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTestStatus("ok");
+        setTestMessage(data.next || "Test row inserted. Check your email inbox.");
+      } else {
+        setTestStatus("error");
+        setTestMessage(`${data.error || "Failed"}${data.detail ? ` — ${data.detail}` : ""}${data.hint ? `\n\nHint: ${data.hint}` : ""}`);
+      }
+    } catch (e: any) {
+      setTestStatus("error");
+      setTestMessage(e?.message || "Network error");
+    }
+  }
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-[28px] font-serif text-[#1A2C38]">Error Logs</h2>
-        <p className="text-[13px] font-sans text-[#8AAABB] mt-1">{unresolvedCount} unresolved / {errors.length} total</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-[28px] font-serif text-[#1A2C38]">Error Logs</h2>
+          <p className="text-[13px] font-sans text-[#8AAABB] mt-1">{unresolvedCount} unresolved / {errors.length} total</p>
+        </div>
+        <button
+          onClick={handleTestAlert}
+          disabled={testStatus === "firing"}
+          className="shrink-0 inline-flex items-center gap-2 text-[12px] font-sans border border-[#D8E8EE] rounded-[8px] px-4 py-2 text-[#3D6E8A] hover:bg-[#F2F8FB] transition-colors disabled:opacity-50"
+          style={{ fontWeight: 500 }}
+        >
+          {testStatus === "firing" ? "Firing..." : "🧪 Send test error alert"}
+        </button>
       </div>
+
+      {testStatus === "ok" && (
+        <div className="mb-4 bg-[#E8F4EE] border-[1.5px] border-[#3D7A58]/30 rounded-[10px] p-4">
+          <p className="text-[13px] font-sans text-[#3D7A58]" style={{ fontWeight: 600 }}>Test row inserted ✓</p>
+          <p className="text-[12px] font-sans text-[#3D7A58]/80 mt-1">{testMessage}</p>
+        </div>
+      )}
+      {testStatus === "error" && (
+        <div className="mb-4 bg-[#F4EAEA] border-[1.5px] border-[#A03D3D]/30 rounded-[10px] p-4">
+          <p className="text-[13px] font-sans text-[#A03D3D]" style={{ fontWeight: 600 }}>Test failed</p>
+          <p className="text-[12px] font-sans text-[#A03D3D]/80 mt-1 whitespace-pre-wrap">{testMessage}</p>
+        </div>
+      )}
 
       <div className="space-y-3">
         {errors.map((err: any) => (

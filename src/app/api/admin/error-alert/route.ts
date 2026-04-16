@@ -119,6 +119,13 @@ export async function POST(req: NextRequest) {
   const html = buildEmailHTML(record);
 
   try {
+    // Sender address: uses ADMIN_ALERT_FROM if set (e.g. once you've
+    // verified createsuite.co on Resend), otherwise falls back to Resend's
+    // sandbox address which works without any domain setup.
+    const fromAddress =
+      (process.env.ADMIN_ALERT_FROM || "").trim() ||
+      "Create Suite Alerts <onboarding@resend.dev>";
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -126,7 +133,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Create Suite Alerts <alerts@createsuite.co>",
+        from: fromAddress,
         to: [adminEmail],
         subject,
         html,
