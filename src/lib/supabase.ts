@@ -76,7 +76,6 @@ export type Profile = {
   location?: string | null;
   date_of_birth?: string | null;
   gender?: string | null;
-  ethnicity?: string | null;
   primary_niche?: string | null;
   secondary_niches?: string[] | null;
   languages?: string[] | null;
