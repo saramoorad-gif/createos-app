@@ -501,6 +501,7 @@ function DealDefaultsSection({ inputClass, labelClass, labelStyle, sectionClass 
 
 function BrandsSection({ inputClass, labelClass, labelStyle, sectionClass }) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { data: brands, loading, refetch } = useSupabaseQuery("agency_brands");
   const mutation = useSupabaseMutation("agency_brands");
   const [showForm, setShowForm] = useState(false);
@@ -527,7 +528,11 @@ function BrandsSection({ inputClass, labelClass, labelStyle, sectionClass }) {
       setForm({ name: "", category: "", contact_name: "", contact_email: "", status: "active" });
       setShowForm(false);
       refetch();
-    } catch (e) { console.error(e); }
+      toast("success", `${form.name} added to brands`);
+    } catch (e) {
+      console.error(e);
+      toast("error", "Failed to add brand — please try again");
+    }
     setSubmitting(false);
   }
 
