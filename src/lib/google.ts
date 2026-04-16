@@ -1,10 +1,10 @@
 // Google OAuth configuration for Gmail + Calendar
 // Set these env vars in Vercel after creating a Google Cloud project
 
-export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
-export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
+export const GOOGLE_CLIENT_ID = (process.env.GOOGLE_CLIENT_ID || "").trim();
+export const GOOGLE_CLIENT_SECRET = (process.env.GOOGLE_CLIENT_SECRET || "").trim();
 export const GOOGLE_REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL
-  ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/google/callback`
+  ? `${(process.env.NEXT_PUBLIC_APP_URL || "").trim()}/api/auth/google/callback`
   : "https://createsuite.co/api/auth/google/callback";
 
 export const GOOGLE_SCOPES = [

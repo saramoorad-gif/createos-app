@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing to, subject, or body" }, { status: 400 });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = (process.env.RESEND_API_KEY || "").trim();
 
   if (!apiKey) {
     // If no email API configured, just log it

@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { getSupabase } from "@/lib/supabase";
+import { logError } from "@/lib/error-logger";
 import { Copy, Check } from "lucide-react";
 
 // ─── Creator Onboarding (4 steps) ────────────────────────────────
@@ -27,7 +28,7 @@ function CreatorOnboarding() {
     setLaunching(true);
     try {
       const sb = getSupabase();
-      await sb
+      const { error } = await sb
         .from("profiles")
         .update({
           tiktok_handle: tiktok || null,
@@ -37,10 +38,27 @@ function CreatorOnboarding() {
           has_agency: hasAgency === true,
         })
         .eq("id", user.id);
+      if (error) {
+        console.error("Onboarding save error:", error);
+        logError({
+          source: "onboarding.handleLaunch",
+          message: error.message,
+          userId: user.id,
+          userEmail: user.email || undefined,
+          metadata: { code: error.code },
+        });
+      }
       await refreshProfile();
       window.location.href = "/dashboard";
     } catch (e) {
       console.error("Failed to save onboarding:", e);
+      logError({
+        source: "onboarding.handleLaunch",
+        message: e instanceof Error ? e.message : "Unknown error",
+        stack: e instanceof Error ? e.stack : undefined,
+        userId: user.id,
+        userEmail: user.email || undefined,
+      });
       // Still redirect — don't block user from accessing the app
       window.location.href = "/dashboard";
     }

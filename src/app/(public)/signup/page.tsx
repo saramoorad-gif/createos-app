@@ -51,12 +51,22 @@ function SignUpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const refCode = searchParams.get("ref");
+  // Allow pre-selecting a plan via ?plan=free|ugc|ugc_influencer|agency (from /pricing CTAs).
+  // "agency_starter" and "agency_growth" both map to "agency" for signup tier selection.
+  const planParam = searchParams.get("plan");
+  const initialAccountType: AccountType | null = (() => {
+    if (planParam === "free") return "free";
+    if (planParam === "ugc") return "ugc";
+    if (planParam === "ugc_influencer") return "ugc_influencer";
+    if (planParam === "agency" || planParam === "agency_starter" || planParam === "agency_growth") return "agency";
+    return null;
+  })();
   const [step, setStep] = useState<Step>("credentials");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [accountType, setAccountType] = useState<AccountType | null>(null);
+  const [accountType, setAccountType] = useState<AccountType | null>(initialAccountType);
   const [agencyName, setAgencyName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

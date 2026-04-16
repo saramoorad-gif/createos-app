@@ -362,9 +362,11 @@ function CheckoutContent() {
               </div>
             </div>
 
-            {/* Change plan link */}
+            {/* Change plan link — /pricing shows all plans (Free, UGC, UGC+Influencer, Agency)
+                and routes smartly based on auth state, so signed-in users don't get sent
+                back to the signup form. */}
             <div className="text-center">
-              <Link href="/signup" className="text-[12px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>
+              <Link href="/pricing" className="text-[12px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>
                 ← Change plan
               </Link>
             </div>

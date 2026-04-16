@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const { contractText, creatorName } = await req.json();
   if (!contractText) return NextResponse.json({ error: "No contract text" }, { status: 400 });
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = (process.env.ANTHROPIC_API_KEY || "").trim();
   if (!apiKey) {
     return NextResponse.json({ analysis: getFallbackAnalysis() });
   }

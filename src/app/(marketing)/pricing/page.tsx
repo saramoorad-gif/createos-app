@@ -2,14 +2,28 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
 
 type Billing = "monthly" | "annual";
 
+// Plan slugs match the keys in /checkout plans object.
+type PlanSlug = "free" | "ugc" | "ugc_influencer" | "agency_starter" | "agency_growth";
+
 /* ─── Pricing Data ─── */
 
-const creatorTiers = [
+const creatorTiers: Array<{
+  name: string;
+  slug: PlanSlug;
+  monthly: number;
+  annual: number;
+  description: string;
+  features: { name: string; included: boolean }[];
+  cta: string;
+  featured: boolean;
+}> = [
   {
     name: "Free",
+    slug: "free",
     monthly: 0,
     annual: 0,
     description: "Get started with the basics. Perfect for creators just starting out with brand deals.",
@@ -32,6 +46,7 @@ const creatorTiers = [
   },
   {
     name: "UGC Creator",
+    slug: "ugc",
     monthly: 27,
     annual: 270,
     description: "Full deal pipeline with AI tools. Everything you need to run your UGC business professionally.",
@@ -54,6 +69,7 @@ const creatorTiers = [
   },
   {
     name: "UGC + Influencer",
+    slug: "ugc_influencer",
     monthly: 39,
     annual: 390,
     description: "Everything in UGC Creator plus audience analytics, engagement tracking, and campaign recaps.",
@@ -76,9 +92,20 @@ const creatorTiers = [
   },
 ];
 
-const agencyTiers = [
+const agencyTiers: Array<{
+  name: string;
+  slug: PlanSlug;
+  monthly: number;
+  annual: number;
+  description: string;
+  creators: string;
+  features: { name: string; included: boolean }[];
+  cta: string;
+  featured: boolean;
+}> = [
   {
     name: "Agency Starter",
+    slug: "agency_starter",
     monthly: 149,
     annual: 1490,
     description: "Up to 15 creators. Full roster management, campaign builder, and commission tracking.",
@@ -103,6 +130,7 @@ const agencyTiers = [
   },
   {
     name: "Agency Growth",
+    slug: "agency_growth",
     monthly: 249,
     annual: 2490,
     description: "Up to 40 creators. Everything in Starter plus team permissions, custom reporting, and API access.",
@@ -235,6 +263,37 @@ function CellDisplay({ value }: { value: CellValue }) {
 export default function PricingPage() {
   const [billing, setBilling] = useState<Billing>("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const { user, profile } = useAuth();
+
+  // Smart CTA routing:
+  // - Not signed in → /signup?plan=X (signup will route to checkout after account creation)
+  // - Signed in + free slug → /dashboard (they already have a free account — just go in)
+  // - Signed in + paid slug → /checkout?plan=X (go straight to payment)
+  // - Signed in + already on that plan → /dashboard (no-op)
+  function ctaHrefFor(slug: PlanSlug): string {
+    if (!user) {
+      if (slug === "free") return "/signup";
+      return `/signup?plan=${slug}`;
+    }
+    // Already signed in
+    if (slug === "free") return "/dashboard";
+    // Check if they're already on this plan — no need to re-checkout
+    if (profile?.account_type === slug && profile?.subscription_status === "active") {
+      return "/dashboard";
+    }
+    // Paid plans — go to checkout with plan pre-selected.
+    // /checkout expects "ugc", "ugc_influencer", or "agency" (not "agency_starter"/"agency_growth").
+    const checkoutSlug = slug === "agency_starter" || slug === "agency_growth" ? "agency" : slug;
+    return `/checkout?plan=${checkoutSlug}`;
+  }
+
+  function ctaLabelFor(slug: PlanSlug, defaultLabel: string): string {
+    if (user && profile?.account_type === slug && profile?.subscription_status === "active") {
+      return "Current plan";
+    }
+    if (user && slug === "free") return "Continue with free";
+    return defaultLabel;
+  }
 
   function price(monthly: number, annual: number) {
     return billing === "annual" ? annual : monthly;
@@ -374,14 +433,14 @@ export default function PricingPage() {
                 </div>
 
                 <a
-                  href="/signup"
+                  href={ctaHrefFor(tier.slug)}
                   className={`block text-center rounded-[10px] px-4 py-3 text-[14px] font-sans font-500 transition-colors ${
                     tier.featured
                       ? "bg-[#1E3F52] text-white hover:bg-[#2a5269]"
                       : "border border-[#D8E8EE] text-[#3D6E8A] hover:bg-[#F2F8FB]"
                   }`}
                 >
-                  {tier.cta}
+                  {ctaLabelFor(tier.slug, tier.cta)}
                 </a>
               </div>
             ))}
@@ -457,14 +516,14 @@ export default function PricingPage() {
                 </div>
 
                 <a
-                  href="/signup"
+                  href={ctaHrefFor(tier.slug)}
                   className={`block text-center rounded-[10px] px-4 py-3 text-[14px] font-sans font-500 transition-colors ${
                     tier.featured
                       ? "bg-[#1E3F52] text-white hover:bg-[#2a5269]"
                       : "border border-[#D8E8EE] text-[#3D6E8A] hover:bg-[#F2F8FB]"
                   }`}
                 >
-                  {tier.cta}
+                  {ctaLabelFor(tier.slug, tier.cta)}
                 </a>
               </div>
             ))}
@@ -608,10 +667,10 @@ export default function PricingPage() {
           </p>
           <div className="flex items-center justify-center gap-3">
             <a
-              href="/signup"
+              href={user ? "/dashboard" : "/signup"}
               className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors"
             >
-              Get started free
+              {user ? "Go to dashboard" : "Get started free"}
             </a>
             <Link
               href="/contact"

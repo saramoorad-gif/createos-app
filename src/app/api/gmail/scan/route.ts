@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
     )).filter(Boolean) as EmailData[];
 
     // Use AI to detect deals
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = (process.env.ANTHROPIC_API_KEY || "").trim();
     if (!apiKey) {
       // Fallback: keyword-based detection
       return NextResponse.json({ deals: keywordDetection(emails), source: "keywords" });

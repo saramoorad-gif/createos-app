@@ -1,10 +1,10 @@
 // DocuSign integration
 // Set these env vars after creating a DocuSign developer account
 
-export const DOCUSIGN_INTEGRATION_KEY = process.env.DOCUSIGN_INTEGRATION_KEY || "";
-export const DOCUSIGN_SECRET_KEY = process.env.DOCUSIGN_SECRET_KEY || "";
+export const DOCUSIGN_INTEGRATION_KEY = (process.env.DOCUSIGN_INTEGRATION_KEY || "").trim();
+export const DOCUSIGN_SECRET_KEY = (process.env.DOCUSIGN_SECRET_KEY || "").trim();
 export const DOCUSIGN_REDIRECT_URI = "https://createsuite.co/api/auth/docusign/callback";
-export const DOCUSIGN_AUTH_SERVER = process.env.DOCUSIGN_AUTH_SERVER || "https://account-d.docusign.com"; // -d for demo, remove for production
+export const DOCUSIGN_AUTH_SERVER = (process.env.DOCUSIGN_AUTH_SERVER || "https://account-d.docusign.com").trim(); // -d for demo, remove for production
 
 export function getDocuSignAuthUrl(state: string): string {
   const params = new URLSearchParams({
