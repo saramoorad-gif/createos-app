@@ -40,7 +40,7 @@ const platformLabel: Record<string, string> = {
 };
 
 export default function InboundPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { data: inboundInquiries, loading, setData: setInquiries } = useSupabaseQuery<InboundInquiry>("inbound_inquiries", {
     order: { column: "created_at", ascending: false },
   });
@@ -52,13 +52,20 @@ export default function InboundPage() {
   const slug = (profile?.full_name || "creator").toLowerCase().replace(/\s+/g, "");
 
   async function handleAddToPipeline(inq: InboundInquiry) {
+    if (!user?.id) {
+      toast("error", "You must be signed in.");
+      return;
+    }
     try {
-      // Create a new deal from the inquiry
+      // Create a new deal from the inquiry. The deals RLS policy requires
+      // auth.uid() = user_id OR auth.uid() = creator_id, so we set both.
       await insertDeal({
         brand_name: inq.brand_name,
         stage: "lead",
         notes: `From inbound inquiry: ${inq.message}`,
         platform: inq.platforms_requested[0] || null,
+        user_id: user.id,
+        creator_id: user.id,
       });
 
       // Mark the inquiry as added

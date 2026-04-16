@@ -41,7 +41,7 @@ const stageProgress: Record<string, number> = { lead: 5, pitched: 15, negotiatin
 const stageOrder = ["lead", "pitched", "negotiating", "contracted", "in_progress", "delivered", "paid"];
 
 export default function DealsPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [filter, setFilter] = useState<Filter>("all");
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
   const [showNew, setShowNew] = useState(false);
@@ -117,7 +117,15 @@ export default function DealsPage() {
         setDeals(prev => prev.map(d => d.id === editDeal.id ? { ...d, ...payload } : d));
         toast("success", `${fBrand} updated`);
       } else {
-        const d = await insert(payload);
+        // The deals RLS policy requires auth.uid() = user_id OR auth.uid() = creator_id.
+        // Set both on insert so the policy accepts the row and so existing queries
+        // that filter by either column find this deal.
+        if (!user?.id) {
+          toast("error", "You must be signed in to create a deal.");
+          return;
+        }
+        const insertPayload = { ...payload, user_id: user.id, creator_id: user.id };
+        const d = await insert(insertPayload);
         if (d) setDeals(prev => [d as Deal, ...prev]);
         toast("success", `${fBrand} added to pipeline`);
       }
@@ -155,8 +163,20 @@ export default function DealsPage() {
   }
 
   async function handleCreateInvoice(deal: Deal) {
+    if (!user?.id) {
+      toast("error", "You must be signed in to create an invoice.");
+      return;
+    }
     try {
-      await insertInvoice({ brand_name: deal.brand_name, amount: deal.value, status: "draft", due_date: deal.due_date || new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0], deal_id: deal.id });
+      await insertInvoice({
+        brand_name: deal.brand_name,
+        amount: deal.value,
+        status: "draft",
+        due_date: deal.due_date || new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
+        deal_id: deal.id,
+        user_id: user.id,
+        creator_id: user.id,
+      });
       toast("success", "Invoice created for " + deal.brand_name);
     } catch { toast("error", "Failed to create invoice"); }
   }

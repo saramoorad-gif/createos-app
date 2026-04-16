@@ -14,6 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
+import { useAuth } from "@/contexts/auth-context";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
 import { TableSkeleton } from "@/components/global/skeleton";
@@ -93,6 +94,7 @@ function QuickAddModal({
   const [brand, setBrand] = useState("");
   const [value, setValue] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
   const { insert: insertDeal, loading: inserting } = useSupabaseMutation("deals");
   const { toast } = useToast();
 
@@ -106,12 +108,23 @@ function QuickAddModal({
 
   async function handleCreate() {
     if (!brand.trim()) return;
+    if (!user?.id) {
+      toast("error", "You must be signed in.");
+      return;
+    }
     try {
+      // The deals RLS policy "Agency insert deals" requires
+      //   created_by_agency = true AND agency_id = auth.uid()
+      // Agencies create deals on behalf of a creator, so also set creator_id
+      // (and user_id for back-compat with the 'Own deals' policy).
       const newDeal = await insertDeal({
         brand_name: brand.trim(),
         value: Number(value) || 0,
         stage: "lead",
-        creator_id: creatorId || null,
+        creator_id: creatorId || user.id,
+        user_id: creatorId || user.id,
+        agency_id: user.id,
+        created_by_agency: true,
         deal_type: "ugc",
         notes: "",
         due_date: null,

@@ -34,7 +34,11 @@ interface Expense {
   category: string;
   amount: number;
   date: string;
-  note: string;
+  // DB column is `description`. We keep a legacy `note` alias on the local
+  // state for form-binding purposes but the display paths read `description`
+  // with a `note` fallback for any old rows.
+  description?: string;
+  note?: string;
 }
 
 type DateRange = "this-year" | "last-year" | "custom";
@@ -49,7 +53,7 @@ const expenseCategories = [
 ];
 
 function TaxExportContent() {
-  useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const { data: deals, loading: dealsLoading } = useSupabaseQuery<Deal>(
@@ -170,12 +174,18 @@ function TaxExportContent() {
       toast("warning", "Enter an expense amount.");
       return;
     }
+    if (!user?.id) {
+      toast("error", "You must be signed in.");
+      return;
+    }
     try {
       const result = await insertExpense({
+        creator_id: user.id,
         category: newExpense.category,
         amount,
         date: newExpense.date,
-        note: newExpense.note,
+        // DB column is `description`, not `note`.
+        description: newExpense.note,
       });
       if (result) {
         setExpenses((prev) => [result as Expense, ...prev]);
@@ -235,7 +245,7 @@ function TaxExportContent() {
       rows.push([
         e.date,
         "Expense",
-        e.note || e.category,
+        e.description || e.note || e.category,
         String(-e.amount),
         e.category,
       ]);
@@ -476,7 +486,7 @@ function TaxExportContent() {
                     {e.category}
                   </span>
                   <span className="text-[14px] font-sans text-[#1A2C38]">
-                    {e.note || e.category}
+                    {e.description || e.note || e.category}
                   </span>
                   <span className="text-[12px] font-sans text-[#8AAABB]">
                     {formatDate(e.date)}

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { useAuth } from "@/contexts/auth-context";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
@@ -188,6 +189,7 @@ const inputClass =
 
 function AffiliateTab() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const {
     data: links,
     loading: linksLoading,
@@ -253,12 +255,17 @@ function AffiliateTab() {
         );
       }
     } else {
+      if (!user?.id) {
+        toast("error", "You must be signed in.");
+        return;
+      }
       const created = await insertLink({
         platform,
         nickname,
         url,
         category,
         archived: false,
+        creator_id: user.id,
       });
       if (created) { setLinks([created as AffiliateLink, ...links]); toast("success", "Affiliate link created"); }
     }
@@ -273,11 +280,16 @@ function AffiliateTab() {
       toast("error", "Please enter a valid amount");
       return;
     }
+    if (!user?.id) {
+      toast("error", "You must be signed in.");
+      return;
+    }
     const created = await insertEarning({
       link_id: showLogEarning,
       month: earningMonth,
       amount: parsedAmount,
       notes: earningNotes,
+      creator_id: user.id,
     });
     if (created) { setEarnings([...earnings, created as AffiliateEarning]); toast("success", "Earnings logged"); }
     setShowLogEarning(null);
@@ -531,6 +543,8 @@ function AffiliateTab() {
 /* ------------------------------------------------------------------ */
 
 function StanTab() {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const {
     data: earnings,
     loading,
@@ -589,6 +603,10 @@ function StanTab() {
 
   async function handleManualEntry() {
     if (!productName.trim() || !price || !unitsSold) return;
+    if (!user?.id) {
+      toast("error", "You must be signed in.");
+      return;
+    }
     const p = parseFloat(price);
     const u = parseInt(unitsSold);
     const created = await insert({
@@ -597,6 +615,7 @@ function StanTab() {
       units_sold: u,
       revenue: p * u,
       month: manualMonth,
+      creator_id: user.id,
     });
     if (created) setEarnings([created as StanStoreEarning, ...earnings]);
     setShowManual(false);
