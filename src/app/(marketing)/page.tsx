@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SmartCTA } from "@/components/marketing/smart-cta";
 
 export const metadata: Metadata = {
   title: "Create Suite — The Business OS for Creators & Agencies",
@@ -11,11 +12,13 @@ export const metadata: Metadata = {
   },
 };
 
+// Trust strip — swap these to real numbers once we have them. For launch we
+// show a value-prop headline strip instead of faked metrics.
 const stats = [
-  { value: "$4.2M", label: "Earned by creators" },
-  { value: "12K+", label: "Deals tracked" },
-  { value: "2,400", label: "Active creators" },
-  { value: "180+", label: "Agency teams" },
+  { value: "AI", label: "Contract review" },
+  { value: "Gmail", label: "Deal scanner" },
+  { value: "$27/mo", label: "Start pro" },
+  { value: "30-day", label: "Guarantee" },
 ];
 
 const creatorFeatures = [
@@ -96,22 +99,19 @@ export default function HomePage() {
             AI contract review, Gmail deal scanner, contract templates, task management, exclusivity tracking, and more — powered by Claude AI. Built for UGC creators, influencers, and talent agencies.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <a href="/signup" className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors">
-              Get started free
-            </a>
+            <SmartCTA
+              label="Get started free"
+              loggedInLabel="Open dashboard"
+              className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#2a5269] transition-colors"
+            />
             <Link href="/contact?topic=demo" className="border border-[#D8E8EE] text-[#3D6E8A] text-[15px] font-sans font-500 px-7 py-3.5 rounded-[10px] hover:bg-[#F2F8FB] transition-colors">
               Book a demo
             </Link>
           </div>
 
-          <div className="flex items-center justify-center gap-2 mt-6">
-            <div className="flex -space-x-2">
-              {["BC", "MC", "JE", "CR"].map((i) => (
-                <div key={i} className="h-8 w-8 rounded-full bg-[#D8E8EE] border-2 border-[#FAF8F4] flex items-center justify-center text-[10px] font-sans font-500 text-[#3D6E8A]">{i}</div>
-              ))}
-            </div>
-            <p className="text-[13px] font-sans text-[#8AAABB]">Joined by 2,400+ creators this month</p>
-          </div>
+          <p className="text-[13px] font-sans text-[#8AAABB] mt-6 text-center">
+            Free plan available — no credit card required
+          </p>
         </div>
 
         {/* Dashboard mockup */}
@@ -346,9 +346,11 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              <a href="/signup" className="inline-flex items-center gap-2 bg-[#1E3F52] text-white rounded-[10px] px-6 py-3 text-[14px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
-                Get your affiliate link →
-              </a>
+              <SmartCTA
+                label="Get your affiliate link →"
+                loggedInLabel="Open dashboard →"
+                className="inline-flex items-center gap-2 bg-[#1E3F52] text-white rounded-[10px] px-6 py-3 text-[14px] font-sans hover:bg-[#2a5269] transition-colors"
+              />
             </div>
 
             {/* Visual mockup */}
@@ -435,11 +437,13 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-                <a href="/signup" className={`block text-center rounded-[10px] px-4 py-2.5 text-[14px] font-sans font-500 transition-colors ${
-                  t.featured ? "bg-white text-[#1E3F52] hover:bg-[#F2F8FB]" : "border border-[#D8E8EE] text-[#3D6E8A] hover:bg-[#F2F8FB]"
-                }`}>
-                  {t.cta}
-                </a>
+                <SmartCTA
+                  label={t.cta}
+                  loggedInLabel="Open dashboard"
+                  className={`block text-center rounded-[10px] px-4 py-2.5 text-[14px] font-sans font-500 transition-colors ${
+                    t.featured ? "bg-white text-[#1E3F52] hover:bg-[#F2F8FB]" : "border border-[#D8E8EE] text-[#3D6E8A] hover:bg-[#F2F8FB]"
+                  }`}
+                />
               </div>
             ))}
           </div>
@@ -456,11 +460,13 @@ export default function HomePage() {
             Ready to run your creator business <em className="italic text-[#3D6E8A]">properly</em>?
           </h2>
           <p className="text-[15px] font-sans text-[#4A6070] mb-8">
-            Join 2,400+ creators and 180+ agencies already using Create Suite.
+            Free to start. No credit card required. Upgrade when you&apos;re ready.
           </p>
-          <a href="/signup" className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-8 py-4 rounded-[10px] hover:bg-[#2a5269] transition-colors inline-block">
-            Get started free →
-          </a>
+          <SmartCTA
+            label="Get started free →"
+            loggedInLabel="Open dashboard →"
+            className="bg-[#1E3F52] text-white text-[15px] font-sans font-500 px-8 py-4 rounded-[10px] hover:bg-[#2a5269] transition-colors inline-block"
+          />
         </div>
       </section>
     </div>

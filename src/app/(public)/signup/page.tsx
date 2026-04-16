@@ -71,6 +71,7 @@ function SignUpContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [referrerName, setReferrerName] = useState<string | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Look up referrer name if ref code is present
   useEffect(() => {
@@ -95,6 +96,7 @@ function SignUpContent() {
   function handleCredentialsNext(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!agreedToTerms) { setError("Please agree to the Terms of Service and Privacy Policy."); return; }
     if (password !== confirmPassword) { setError("Passwords don't match."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     setStep("tier");
@@ -234,7 +236,30 @@ function SignUpContent() {
                   <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Confirm password</label>
                   <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Confirm your password" required className={inputClass} />
                 </div>
-                <button className="w-full bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] transition-colors" type="submit">
+                <label className="flex items-start gap-2 cursor-pointer pt-1">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-[1.5px] border-[#D8E8EE] text-[#7BAFC8] focus:ring-[#7BAFC8]/30"
+                  />
+                  <span className="text-[12px] font-sans text-[#4A6070] leading-relaxed">
+                    I agree to the{" "}
+                    <Link href="/terms" target="_blank" className="text-[#7BAFC8] hover:underline">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" target="_blank" className="text-[#7BAFC8] hover:underline">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </span>
+                </label>
+                <button
+                  className="w-full bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] transition-colors disabled:opacity-50"
+                  type="submit"
+                  disabled={!agreedToTerms}
+                >
                   Continue &rarr;
                 </button>
               </form>

@@ -5,6 +5,7 @@ const publicRoutes = [
   "/login", "/signup", "/checkout", "/onboarding", "/kit", "/pricing",
   "/for-creators", "/for-agencies", "/features", "/faq",
   "/help", "/contact", "/privacy", "/terms", "/team-onboarding",
+  "/forgot-password", "/reset-password",
   "/admin", // /admin has its own auth check inside the page
 ];
 

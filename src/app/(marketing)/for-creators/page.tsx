@@ -655,7 +655,7 @@ export default function ForCreatorsPage() {
             Ready to run your business<br className="hidden md:block" /> like a <em className="italic text-[#3D6E8A]">real business</em>?
           </h2>
           <p className="text-[16px] font-sans text-[#4A6070] mb-8">
-            Join 2,400+ creators already using Create Suite. Free to start, no credit card required.
+            Free to start. No credit card required.
           </p>
           <a
             href="/signup"

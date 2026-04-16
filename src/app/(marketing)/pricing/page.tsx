@@ -725,7 +725,7 @@ export default function PricingPage() {
             Ready to get <em className="italic text-[#3D6E8A]">started</em>?
           </h2>
           <p className="text-[15px] font-sans text-[#4A6070] mb-8">
-            Join 2,400+ creators and 180+ agencies already using Create Suite.
+            Start free, upgrade anytime. Cancel in one click.
           </p>
           <div className="flex items-center justify-center gap-3">
             <a

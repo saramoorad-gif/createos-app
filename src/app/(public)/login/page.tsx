@@ -193,9 +193,17 @@ function LoginContent() {
                   </div>
 
                   <div>
-                    <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">
-                      Password
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[12px] font-sans font-medium text-[#1A2C38]">
+                        Password
+                      </label>
+                      <Link
+                        href="/forgot-password"
+                        className="text-[11px] font-sans text-[#7BAFC8] hover:underline"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
                     <input
                       type="password"
                       value={password}

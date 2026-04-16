@@ -9,6 +9,7 @@ import { useSupabaseQuery } from "@/lib/hooks";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
 import { DashboardSkeleton } from "@/components/global/skeleton";
+import { hasFeatureAccess } from "@/lib/feature-gates";
 import Link from "next/link";
 import {
   ArrowRight, Plus, TrendingUp, FileText, Briefcase, Star,
@@ -152,9 +153,13 @@ function CreatorDashboard() {
     ["contracted", "in_progress", "delivered"].includes(d.stage)
   );
 
-  // AI insight
+  // AI insight — gated behind the UGC tier since it hits /api/ai
+  // which now returns 403 for free users. Skip entirely so there's no
+  // failed network request on every dashboard render.
+  const canUseAI = hasFeatureAccess(profile?.account_type, "ai-features");
+
   async function fetchInsight() {
-    if (!user) return;
+    if (!user || !canUseAI) return;
     setInsightLoading(true);
     try {
       const context = {
@@ -183,8 +188,9 @@ function CreatorDashboard() {
   }
 
   useEffect(() => {
-    if (!dealsLoading && deals.length > 0) fetchInsight();
-  }, [dealsLoading]);
+    if (!dealsLoading && deals.length > 0 && canUseAI) fetchInsight();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealsLoading, canUseAI]);
 
   // Greeting based on time
   const hour = now.getHours();
@@ -192,8 +198,21 @@ function CreatorDashboard() {
 
   if (dealsLoading) return <DashboardSkeleton />;
 
-  // New user
+  // New user — show onboarding cards, filtered by what the user's tier can
+  // actually access so Free users don't hit a paywall on their first click.
   if (deals.length === 0 && invoices.length === 0) {
+    const allCards = [
+      { icon: Plus, title: "Log your first deal", desc: "Track a brand partnership from pitch to payment", href: "/deals", cta: "Add a deal", feature: "deals" },
+      { icon: FileText, title: "Upload a contract", desc: "Store and review brand contracts in one place", href: "/contracts", cta: "Upload" , feature: "contracts" },
+      { icon: ListTodo, title: "Create a task", desc: "Track deliverables, deadlines, and follow-ups", href: "/tasks", cta: "New task", feature: "tasks" },
+      { icon: Briefcase, title: "Set up your media kit", desc: "Create a shareable profile that attracts brands", href: "/media-kit", cta: "Build media kit", feature: "media-kit" },
+      { icon: TrendingUp, title: "Calculate your rates", desc: "Find out what you should be charging", href: "/rate-calculator", cta: "Check rates", feature: "rate-calculator" },
+      { icon: Mail, title: "Connect Gmail", desc: "Auto-detect deals from your email inbox", href: "/integrations", cta: "Connect", feature: "integrations" },
+    ];
+    // Free users see the three they actually have access to, paid users see all six.
+    const onboardingCards = allCards.filter((c) => hasFeatureAccess(profile?.account_type, c.feature));
+    const isFree = profile?.account_type === "free";
+
     return (
       <div>
         <PageHeader
@@ -201,14 +220,7 @@ function CreatorDashboard() {
           subheading="Your creator business starts here. Let's get you set up."
         />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          {[
-            { icon: Plus, title: "Log your first deal", desc: "Track a brand partnership from pitch to payment", href: "/deals", cta: "Add a deal" },
-            { icon: ListTodo, title: "Create a task", desc: "Track deliverables, deadlines, and follow-ups", href: "/tasks", cta: "New task" },
-            { icon: Briefcase, title: "Set up your media kit", desc: "Create a shareable profile that attracts brands", href: "/media-kit", cta: "Build media kit" },
-            { icon: TrendingUp, title: "Calculate your rates", desc: "Find out what you should be charging", href: "/rate-calculator", cta: "Check rates" },
-            { icon: FileText, title: "Review a contract", desc: "Upload a contract for AI-powered analysis", href: "/contracts", cta: "AI review" },
-            { icon: Mail, title: "Connect Gmail", desc: "Auto-detect deals from your email inbox", href: "/integrations", cta: "Connect" },
-          ].map(item => (
+          {onboardingCards.map(item => (
             <Link key={item.title} href={item.href} className="bg-white border-[1.5px] border-[#D8E8EE] rounded-card p-5 hover:border-[#7BAFC8] hover:shadow-card transition-all group">
               <div className="h-10 w-10 rounded-[10px] bg-[#F2F8FB] flex items-center justify-center mb-3 group-hover:bg-[#7BAFC8]/10 transition-colors">
                 <item.icon className="h-5 w-5 text-[#7BAFC8]" />
@@ -219,6 +231,26 @@ function CreatorDashboard() {
             </Link>
           ))}
         </div>
+        {isFree && (
+          <div className="bg-gradient-to-r from-[#1E3F52] to-[#2a5269] rounded-card p-5 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-[10px] bg-white/10 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="h-5 w-5 text-[#7BAFC8]" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[14px] font-sans text-white" style={{ fontWeight: 600 }}>Unlock the full creator toolkit</p>
+              <p className="text-[12px] font-sans text-white/70">
+                UGC Creator ($27/mo) adds AI contract review, rate calculator, media kit, Gmail integration, tasks, and more.
+              </p>
+            </div>
+            <Link
+              href="/pricing"
+              className="bg-white text-[#1E3F52] rounded-[8px] px-4 py-2 text-[12px] font-sans flex-shrink-0 hover:bg-white/90 transition-colors"
+              style={{ fontWeight: 600 }}
+            >
+              See plans
+            </Link>
+          </div>
+        )}
       </div>
     );
   }

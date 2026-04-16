@@ -648,7 +648,7 @@ export default function ForAgenciesPage() {
             Ready to manage your roster<br className="hidden md:block" /> from <em className="italic text-[#3D6E8A]">one platform</em>?
           </h2>
           <p className="text-[16px] font-sans text-[#4A6070] mb-8">
-            Join 180+ agencies already using Create Suite. Book a demo or start your free trial today.
+            Book a demo or start your free trial today.
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <Link
