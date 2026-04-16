@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireFeature } from "@/lib/require-tier";
 
 // AI-powered contract review — analyzes contract text and flags issues
 
 export async function POST(req: NextRequest) {
+  // Gate: AI features are UGC-and-up only.
+  const check = await requireFeature(req, "ai-features");
+  if (!check.ok) {
+    return NextResponse.json({ error: check.error, hint: check.hint }, { status: check.status });
+  }
+
   const { contractText, creatorName } = await req.json();
   if (!contractText) return NextResponse.json({ error: "No contract text" }, { status: 400 });
 

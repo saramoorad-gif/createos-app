@@ -1,6 +1,15 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 
 export default function SponsorTolerancePage() {
+  return (
+    <UpgradeGate feature="sponsor-tolerance">
+      <SponsorTolerancePageContent />
+    </UpgradeGate>
+  );
+}
+
+function SponsorTolerancePageContent() {
   return (
     <div>
       <PageHeader

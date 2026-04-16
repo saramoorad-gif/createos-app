@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { refreshGoogleToken } from "@/lib/google";
 import { verifyUserRequest } from "@/lib/api-auth";
+import { requireFeature } from "@/lib/require-tier";
 
 // AI-powered email scanner: detects brand deal opportunities in Gmail
 // and auto-creates deals in the pipeline
@@ -40,6 +41,13 @@ interface DetectedDeal {
 }
 
 export async function POST(req: NextRequest) {
+  // Gate: Gmail scanning requires a UGC-or-higher tier (it's an AI feature
+  // and also part of the integrations set).
+  const check = await requireFeature(req, "ai-features");
+  if (!check.ok) {
+    return NextResponse.json({ error: check.error, hint: check.hint }, { status: check.status });
+  }
+
   const { userId } = await req.json();
   if (!userId || typeof userId !== "string" || !userId.trim()) {
     return NextResponse.json({ error: "Invalid userId" }, { status: 400 });

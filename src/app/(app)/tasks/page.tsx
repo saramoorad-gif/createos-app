@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
 import { TableSkeleton } from "@/components/global/skeleton";
 import { logError } from "@/lib/error-logger";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { Plus, X, CheckCircle2, Circle, Clock, Flag, Calendar, Briefcase, ChevronDown, Filter, Trash2, Edit3 } from "lucide-react";
 
 interface Task {
@@ -65,6 +66,14 @@ function formatDueDate(dateStr: string | null): { text: string; overdue: boolean
 }
 
 export default function TasksPage() {
+  return (
+    <UpgradeGate feature="tasks">
+      <TasksPageContent />
+    </UpgradeGate>
+  );
+}
+
+function TasksPageContent() {
   const { user } = useAuth();
   const { data: tasks, loading, setData: setTasks } = useSupabaseQuery<Task>("creator_tasks", {
     order: { column: "created_at", ascending: false },

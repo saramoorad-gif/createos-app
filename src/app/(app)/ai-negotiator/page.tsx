@@ -5,9 +5,18 @@ import { PageHeader } from "@/components/layout/page-header";
 import { useToast } from "@/components/global/toast";
 import { useAuth } from "@/contexts/auth-context";
 import { Shimmer } from "@/components/global/skeleton";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { Copy, Sparkles, Send } from "lucide-react";
 
 export default function AINegotiatorPage() {
+  return (
+    <UpgradeGate feature="ai-features">
+      <AINegotiatorPageContent />
+    </UpgradeGate>
+  );
+}
+
+function AINegotiatorPageContent() {
   const { profile } = useAuth();
   const { toast } = useToast();
 

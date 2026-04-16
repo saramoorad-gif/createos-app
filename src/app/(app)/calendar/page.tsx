@@ -1,6 +1,15 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 
 export default function CalendarPage() {
+  return (
+    <UpgradeGate feature="integrations">
+      <CalendarPageContent />
+    </UpgradeGate>
+  );
+}
+
+function CalendarPageContent() {
   return (
     <div>
       <PageHeader

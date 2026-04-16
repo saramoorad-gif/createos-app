@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 
 const GOOGLE_CLIENT_ID = "854619861848-ck0ldn040uojlec0jpqkbpeoo9adhnm6.apps.googleusercontent.com";
 import { Mail, CreditCard, Video, Camera, Calendar, FileText, Palette, Check, Bell, Unplug } from "lucide-react";
@@ -21,6 +22,14 @@ const integrations = [
 ];
 
 export default function IntegrationsPage() {
+  return (
+    <UpgradeGate feature="integrations">
+      <IntegrationsPageContent />
+    </UpgradeGate>
+  );
+}
+
+function IntegrationsPageContent() {
   const { user, profile, refreshProfile } = useAuth();
   const [justConnected, setJustConnected] = useState<string | null>(null);
   const [notified, setNotified] = useState<Set<string>>(new Set());

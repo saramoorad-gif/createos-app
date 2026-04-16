@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 
 interface ContentItem {
@@ -55,6 +56,14 @@ function getMonthDays(year: number, month: number) {
 // No seed data — content is user-created only
 
 export default function ContentCalendarPage() {
+  return (
+    <UpgradeGate feature="content-calendar">
+      <ContentCalendarPageContent />
+    </UpgradeGate>
+  );
+}
+
+function ContentCalendarPageContent() {
   const { user } = useAuth();
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());

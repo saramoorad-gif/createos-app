@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useToast } from "@/components/global/toast";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { Zap } from "lucide-react";
 
 interface Automation {
@@ -34,6 +35,14 @@ function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () =>
 }
 
 export default function AutomationsPage() {
+  return (
+    <UpgradeGate feature="automations">
+      <AutomationsPageContent />
+    </UpgradeGate>
+  );
+}
+
+function AutomationsPageContent() {
   const [items, setItems] = useState<Automation[]>(systemAutomations);
   const { toast } = useToast();
 

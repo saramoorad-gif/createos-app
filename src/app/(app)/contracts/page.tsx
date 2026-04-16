@@ -226,6 +226,11 @@ export default function ContractsPage() {
       toast("error", "Please paste or upload contract text first");
       return;
     }
+    // Gate AI review on the paid tiers — Free users see a toast and are pointed at pricing.
+    if (profile?.account_type === "free") {
+      toast("error", "AI contract review requires the UGC plan. Upgrade at /pricing.");
+      return;
+    }
     setAnalyzing(true);
     setAnalysis(null);
     try {

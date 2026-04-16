@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Download } from "lucide-react";
 
 type ImportType = "deals" | "invoices";
@@ -14,6 +15,14 @@ const templates = {
 };
 
 export default function ImportPage() {
+  return (
+    <UpgradeGate feature="import">
+      <ImportPageContent />
+    </UpgradeGate>
+  );
+}
+
+function ImportPageContent() {
   const { user } = useAuth();
   const [importType, setImportType] = useState<ImportType>("deals");
   const [csvText, setCsvText] = useState("");

@@ -1,6 +1,15 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 
 export default function ExclusivityPage() {
+  return (
+    <UpgradeGate feature="exclusivity">
+      <ExclusivityPageContent />
+    </UpgradeGate>
+  );
+}
+
+function ExclusivityPageContent() {
   return (
     <div>
       <PageHeader

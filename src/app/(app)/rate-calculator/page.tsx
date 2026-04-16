@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/components/global/toast";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { Sparkles, Loader2 } from "lucide-react";
 
 type Platform = "tiktok" | "instagram" | "youtube";
@@ -75,6 +76,14 @@ function fmt(n: number) {
 }
 
 export default function RateCalculatorPage() {
+  return (
+    <UpgradeGate feature="rate-calculator">
+      <RateCalculatorPageContent />
+    </UpgradeGate>
+  );
+}
+
+function RateCalculatorPageContent() {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [platform, setPlatform] = useState<Platform>("tiktok");

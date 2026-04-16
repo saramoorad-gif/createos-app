@@ -5,9 +5,18 @@ import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { useSupabaseMutation } from "@/lib/hooks";
 import { useToast } from "@/components/global/toast";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { Copy, Check, ExternalLink, Edit3 } from "lucide-react";
 
 export default function MediaKitPage() {
+  return (
+    <UpgradeGate feature="media-kit">
+      <MediaKitPageContent />
+    </UpgradeGate>
+  );
+}
+
+function MediaKitPageContent() {
   const { profile, loading, refreshProfile } = useAuth();
   const { toast } = useToast();
   const { update } = useSupabaseMutation("profiles");

@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireFeature } from "@/lib/require-tier";
 
 // AI features powered by Anthropic Claude API
 // Set ANTHROPIC_API_KEY in Vercel env vars
 
 export async function POST(req: NextRequest) {
+  // Gate: AI features are UGC-and-up only.
+  const check = await requireFeature(req, "ai-features");
+  if (!check.ok) {
+    return NextResponse.json({ error: check.error, hint: check.hint }, { status: check.status });
+  }
+
   const { type, context } = await req.json();
   const apiKey = (process.env.ANTHROPIC_API_KEY || "").trim();
 

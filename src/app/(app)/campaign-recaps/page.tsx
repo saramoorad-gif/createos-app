@@ -1,6 +1,15 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 
 export default function CampaignRecapsPage() {
+  return (
+    <UpgradeGate feature="campaign-recaps">
+      <CampaignRecapsPageContent />
+    </UpgradeGate>
+  );
+}
+
+function CampaignRecapsPageContent() {
   return (
     <div>
       <PageHeader

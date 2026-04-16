@@ -6,6 +6,7 @@ import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { useAuth } from "@/contexts/auth-context";
 import { formatDate } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import { X, Plus, ChevronLeft, Check, Clock, Send, AlertCircle, FileText } from "lucide-react";
 
 interface Brief {
@@ -112,6 +113,14 @@ const seededSubmissions: Submission[] = [
 ];
 
 export default function BriefsPage() {
+  return (
+    <UpgradeGate feature="briefs">
+      <BriefsPageContent />
+    </UpgradeGate>
+  );
+}
+
+function BriefsPageContent() {
   const { user } = useAuth();
   const { data: dbBriefs, loading } = useSupabaseQuery<Brief>("briefs", { order: { column: "created_at", ascending: false } });
   const { insert: insertBrief } = useSupabaseMutation("briefs");

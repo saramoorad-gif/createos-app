@@ -6,6 +6,7 @@ import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/utils";
 import { useToast } from "@/components/global/toast";
 import { TableSkeleton } from "@/components/global/skeleton";
+import { UpgradeGate } from "@/components/global/upgrade-gate";
 import {
   Plus,
   DollarSign,
@@ -1138,6 +1139,14 @@ function SummaryTab() {
 /* ------------------------------------------------------------------ */
 
 export default function IncomePage() {
+  return (
+    <UpgradeGate feature="income">
+      <IncomePageContent />
+    </UpgradeGate>
+  );
+}
+
+function IncomePageContent() {
   const [tab, setTab] = useState<Tab>("affiliate");
 
   const tabs: { key: Tab; label: string }[] = [
