@@ -65,6 +65,17 @@ function parseDate(d: string | undefined): string | null {
 
 export async function POST(req: NextRequest) {
   const sb = getSupabaseServer(req);
+  if (!sb) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Extract the authenticated user so we can set user_id / creator_id on
+  // every imported row. RLS requires auth.uid() = user_id.
+  const { data: { user }, error: authError } = await sb.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { csv, type } = await req.json();
 
   if (!csv || !type) {
@@ -76,24 +87,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No data found in CSV" }, { status: 400 });
   }
 
-  if (type === "deals") {
-    const deals = rows.map(mapToDeal).filter(d => d.brand_name);
-    const { data, error } = await sb.from("deals").insert(deals).select();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ imported: data?.length || 0 });
-  }
+  try {
+    if (type === "deals") {
+      const deals = rows
+        .map(mapToDeal)
+        .filter(d => d.brand_name)
+        .map(d => ({ ...d, user_id: user.id, creator_id: user.id }));
+      const { data, error } = await sb.from("deals").insert(deals).select();
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ imported: data?.length || 0 });
+    }
 
-  if (type === "invoices") {
-    const invoices = rows.map(row => ({
-      brand_name: row.brand_name || row.brand || row.client || "",
-      amount: parseFloat(row.amount || row.value || "0") || 0,
-      status: (row.status || "draft").toLowerCase(),
-      due_date: parseDate(row.due_date || row.date) || new Date().toISOString().split("T")[0],
-    })).filter(i => i.brand_name);
-    const { data, error } = await sb.from("invoices").insert(invoices).select();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ imported: data?.length || 0 });
-  }
+    if (type === "invoices") {
+      const invoices = rows.map(row => ({
+        brand_name: row.brand_name || row.brand || row.client || "",
+        amount: parseFloat(row.amount || row.value || "0") || 0,
+        status: (row.status || "draft").toLowerCase(),
+        due_date: parseDate(row.due_date || row.date) || new Date().toISOString().split("T")[0],
+        user_id: user.id,
+        creator_id: user.id,
+      })).filter(i => i.brand_name);
+      const { data, error } = await sb.from("invoices").insert(invoices).select();
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ imported: data?.length || 0 });
+    }
 
-  return NextResponse.json({ error: "Unknown import type" }, { status: 400 });
+    return NextResponse.json({ error: "Unknown import type" }, { status: 400 });
+  } catch (err: any) {
+    console.error("[Import] Error:", err);
+    return NextResponse.json({ error: err.message || "Import failed" }, { status: 500 });
+  }
 }
