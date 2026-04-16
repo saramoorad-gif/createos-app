@@ -47,9 +47,11 @@ function ExclusivityContent() {
           ["contracted", "in_progress", "delivered", "paid"].includes(d.stage)
       )
       .map((d) => {
-        // If there's a due_date, use that as the start of the exclusivity window.
-        // Otherwise approximate from the deal's created_at.
-        const start = d.due_date ? new Date(d.due_date) : new Date(d.created_at);
+        // Exclusivity starts when the deal is contracted (roughly created_at).
+        // Using due_date would break for deals where due_date is still in the
+        // future — the clock would appear to stand still and daysRemaining
+        // would include the entire pre-delivery window.
+        const start = new Date(d.created_at);
         const end = new Date(start.getTime() + (d.exclusivity_days || 0) * 86400000);
         const totalMs = end.getTime() - start.getTime();
         const elapsedMs = Math.min(Math.max(now.getTime() - start.getTime(), 0), totalMs);
