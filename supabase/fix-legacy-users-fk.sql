@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════
--- FIX LEGACY public.users FK CONSTRAINTS  (v2 — handles tier column)
+-- FIX LEGACY public.users FK CONSTRAINTS  (v3 — drops stale check)
 --
 -- Background:
 -- The schema has TWO user-like tables:
@@ -8,18 +8,32 @@
 --   public.profiles — current, populated on signup, drives the app
 --
 -- Nothing in the app populates public.users, so the FK constraints on
--- those four tables silently reject every creator-side INSERT. Creating
--- a deal, invoice, inbound inquiry, or cached email → foreign key error.
+-- those four tables silently reject every creator-side INSERT.
 --
 -- Fix: backfill public.users from public.profiles, then install a trigger
--- that keeps them in sync forever. Relax every NOT NULL except `id` first
--- so we don't trip on surprise required columns.
+-- that keeps them in sync forever. Drop every stale CHECK constraint and
+-- NOT NULL constraint except on `id` so surprise rejections can't happen.
 --
 -- Safe to run multiple times.
 -- ═══════════════════════════════════════════════════════════════════
 
--- 1. Relax every NOT NULL on public.users except `id`, so the trigger
--- and backfill never fail on a surprise required column.
+-- 1. Drop every CHECK constraint on public.users (they're from the
+-- pre-agency era and reject valid modern account_type values).
+do $$
+declare
+  con record;
+begin
+  for con in
+    select conname
+    from pg_constraint
+    where conrelid = 'public.users'::regclass
+      and contype = 'c'
+  loop
+    execute format('alter table public.users drop constraint %I', con.conname);
+  end loop;
+end $$;
+
+-- 2. Relax every NOT NULL on public.users except `id`.
 do $$
 declare
   col record;
@@ -36,7 +50,7 @@ begin
   end loop;
 end $$;
 
--- 2. Backfill: ensure every existing profile has a matching public.users row.
+-- 3. Backfill: ensure every existing profile has a matching public.users row.
 insert into public.users (id, full_name, email, tier)
 select p.id,
        coalesce(p.full_name, 'Creator'),
@@ -46,7 +60,7 @@ from public.profiles p
 where not exists (select 1 from public.users u where u.id = p.id)
 on conflict (id) do nothing;
 
--- 3. Trigger: mirror every future profile insert/update into public.users.
+-- 4. Trigger: mirror every future profile insert/update into public.users.
 create or replace function public.sync_profile_to_users()
 returns trigger
 language plpgsql
@@ -74,12 +88,12 @@ create trigger trg_sync_profile_to_users
   for each row
   execute function public.sync_profile_to_users();
 
--- 4. RLS on public.users — lock it down.
+-- 5. RLS on public.users — lock it down.
 alter table public.users enable row level security;
 drop policy if exists "Own user row" on public.users;
 create policy "Own user row" on public.users for select using (auth.uid() = id);
 
 -- ═══════════════════════════════════════════════════════════════════
 -- DONE. After running, creating a deal/invoice/etc. will succeed because
--- the FK target row is guaranteed to exist.
+-- the FK target row is guaranteed to exist and has no stale constraints.
 -- ═══════════════════════════════════════════════════════════════════
