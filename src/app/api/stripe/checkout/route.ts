@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getStripe, PRICE_IDS, isStripeConfigured } from "@/lib/stripe";
 
 // Cache for referral coupon ID so we don't create a new one every request
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
     // Apply referral discount only for ugc_influencer plan
     const shouldApplyDiscount = referralCode && priceKey.startsWith("ugc_influencer");
     let discounts: any = undefined;
+    let affiliateId: string | null = null;
 
     if (shouldApplyDiscount) {
       try {
@@ -67,6 +69,24 @@ export async function POST(req: NextRequest) {
       } catch (e) {
         console.error("Failed to create/apply referral coupon:", e);
         // Continue without discount rather than failing the checkout
+      }
+
+      // Look up the affiliate by promo code so we can track the commission.
+      try {
+        const sb = createClient(
+          (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim(),
+          (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim()
+        );
+        const { data: affiliate } = await sb
+          .from("affiliates")
+          .select("id")
+          .eq("promo_code", referralCode.toUpperCase())
+          .eq("status", "active")
+          .single();
+        if (affiliate) affiliateId = affiliate.id;
+      } catch {
+        // If the affiliates table doesn't exist yet or the lookup fails,
+        // continue without affiliate tracking — don't block checkout.
       }
     }
 
@@ -82,6 +102,7 @@ export async function POST(req: NextRequest) {
         userId,
         priceKey,
         referralCode: referralCode || "",
+        affiliateId: affiliateId || "",
       },
     });
 

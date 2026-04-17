@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
+import {
+  createCommissionForInvoice,
+  voidCommissionForCharge,
+  markReferralChurned,
+} from "@/lib/affiliate-commissions";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -71,7 +76,7 @@ export async function POST(req: NextRequest) {
 
         console.log(`[Stripe Webhook] Upgraded user ${userId} to ${accountType}`);
 
-        // Mark referral as converted if applicable
+        // Mark referral as converted if applicable (legacy referrals table)
         if (referralCode) {
           const { error: refError } = await sb
             .from("referrals")
@@ -85,7 +90,27 @@ export async function POST(req: NextRequest) {
 
           if (refError) {
             console.error("[Stripe Webhook] Failed to update referral:", refError);
-            // Don't fail — referral tracking is non-critical
+          }
+        }
+
+        // ── Affiliate program: create affiliate_referrals row ──────
+        const affiliateId = session.metadata?.affiliateId;
+        if (affiliateId) {
+          try {
+            await sb.from("affiliate_referrals").insert({
+              affiliate_id: affiliateId,
+              referred_user_id: userId,
+              attribution_method: "code",
+              signed_up_at: new Date().toISOString(),
+              status: "signed_up",
+              plan_tier: accountType,
+              stripe_subscription_id: session.subscription || null,
+            });
+            console.log(`[Stripe Webhook] Created affiliate referral: affiliate=${affiliateId}, user=${userId}`);
+          } catch (affErr: any) {
+            // Don't fail checkout — affiliate tracking is non-critical.
+            // Might fail if affiliates table doesn't exist yet.
+            console.error("[Stripe Webhook] Failed to create affiliate referral:", affErr?.message);
           }
         }
         break;
@@ -136,6 +161,13 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Downgrade failed" }, { status: 500 });
         }
         console.log(`[Stripe Webhook] Downgraded customer ${customerId} to free`);
+
+        // ── Affiliate program: mark referral as churned ──────
+        try {
+          await markReferralChurned(sb, subscription.id);
+        } catch (affErr: any) {
+          console.error("[Stripe Webhook] markReferralChurned error:", affErr?.message);
+        }
         break;
       }
 
@@ -176,6 +208,57 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Status update failed" }, { status: 500 });
           }
           console.log(`[Stripe Webhook] Marked customer ${customerId} as active after successful payment`);
+
+          // ── Affiliate program: create commission if referred user ──
+          try {
+            const result = await createCommissionForInvoice(sb, {
+              id: invoice.id,
+              charge: (invoice as any).charge as string,
+              customer: customerId,
+              amount_paid: (invoice as any).amount_paid as number,
+              subscription: (invoice as any).subscription as string,
+            });
+            if (result.created) {
+              console.log(`[Stripe Webhook] Commission created for invoice ${invoice.id}`);
+            } else {
+              console.log(`[Stripe Webhook] No commission for invoice ${invoice.id}: ${result.reason}`);
+            }
+          } catch (commErr: any) {
+            // Don't fail the webhook — commission tracking is non-critical.
+            console.error("[Stripe Webhook] Commission creation error:", commErr?.message);
+          }
+        }
+        break;
+      }
+
+      case "charge.refunded": {
+        const charge = event.data.object;
+        const chargeId = charge.id;
+        try {
+          const sb = getSupabaseAdmin();
+          const { voided } = await voidCommissionForCharge(sb, chargeId, "refund");
+          if (voided) {
+            console.log(`[Stripe Webhook] Voided commission for refunded charge ${chargeId}`);
+          }
+        } catch (err: any) {
+          console.error("[Stripe Webhook] charge.refunded error:", err?.message);
+        }
+        break;
+      }
+
+      case "charge.dispute.created": {
+        const dispute = event.data.object;
+        const chargeId = (dispute as any).charge as string;
+        if (chargeId) {
+          try {
+            const sb = getSupabaseAdmin();
+            const { voided } = await voidCommissionForCharge(sb, chargeId, "chargeback");
+            if (voided) {
+              console.log(`[Stripe Webhook] Voided commission for disputed charge ${chargeId}`);
+            }
+          } catch (err: any) {
+            console.error("[Stripe Webhook] charge.dispute.created error:", err?.message);
+          }
         }
         break;
       }
