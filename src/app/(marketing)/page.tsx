@@ -328,16 +328,18 @@ export default function HomePage() {
             <div>
               <p className="text-[12px] font-sans font-600 uppercase tracking-[3px] text-[#7BAFC8] mb-3">CREATOR REFERRAL PROGRAM</p>
               <h2 className="text-[36px] font-serif text-[#1A2C38] leading-tight mb-4">
-                Give your followers a <em className="italic text-[#3D6E8A]">discount</em>
+                Earn while your followers <em className="italic text-[#3D6E8A]">save</em>
               </h2>
               <p className="text-[15px] font-sans text-[#4A6070] mb-6 leading-relaxed">
-                Share your unique affiliate link with your audience. Anyone who signs up with your link gets their first month of UGC + Influencer at the UGC price — $27 instead of $39.
+                Share your unique link and code. Your followers get their first month of UGC + Influencer for $27 instead of $39 — a $12 discount auto-applied at checkout. You earn 15% recurring commission for 12 months on every paying subscriber you bring in.
               </p>
               <div className="space-y-3 mb-8">
                 {[
-                  "Unique affiliate link per creator",
-                  "$12 off first month auto-applied at checkout",
-                  "Real-time signup and conversion tracking",
+                  "Unique affiliate link and promo code per creator",
+                  "Followers save $12 on month one — auto-applied at checkout",
+                  "15% recurring commission for 12 months (~$68 per subscriber, Year 1)",
+                  "Real-time signup, conversion, and earnings tracking",
+                  "Monthly payouts via Stripe ($50 minimum)",
                   "Share via Twitter, Email, SMS, or anywhere",
                 ].map(item => (
                   <div key={item} className="flex items-start gap-3">
@@ -346,11 +348,14 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              <SmartCTA
-                label="Get your affiliate link →"
-                loggedInLabel="Open dashboard →"
-                className="inline-flex items-center gap-2 bg-[#1E3F52] text-white rounded-[10px] px-6 py-3 text-[14px] font-sans hover:bg-[#2a5269] transition-colors"
-              />
+              <div className="flex items-center gap-3 flex-wrap">
+                <Link href="/creators/apply" className="inline-flex items-center gap-2 bg-[#1E3F52] text-white rounded-[10px] px-6 py-3 text-[14px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}>
+                  Apply to join →
+                </Link>
+                <Link href="/referral-program" className="text-[14px] font-sans text-[#3D6E8A] hover:underline" style={{ fontWeight: 500 }}>
+                  Read the full terms →
+                </Link>
+              </div>
             </div>
 
             {/* Visual mockup */}
