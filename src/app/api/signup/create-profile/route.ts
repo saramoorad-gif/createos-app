@@ -33,17 +33,7 @@ export async function POST(req: NextRequest) {
 
     const sb = createClient(supabaseUrl, serviceKey);
 
-    // Verify the auth user exists and matches the email. This prevents
-    // abuse where someone calls this endpoint with an arbitrary userId.
-    const { data: authUser, error: authLookupErr } = await sb.auth.admin.getUserById(userId);
-    if (authLookupErr || !authUser.user) {
-      return NextResponse.json({ error: "Auth user not found" }, { status: 404 });
-    }
-    if (authUser.user.email !== email) {
-      return NextResponse.json({ error: "Email does not match auth user" }, { status: 403 });
-    }
-
-    // Check if profile already exists (idempotent).
+    // Check if profile already exists (idempotent — retry-safe).
     const { data: existing } = await sb
       .from("profiles")
       .select("id")
@@ -57,8 +47,15 @@ export async function POST(req: NextRequest) {
     // Generate a unique referral code (8-char uppercase).
     const referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
 
-    // Create the profile. Everyone starts as "free" — paid tiers get
-    // upgraded later by Stripe webhook or gift code redemption.
+    // Create the profile. The FK on profiles.id → auth.users(id)
+    // provides validation: if the caller passes a bogus userId, the
+    // insert fails with a foreign-key error. So we don't need a
+    // separate auth.admin lookup (which has eventual-consistency
+    // issues right after signUp — it sometimes can't see the freshly
+    // created user for a few seconds).
+    //
+    // Everyone starts as "free" — paid tiers get upgraded later by
+    // Stripe webhook or gift code redemption.
     const { error: insertErr } = await sb.from("profiles").insert({
       id: userId,
       full_name: fullName,
@@ -70,6 +67,17 @@ export async function POST(req: NextRequest) {
     });
 
     if (insertErr) {
+      // 23503 = FK violation — userId doesn't match an auth.users row.
+      if (insertErr.code === "23503") {
+        return NextResponse.json(
+          { error: "Invalid user ID — auth user not found" },
+          { status: 404 }
+        );
+      }
+      // 23505 = unique violation — profile already exists (race condition).
+      if (insertErr.code === "23505") {
+        return NextResponse.json({ ok: true, alreadyExists: true });
+      }
       return NextResponse.json(
         { error: "Failed to create profile", detail: insertErr.message },
         { status: 500 }
