@@ -75,6 +75,22 @@ function SignUpContent() {
   const [showGiftCodeField, setShowGiftCodeField] = useState(false);
   const [giftCode, setGiftCode] = useState("");
 
+  // Clear any existing session on mount so a pre-signed-in user (e.g. admin)
+  // doesn't accidentally hijack the new account creation flow. Supabase's
+  // signUp() does NOT replace an existing session when email confirmation is
+  // enabled — so if we don't sign out first, the browser keeps the old auth
+  // token and the newly created account gets treated as whoever was signed in.
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    (async () => {
+      const sb = getSupabase();
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        await sb.auth.signOut();
+      }
+    })();
+  }, []);
+
   // Look up referrer name if ref code is present
   useEffect(() => {
     async function lookupReferrer() {
