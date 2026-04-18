@@ -149,20 +149,38 @@ function SignUpContent() {
     }
 
     if (data.user) {
-      // Generate a unique referral code for this user (8-char uppercase)
-      const myReferralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-
-      // Everyone starts as "free" in the database.
-      // Paid tiers get upgraded by Stripe webhook after successful checkout.
-      await sb.from("profiles").insert({
-        id: data.user.id,
-        full_name: fullName,
-        email,
-        account_type: "free",
-        agency_name: accountType === "agency" ? agencyName : null,
-        referral_code: myReferralCode,
-        referred_by_code: refCode ? refCode.toUpperCase() : null,
+      // Create the profile via a server-side endpoint that uses the
+      // service role. This bypasses the RLS issue where Supabase
+      // email confirmation = ON prevents the client from having a
+      // session at this moment, which would silently reject the
+      // direct .insert() we used to do here.
+      const createRes = await fetch("/api/signup/create-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: data.user.id,
+          email,
+          fullName,
+          accountType,
+          agencyName: accountType === "agency" ? agencyName : null,
+          refCode: refCode || null,
+        }),
       });
+
+      if (!createRes.ok) {
+        const createData = await createRes.json().catch(() => ({}));
+        logError({
+          source: "signup.create-profile",
+          message: createData.error || "Profile creation failed",
+          metadata: { userId: data.user.id, email, accountType },
+        });
+        setError(
+          "Your account was created, but we hit a snag setting up your profile. " +
+          "Try signing in — if the issue persists, email hello@createsuite.co."
+        );
+        setLoading(false);
+        return;
+      }
 
       // Track the referral if one was used
       if (refCode) {
