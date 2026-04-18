@@ -13,7 +13,7 @@ import {
   Search, ChevronRight, Activity, LogOut,
 } from "lucide-react";
 
-type Tab = "overview" | "users" | "revenue" | "referrals" | "errors";
+type Tab = "overview" | "users" | "revenue" | "referrals" | "errors" | "gift-codes";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -126,6 +126,7 @@ export default function AdminPortal() {
     { key: "users" as Tab, label: "Users", icon: Users },
     { key: "revenue" as Tab, label: "Revenue", icon: DollarSign },
     { key: "referrals" as Tab, label: "Referrals", icon: Gift },
+    { key: "gift-codes" as Tab, label: "Gift Codes", icon: Gift },
     { key: "errors" as Tab, label: "Errors", icon: AlertTriangle, badge: stats?.overview?.unresolvedErrors },
   ];
 
@@ -201,6 +202,7 @@ export default function AdminPortal() {
               )}
               {tab === "revenue" && <RevenueTab stats={stats} users={users} />}
               {tab === "referrals" && <ReferralsTab data={referrals} />}
+              {tab === "gift-codes" && <GiftCodesTab getAuthHeader={getAuthHeader} />}
               {tab === "errors" && <ErrorsTab errors={errors} onResolve={resolveError} />}
             </>
           )}
@@ -682,6 +684,236 @@ function ErrorsTab({ errors, onResolve }: any) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── GIFT CODES TAB ─────────────────────────────
+
+function GiftCodesTab({ getAuthHeader }: { getAuthHeader: () => Promise<Record<string, string>> }) {
+  const [codes, setCodes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    code: "",
+    plan_tier: "ugc_influencer",
+    duration_months: 3 as number | null,
+    max_uses: 1 as number | null,
+    notes: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => { fetchCodes(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function fetchCodes() {
+    setLoading(true);
+    try {
+      const headers = await getAuthHeader();
+      const res = await fetch("/api/admin/gift-codes", { headers });
+      const data = await res.json();
+      if (res.ok) setCodes(data.codes || []);
+    } catch {}
+    setLoading(false);
+  }
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const headers = await getAuthHeader();
+      const res = await fetch("/api/admin/gift-codes", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: form.code.trim().toUpperCase(),
+          plan_tier: form.plan_tier,
+          duration_months: form.duration_months,
+          max_uses: form.max_uses,
+          notes: form.notes.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setForm({ code: "", plan_tier: "ugc_influencer", duration_months: 3, max_uses: 1, notes: "" });
+        setShowForm(false);
+        fetchCodes();
+      } else {
+        alert(data.error || "Failed to create code");
+      }
+    } catch (e: any) {
+      alert(e.message || "Failed to create code");
+    }
+    setSubmitting(false);
+  }
+
+  async function toggleActive(id: string, newActive: boolean) {
+    try {
+      const headers = await getAuthHeader();
+      await fetch("/api/admin/gift-codes", {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ id, active: newActive }),
+      });
+      fetchCodes();
+    } catch {}
+  }
+
+  function copyCode(code: string, id: string) {
+    navigator.clipboard.writeText(code);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  const inputClass = "w-full rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2 text-[13px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]";
+
+  return (
+    <div>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-[28px] font-serif text-[#1A2C38]">Gift Codes</h2>
+          <p className="text-[13px] font-sans text-[#8AAABB] mt-1">Comp codes for influencers, press, and partnerships.</p>
+        </div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="shrink-0 bg-[#1E3F52] text-white rounded-[8px] px-4 py-2 text-[13px] font-sans hover:bg-[#2a5269]"
+          style={{ fontWeight: 600 }}
+        >
+          {showForm ? "Cancel" : "+ New code"}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleCreate} className="mb-6 bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[11px] font-sans font-600 uppercase tracking-[1.5px] text-[#8AAABB] block mb-1.5">Code</label>
+              <input
+                type="text"
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase().replace(/\s+/g, "") })}
+                placeholder="BRI-FREE"
+                required
+                minLength={2}
+                className={`${inputClass} font-mono`}
+              />
+              <p className="text-[10px] text-[#8AAABB] mt-1">Human-readable, e.g. CREATOR-NAME or PRESS-2026</p>
+            </div>
+            <div>
+              <label className="text-[11px] font-sans font-600 uppercase tracking-[1.5px] text-[#8AAABB] block mb-1.5">Plan tier</label>
+              <select
+                value={form.plan_tier}
+                onChange={(e) => setForm({ ...form, plan_tier: e.target.value })}
+                className={inputClass}
+              >
+                <option value="ugc">UGC Creator ($27/mo)</option>
+                <option value="ugc_influencer">UGC + Influencer ($39/mo)</option>
+                <option value="agency">Agency Starter ($149/mo)</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[11px] font-sans font-600 uppercase tracking-[1.5px] text-[#8AAABB] block mb-1.5">Duration</label>
+              <select
+                value={form.duration_months === null ? "lifetime" : String(form.duration_months)}
+                onChange={(e) => setForm({ ...form, duration_months: e.target.value === "lifetime" ? null : parseInt(e.target.value) })}
+                className={inputClass}
+              >
+                <option value="1">1 month</option>
+                <option value="3">3 months</option>
+                <option value="6">6 months</option>
+                <option value="12">12 months (1 year)</option>
+                <option value="lifetime">Lifetime</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-sans font-600 uppercase tracking-[1.5px] text-[#8AAABB] block mb-1.5">Max uses</label>
+              <input
+                type="number"
+                min="1"
+                value={form.max_uses === null ? "" : form.max_uses}
+                onChange={(e) => setForm({ ...form, max_uses: e.target.value ? parseInt(e.target.value) : null })}
+                placeholder="1 (leave empty for unlimited)"
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-sans font-600 uppercase tracking-[1.5px] text-[#8AAABB] block mb-1.5">Notes (internal only)</label>
+            <input
+              type="text"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="e.g. Gift for Brianna Cole — 3-month Influencer comp"
+              className={inputClass}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={submitting || !form.code}
+            className="bg-[#1E3F52] text-white rounded-[8px] px-5 py-2 text-[13px] font-sans hover:bg-[#2a5269] disabled:opacity-50"
+            style={{ fontWeight: 600 }}
+          >
+            {submitting ? "Creating..." : "Create code"}
+          </button>
+        </form>
+      )}
+
+      {loading ? (
+        <div className="text-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#D8E8EE] border-t-[#7BAFC8] mx-auto" /></div>
+      ) : codes.length === 0 ? (
+        <div className="text-center py-12 bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px]">
+          <p className="text-[14px] font-sans text-[#8AAABB]">No gift codes yet. Create your first one above.</p>
+        </div>
+      ) : (
+        <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] overflow-hidden">
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_100px] gap-4 px-5 py-3 bg-[#F0EAE0] text-[10px] font-sans uppercase tracking-[2px] text-[#8AAABB] border-b border-[#D8E8EE]" style={{ fontWeight: 600 }}>
+            <span>Code</span>
+            <span>Tier</span>
+            <span>Duration</span>
+            <span>Uses</span>
+            <span>Status</span>
+            <span></span>
+          </div>
+          {codes.map((c) => (
+            <div key={c.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_100px] gap-4 px-5 py-3 border-b border-[#EEE8E0] last:border-b-0 items-center">
+              <div>
+                <div className="flex items-center gap-2">
+                  <code className="font-mono text-[13px] text-[#1A2C38]" style={{ fontWeight: 600 }}>{c.code}</code>
+                  <button
+                    onClick={() => copyCode(c.code, c.id)}
+                    className="text-[11px] text-[#7BAFC8] hover:underline"
+                  >
+                    {copiedId === c.id ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+                {c.notes && <p className="text-[11px] text-[#8AAABB] mt-0.5">{c.notes}</p>}
+              </div>
+              <span className="text-[12px] font-sans text-[#4A6070]">
+                {c.plan_tier === "ugc_influencer" ? "Influencer" : c.plan_tier === "ugc" ? "UGC" : "Agency"}
+              </span>
+              <span className="text-[12px] font-sans text-[#4A6070]">
+                {c.duration_months ? `${c.duration_months} mo` : "Lifetime"}
+              </span>
+              <span className="text-[12px] font-sans text-[#4A6070]">
+                {c.uses_count}{c.max_uses ? ` / ${c.max_uses}` : " / ∞"}
+              </span>
+              <span>
+                <span className={`text-[11px] uppercase tracking-wide px-2 py-0.5 rounded-full inline-block ${c.active ? "bg-[#E8F4EE] text-[#3D7A58]" : "bg-[#F4EAEA] text-[#A03D3D]"}`} style={{ fontWeight: 600 }}>
+                  {c.active ? "Active" : "Off"}
+                </span>
+              </span>
+              <button
+                onClick={() => toggleActive(c.id, !c.active)}
+                className="text-[11px] font-sans text-[#4A6070] hover:text-[#1A2C38]"
+              >
+                {c.active ? "Deactivate" : "Activate"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

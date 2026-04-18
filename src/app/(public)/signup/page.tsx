@@ -72,6 +72,8 @@ function SignUpContent() {
   const [error, setError] = useState("");
   const [referrerName, setReferrerName] = useState<string | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showGiftCodeField, setShowGiftCodeField] = useState(false);
+  const [giftCode, setGiftCode] = useState("");
 
   // Look up referrer name if ref code is present
   useEffect(() => {
@@ -160,6 +162,37 @@ function SignUpContent() {
         } catch (e) {
           console.error("Failed to track referral:", e);
         }
+      }
+    }
+
+    // ─── Gift code redemption (bypasses Stripe checkout) ─────
+    // If they entered a gift code, try to redeem it. On success, skip
+    // the /checkout redirect and send them to /onboarding with a paid tier.
+    if (giftCode.trim() && data.session?.access_token) {
+      try {
+        const redeemRes = await fetch("/api/gift-codes/redeem", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.session.access_token}`,
+          },
+          body: JSON.stringify({ code: giftCode.trim().toUpperCase() }),
+        });
+        const redeemData = await redeemRes.json();
+        if (redeemRes.ok && redeemData.ok) {
+          // Profile is already upgraded server-side — skip checkout.
+          setLoading(false);
+          router.push("/onboarding?gift=1");
+          return;
+        } else {
+          setError(redeemData.error || "Invalid gift code. Please check and try again, or remove the code to continue.");
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        setError("Failed to redeem gift code. Please try again.");
+        setLoading(false);
+        return;
       }
     }
 
@@ -313,6 +346,45 @@ function SignUpContent() {
               <div className="max-w-md mx-auto mt-4">
                 <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Agency / Company name</label>
                 <input type="text" value={agencyName} onChange={e => setAgencyName(e.target.value)} placeholder="Bright Talent Mgmt" className={inputClass} />
+              </div>
+            )}
+
+            {/* Gift code — skip checkout for comped accounts */}
+            {accountType && accountType !== "free" && (
+              <div className="max-w-md mx-auto mt-4">
+                {!showGiftCodeField ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowGiftCodeField(true)}
+                    className="text-[12px] font-sans text-[#7BAFC8] hover:underline"
+                  >
+                    Have a gift code?
+                  </button>
+                ) : (
+                  <div>
+                    <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">
+                      Gift code
+                    </label>
+                    <input
+                      type="text"
+                      value={giftCode}
+                      onChange={(e) => setGiftCode(e.target.value.toUpperCase().replace(/\s+/g, ""))}
+                      placeholder="BRI-FREE"
+                      className={inputClass}
+                      autoFocus
+                    />
+                    <p className="text-[11px] font-sans text-[#8AAABB] mt-1">
+                      Gift codes give you free access for a set period. You&apos;ll skip the payment step and can cancel anytime.{" "}
+                      <button
+                        type="button"
+                        onClick={() => { setShowGiftCodeField(false); setGiftCode(""); }}
+                        className="text-[#7BAFC8] hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

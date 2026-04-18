@@ -58,6 +58,9 @@ export async function GET(req: NextRequest) {
     results.graduated = graduated;
     console.log(`[Cron] Graduated ${graduated} expired referrals`);
 
+    // ── Phase 4: Gift code expiry ─────────────────────────────────
+    results.giftCodes = await processGiftCodeExpiry(sb);
+
     return NextResponse.json({ ok: true, ...results });
   } catch (err: any) {
     console.error("[Cron] Affiliate payouts error:", err);
@@ -211,4 +214,169 @@ async function processPayouts(sb: ReturnType<typeof createClient>) {
   }
 
   return { processed, failed, details };
+}
+
+/**
+ * Gift code lifecycle:
+ *   1. Send a 7-day warning email to users whose access expires within
+ *      the next 7 days (and hasn't already been warned).
+ *   2. Expire access — downgrade to free — when access_expires_at passes.
+ */
+async function processGiftCodeExpiry(sb: ReturnType<typeof createClient>) {
+  const now = new Date();
+  const sevenDaysOut = new Date(now.getTime() + 7 * 86400000);
+  const results: any = { warned: 0, expired: 0 };
+
+  // ── Phase A: Warning emails (7 days out) ──────────────────────
+  const { data: warningCandidates } = await sb
+    .from("gift_code_redemptions")
+    .select("id, user_id, access_expires_at, gift_codes(plan_tier)")
+    .is("expired_at", null)
+    .is("warning_email_sent_at", null)
+    .lte("access_expires_at", sevenDaysOut.toISOString())
+    .gt("access_expires_at", now.toISOString());
+
+  if (warningCandidates && warningCandidates.length > 0) {
+    for (const r of warningCandidates as any[]) {
+      try {
+        // Get user email
+        const { data: profile } = await sb
+          .from("profiles")
+          .select("email, full_name")
+          .eq("id", r.user_id)
+          .single();
+
+        if (!profile?.email) continue;
+
+        // Send email via internal /api/email route — bypass with direct Resend call
+        // so we don't need to round-trip through the app URL.
+        const resendKey = (process.env.RESEND_API_KEY || "").trim();
+        if (resendKey) {
+          const expiryDate = new Date(r.access_expires_at);
+          const daysLeft = Math.max(1, Math.ceil((expiryDate.getTime() - now.getTime()) / 86400000));
+          const fromAddress = (process.env.ADMIN_ALERT_FROM || "").trim() || "Create Suite <onboarding@resend.dev>";
+
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${resendKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: fromAddress,
+              to: [profile.email],
+              subject: `Your Create Suite gift access ends in ${daysLeft} days`,
+              html: buildWarningEmailHTML(profile.full_name || "there", daysLeft, expiryDate),
+            }),
+          });
+        }
+
+        // Mark as warned so we don't email again
+        await sb
+          .from("gift_code_redemptions")
+          .update({ warning_email_sent_at: now.toISOString() })
+          .eq("id", r.id);
+
+        results.warned++;
+      } catch (err: any) {
+        console.error(`[Cron] Gift warning email failed for redemption ${r.id}:`, err.message);
+      }
+    }
+  }
+
+  // ── Phase B: Expire access ─────────────────────────────────────
+  const { data: expired } = await sb
+    .from("gift_code_redemptions")
+    .select("id, user_id")
+    .is("expired_at", null)
+    .not("access_expires_at", "is", null)
+    .lte("access_expires_at", now.toISOString());
+
+  if (expired && expired.length > 0) {
+    for (const r of expired) {
+      try {
+        // Downgrade the user's profile to free. Only do this if they're
+        // not currently on a paid Stripe subscription (they might have
+        // subscribed during their gift period).
+        const { data: profile } = await sb
+          .from("profiles")
+          .select("stripe_subscription_id, subscription_status")
+          .eq("id", r.user_id)
+          .single();
+
+        const hasPaidSub =
+          profile?.stripe_subscription_id &&
+          (profile?.subscription_status === "active" || profile?.subscription_status === "trialing");
+
+        if (!hasPaidSub) {
+          await sb
+            .from("profiles")
+            .update({ account_type: "free", subscription_status: null })
+            .eq("id", r.user_id);
+        }
+
+        // Mark the redemption as expired regardless (so we don't retry).
+        await sb
+          .from("gift_code_redemptions")
+          .update({ expired_at: now.toISOString() })
+          .eq("id", r.id);
+
+        results.expired++;
+      } catch (err: any) {
+        console.error(`[Cron] Gift expiry failed for redemption ${r.id}:`, err.message);
+      }
+    }
+  }
+
+  return results;
+}
+
+function buildWarningEmailHTML(name: string, daysLeft: number, expiryDate: Date): string {
+  return `<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:0;background:#FAF8F4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
+      <div style="text-align:center;margin-bottom:32px;">
+        <h1 style="font-family:Georgia,serif;font-size:24px;color:#1A2C38;margin:0;">
+          Create<em style="color:#7BAFC8;font-style:italic;">Suite</em>
+        </h1>
+      </div>
+      <div style="background:white;border:1px solid #D8E8EE;border-radius:10px;padding:32px;">
+        <h2 style="font-family:Georgia,serif;font-size:22px;color:#1A2C38;margin:0 0 12px 0;">
+          Hey ${escapeHtml(name)},
+        </h2>
+        <p style="font-size:15px;color:#4A6070;line-height:1.6;margin:0 0 16px 0;">
+          Your complimentary Create Suite access ends in <strong style="color:#A03D3D;">${daysLeft} day${daysLeft === 1 ? "" : "s"}</strong>
+          on ${expiryDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}.
+        </p>
+        <p style="font-size:14px;color:#4A6070;line-height:1.6;margin:0 0 20px 0;">
+          After that, your account will switch to the Free plan. Your data stays with you —
+          deals, contracts, media kit, everything — but features like AI contract review, rate calculator,
+          and media kit will be locked behind an upgrade.
+        </p>
+        <p style="font-size:14px;color:#4A6070;line-height:1.6;margin:0 0 28px 0;">
+          Want to keep going? Subscribe anytime to continue uninterrupted.
+        </p>
+        <div style="text-align:center;">
+          <a href="https://createsuite.co/checkout?plan=ugc_influencer" style="display:inline-block;background:#1E3F52;color:white;text-decoration:none;padding:14px 28px;border-radius:10px;font-size:14px;font-weight:600;">
+            Continue with UGC + Influencer →
+          </a>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:12px;color:#8AAABB;margin-top:24px;">
+        Questions? Reply to this email or write to{" "}
+        <a href="mailto:hello@createsuite.co" style="color:#7BAFC8;">hello@createsuite.co</a>.
+      </p>
+    </div>
+  </body>
+</html>`;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
