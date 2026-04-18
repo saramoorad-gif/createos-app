@@ -364,7 +364,7 @@ function buildWarningEmailHTML(name: string, daysLeft: number, expiryDate: Date)
         </div>
       </div>
       <p style="text-align:center;font-size:12px;color:#8AAABB;margin-top:24px;">
-        Questions? Reply to this email or write to{" "}
+        Questions? Reply to this email or write to
         <a href="mailto:hello@createsuite.co" style="color:#7BAFC8;">hello@createsuite.co</a>.
       </p>
     </div>

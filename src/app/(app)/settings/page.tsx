@@ -207,6 +207,43 @@ function AccountSection({ profile, isAgency, inputClass, labelClass, labelStyle,
 function BillingSection({ profile }) {
   const { toast } = useToast();
   const [upgrading, setUpgrading] = useState(false);
+  const [showGiftField, setShowGiftField] = useState(false);
+  const [giftCode, setGiftCode] = useState("");
+  const [giftLoading, setGiftLoading] = useState(false);
+
+  async function redeemGiftCode() {
+    if (!giftCode.trim()) return;
+    setGiftLoading(true);
+    try {
+      const { getSupabase } = await import("@/lib/supabase");
+      const sb = getSupabase();
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session?.access_token) {
+        toast("error", "Please sign in first");
+        setGiftLoading(false);
+        return;
+      }
+      const res = await fetch("/api/gift-codes/redeem", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ code: giftCode.trim().toUpperCase() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        toast("success", "Gift code applied — your account has been upgraded!");
+        // Reload to reflect new account_type
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        toast("error", data.error || "Invalid gift code");
+      }
+    } catch (e) {
+      toast("error", "Could not apply gift code");
+    }
+    setGiftLoading(false);
+  }
 
   async function manage() {
     const cid = profile?.stripe_customer_id;
@@ -289,6 +326,42 @@ function BillingSection({ profile }) {
                 {profile?.stripe_customer_id ? "Manage billing" : "Upgrade plan"}
               </button>
             </div>
+          </div>
+
+          {/* Gift code redemption (for comp accounts) */}
+          <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-5">
+            {!showGiftField ? (
+              <button
+                onClick={() => setShowGiftField(true)}
+                className="text-[13px] font-sans text-[#7BAFC8] hover:underline"
+                style={{ fontWeight: 500 }}
+              >
+                Have a gift code?
+              </button>
+            ) : (
+              <div>
+                <p className="text-[12px] font-sans text-[#8AAABB] mb-2">
+                  Enter a gift code to upgrade your account for free.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={giftCode}
+                    onChange={(e) => setGiftCode(e.target.value.toUpperCase().replace(/\s+/g, ""))}
+                    placeholder="YOUR-CODE"
+                    className="flex-1 rounded-[8px] border-[1.5px] border-[#D8E8EE] px-3 py-2 text-[13px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8] font-mono"
+                  />
+                  <button
+                    onClick={redeemGiftCode}
+                    disabled={giftLoading || !giftCode.trim()}
+                    className="bg-[#1E3F52] text-white rounded-[8px] px-5 py-2 text-[13px] font-sans hover:bg-[#2a5269] disabled:opacity-50"
+                    style={{ fontWeight: 600 }}
+                  >
+                    {giftLoading ? "Applying..." : "Apply"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       ) : (

@@ -168,13 +168,49 @@ function SignUpContent() {
     // ─── Gift code redemption (bypasses Stripe checkout) ─────
     // If they entered a gift code, try to redeem it. On success, skip
     // the /checkout redirect and send them to /onboarding with a paid tier.
-    if (giftCode.trim() && data.session?.access_token) {
+    if (giftCode.trim()) {
       try {
+        // Get an auth token — signUp returns a session when email confirmation
+        // is off, but if it's on (Supabase default for new projects), data.session
+        // is null and we need to establish a session another way. Fall back to
+        // getSession() (which reads from the Supabase JS client's in-memory state)
+        // and as a final fallback, try signing the user in with the password they
+        // just typed.
+        let accessToken = data.session?.access_token;
+
+        if (!accessToken) {
+          const { data: currentSession } = await sb.auth.getSession();
+          accessToken = currentSession.session?.access_token;
+        }
+
+        if (!accessToken) {
+          const { data: signInData, error: signInError } = await sb.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (signInError) {
+            // Email confirmation is required. Tell the user clearly.
+            setError(
+              "Your account was created, but we couldn't apply the gift code automatically. " +
+              "Please check your email to confirm your account, then log in and enter the code in Settings."
+            );
+            setLoading(false);
+            return;
+          }
+          accessToken = signInData.session?.access_token;
+        }
+
+        if (!accessToken) {
+          setError("Could not apply gift code. Try logging in and redeeming it from Settings.");
+          setLoading(false);
+          return;
+        }
+
         const redeemRes = await fetch("/api/gift-codes/redeem", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${data.session.access_token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({ code: giftCode.trim().toUpperCase() }),
         });
