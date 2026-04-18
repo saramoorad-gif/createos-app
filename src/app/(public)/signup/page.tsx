@@ -154,6 +154,10 @@ function SignUpContent() {
       // email confirmation = ON prevents the client from having a
       // session at this moment, which would silently reject the
       // direct .insert() we used to do here.
+      //
+      // If the user entered a gift code, pass it along — the endpoint
+      // redeems it in the same call, so we don't need a client session
+      // for that either.
       const createRes = await fetch("/api/signup/create-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -164,6 +168,7 @@ function SignUpContent() {
           accountType,
           agencyName: accountType === "agency" ? agencyName : null,
           refCode: refCode || null,
+          giftCode: giftCode.trim() || null,
         }),
       });
 
@@ -180,6 +185,32 @@ function SignUpContent() {
         );
         setLoading(false);
         return;
+      }
+
+      // Check gift code result from the create-profile response.
+      const createData = await createRes.json().catch(() => ({}));
+      if (giftCode.trim() && createData.gift) {
+        if (createData.gift.ok) {
+          // Profile is already upgraded — skip Stripe checkout.
+          setLoading(false);
+          router.push("/onboarding?gift=1");
+          return;
+        } else {
+          const reasonMap: Record<string, string> = {
+            invalid_code: "That gift code doesn't exist.",
+            deactivated: "That gift code has been deactivated.",
+            code_expired: "That gift code has expired.",
+            max_uses_reached: "That gift code has reached its redemption limit.",
+            already_redeemed: "You've already redeemed this code.",
+            upgrade_failed: "Something went wrong applying the code. Please try again.",
+          };
+          setError(
+            reasonMap[createData.gift.reason || ""] ||
+            "Invalid gift code. Remove the code to continue without it."
+          );
+          setLoading(false);
+          return;
+        }
       }
 
       // Track the referral if one was used
@@ -199,72 +230,10 @@ function SignUpContent() {
       }
     }
 
-    // ─── Gift code redemption (bypasses Stripe checkout) ─────
-    // If they entered a gift code, try to redeem it. On success, skip
-    // the /checkout redirect and send them to /onboarding with a paid tier.
-    if (giftCode.trim()) {
-      try {
-        // Get an auth token — signUp returns a session when email confirmation
-        // is off, but if it's on (Supabase default for new projects), data.session
-        // is null and we need to establish a session another way. Fall back to
-        // getSession() (which reads from the Supabase JS client's in-memory state)
-        // and as a final fallback, try signing the user in with the password they
-        // just typed.
-        let accessToken = data.session?.access_token;
-
-        if (!accessToken) {
-          const { data: currentSession } = await sb.auth.getSession();
-          accessToken = currentSession.session?.access_token;
-        }
-
-        if (!accessToken) {
-          const { data: signInData, error: signInError } = await sb.auth.signInWithPassword({
-            email,
-            password,
-          });
-          if (signInError) {
-            // Email confirmation is required. Tell the user clearly.
-            setError(
-              "Your account was created, but we couldn't apply the gift code automatically. " +
-              "Please check your email to confirm your account, then log in and enter the code in Settings."
-            );
-            setLoading(false);
-            return;
-          }
-          accessToken = signInData.session?.access_token;
-        }
-
-        if (!accessToken) {
-          setError("Could not apply gift code. Try logging in and redeeming it from Settings.");
-          setLoading(false);
-          return;
-        }
-
-        const redeemRes = await fetch("/api/gift-codes/redeem", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ code: giftCode.trim().toUpperCase() }),
-        });
-        const redeemData = await redeemRes.json();
-        if (redeemRes.ok && redeemData.ok) {
-          // Profile is already upgraded server-side — skip checkout.
-          setLoading(false);
-          router.push("/onboarding?gift=1");
-          return;
-        } else {
-          setError(redeemData.error || "Invalid gift code. Please check and try again, or remove the code to continue.");
-          setLoading(false);
-          return;
-        }
-      } catch (e) {
-        setError("Failed to redeem gift code. Please try again.");
-        setLoading(false);
-        return;
-      }
-    }
+    // Gift code redemption now happens inside /api/signup/create-profile
+    // (server-side, using the service role) — no client session required.
+    // The result was already checked above and the client routed to
+    // /onboarding?gift=1 on success, or surfaced the error and stopped.
 
     setLoading(false);
 
