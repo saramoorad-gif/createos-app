@@ -33,11 +33,11 @@ const pipelineRows = [
 // ─── Feature grid cells ─────────────────────────────────────────
 const featureCells = [
   { wide: true, accent: true, num: "01", title: <>Contract <em>templates</em></>, desc: "UGC, Influencer, Ambassador, Usage Rights — vetted templates with live preview, ready in a minute.", flag: "New" },
-  { num: "02", title: <>Rate <em>calculator</em></>, desc: "Auto-fills from your stats. AI suggests rates based on your niche, followers, and engagement." },
+  { num: "02", title: <>Rate <em>calculator</em></>, desc: "Auto-fills from your stats. Suggests rates based on your niche, followers, and engagement." },
   { num: "03", title: "Exclusivity tracker", desc: "Every active clause with progress bars, expiry dates, and pre-deal conflict warnings." },
-  { dark: true, num: "04", title: <>AI <em>contract review</em></>, desc: "Paste any contract — get instant analysis with red flags, missing clauses, and specific negotiation tips.", flag: "AI" },
+  { dark: true, num: "04", title: <>Contract <em>review</em></>, desc: "Paste any contract — get instant analysis with red flags, missing clauses, and specific negotiation tips.", flag: "New" },
   { num: "05", title: "Task management", desc: "Track deliverables, deadlines, and follow-ups. Priorities, due dates, overdue alerts." },
-  { num: "06", title: "Brand Radar", desc: "AI matches you with brands hiring creators in your niche, based on your rate card and history." },
+  { num: "06", title: "Brand Radar", desc: "Matches you with brands hiring creators in your niche, based on your rate card and history." },
   { num: "07", title: <>Income <em>journal</em></>, desc: "Affiliate links, Stan Store, brand deals — every stream tracked, tax-ready exports for your CPA." },
   { num: "08", title: "Agency mode", desc: "Roster dashboard, shared templates, commission splits, and per-creator P&L for talent managers." },
 ];
@@ -58,7 +58,7 @@ const pricingTiers = [
     desc: "For UGC creators running a real business.",
     features: [
       "Unlimited deal pipeline",
-      "AI contract review",
+      "Contract review",
       "Gmail deal scanner",
       "Rate calculator",
       "Media kit builder",
@@ -147,7 +147,7 @@ export default function HomePage() {
                 <span className="px-2 py-0.5 rounded-full bg-[#7BAFC8] text-white text-[10px] font-semibold tracking-widest uppercase">
                   New
                 </span>
-                <span>Claude · AI Deal Scanner for Gmail</span>
+                <span>Gmail deal scanner — now live</span>
               </div>
 
               <h1
@@ -185,7 +185,7 @@ export default function HomePage() {
               <div className="mt-8 pt-5 border-t border-[#D8E8EE] flex gap-6 flex-wrap font-mono text-[11.5px] text-[#8AAABB] tracking-wider">
                 <span>
                   <span className="pulse-dot" />
-                  AI contract review
+                  Contract review in 9 seconds
                 </span>
                 <span>Gmail read-only · secure</span>
                 <span>Cancel in 1 click</span>
@@ -275,19 +275,19 @@ export default function HomePage() {
       {/* ══════════════════════ LOGO MARQUEE ══════════════════════ */}
       <div className="py-5 bg-[#F4F1EA] border-y border-[#E3DED2] overflow-hidden">
         <div className="logos-track">
-          <span>AI contract review in 9 seconds</span>
-          <span>Gmail deal scanner — Claude-powered</span>
+          <span>Contract review in 9 seconds</span>
+          <span>Gmail deal scanner</span>
           <span>Tax-ready income export</span>
           <span>Built for UGC creators + influencers</span>
           <span>Agency mode with commission tracking</span>
-          <span>SOC 2 · Read-only Gmail</span>
+          <span>Gmail read-only · secure by default</span>
           {/* duplicate for seamless loop */}
-          <span>AI contract review in 9 seconds</span>
-          <span>Gmail deal scanner — Claude-powered</span>
+          <span>Contract review in 9 seconds</span>
+          <span>Gmail deal scanner</span>
           <span>Tax-ready income export</span>
           <span>Built for UGC creators + influencers</span>
           <span>Agency mode with commission tracking</span>
-          <span>SOC 2 · Read-only Gmail</span>
+          <span>Gmail read-only · secure by default</span>
         </div>
       </div>
 
@@ -391,7 +391,7 @@ export default function HomePage() {
               </h2>
             </div>
             <div className="text-[16px] leading-[1.5] max-w-[50ch] pb-1.5" style={{ color: "rgba(255,255,255,.65)" }}>
-              Claude reads every clause, flags exclusivity traps, perpetual IP grabs, and payment risk, then drafts plain-English redlines tuned to your history.
+              Every clause flagged, every exclusivity trap surfaced, perpetual IP grabs called out, and plain-English redlines drafted in your voice.
             </div>
           </div>
 
@@ -455,7 +455,7 @@ export default function HomePage() {
               <div className="head">
                 <span>
                   <span className="stat-dot" />
-                  Live review · Claude
+                  Live contract review
                 </span>
                 <span>Sample contract · 03:18pm</span>
               </div>
@@ -584,7 +584,7 @@ export default function HomePage() {
               </h2>
             </div>
             <div className="text-[16px] leading-[1.5] text-[#4A6070] max-w-[50ch] pb-1.5">
-              Start free. Upgrade when the first deal lands. Every paid plan includes AI contract review, Gmail scanner, and the template library.
+              Start free. Upgrade when the first deal lands. Every paid plan includes contract review, Gmail scanner, and the template library.
             </div>
           </div>
 
@@ -673,7 +673,7 @@ export default function HomePage() {
                 Create<em className="italic text-[#3D6E8A]">Suite.</em>
               </div>
               <p className="max-w-[32ch] text-[#4A6070] text-[13px] mt-2.5 leading-[1.5]">
-                The operating system for creators. Tracks deals, reviews contracts, handles commissions — all with AI.
+                The operating system for creators. Deals, contracts, invoices, and your roster — all in one place.
               </p>
             </div>
 
@@ -734,7 +734,7 @@ export default function HomePage() {
 
           <div className="flex justify-between items-center pt-5 font-mono text-[11px] text-[#8AAABB] tracking-wider">
             <span>© 2026 CREATE SUITE LLC</span>
-            <span>POWERED BY CLAUDE</span>
+            <span>MADE FOR CREATORS</span>
           </div>
         </div>
       </footer>
