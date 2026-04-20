@@ -197,49 +197,40 @@ export default function DealsPage() {
 
       {/* Free tier usage banner */}
       {isFreeTier && (
-        <div className={`mb-6 rounded-[10px] p-4 flex items-center gap-3 ${
-          deals.length >= FREE_TIER_DEAL_LIMIT
-            ? "bg-[#F4EAEA] border-[1.5px] border-[#A03D3D]/20"
-            : "bg-gradient-to-r from-[#1E3F52] to-[#2a5269]"
-        }`}>
-          <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-            deals.length >= FREE_TIER_DEAL_LIMIT ? "bg-[#A03D3D]/10" : "bg-white/10"
-          }`}>
-            {deals.length >= FREE_TIER_DEAL_LIMIT ? (
-              <Lock className="h-4 w-4 text-[#A03D3D]" />
-            ) : (
-              <Sparkles className="h-4 w-4 text-[#7BAFC8]" />
-            )}
+        deals.length >= FREE_TIER_DEAL_LIMIT ? (
+          <div className="app-alert danger mb-6" style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: 14, cursor: "default" }}>
+            <Lock className="h-5 w-5" style={{ color: "var(--danger)" }} />
+            <div>
+              <span className="al-head">You&apos;ve reached your deal limit</span>
+              <span className="al-sub" style={{ textTransform: "none", letterSpacing: 0, fontFamily: "inherit", fontSize: 12 }}>
+                Upgrade to UGC Creator for unlimited deals, AI features, and more.
+              </span>
+            </div>
+            <Link href="/checkout?plan=ugc" className="bg-[#A03D3D] text-white rounded-[8px] px-4 py-2 text-[12px] font-medium hover:bg-[#8B2F2F] transition-colors whitespace-nowrap">
+              Upgrade — $27/mo →
+            </Link>
           </div>
-          <div className="flex-1">
-            <p className={`text-[13px] font-sans ${deals.length >= FREE_TIER_DEAL_LIMIT ? "text-[#A03D3D]" : "text-white"}`} style={{ fontWeight: 600 }}>
-              {deals.length >= FREE_TIER_DEAL_LIMIT ? "You've reached your deal limit" : `Free plan: ${deals.length} of ${FREE_TIER_DEAL_LIMIT} deals used`}
-            </p>
-            <p className={`text-[12px] font-sans ${deals.length >= FREE_TIER_DEAL_LIMIT ? "text-[#A03D3D]/70" : "text-white/60"}`}>
-              Upgrade to UGC Creator for unlimited deals, AI features, and more.
-            </p>
+        ) : (
+          <div className="ai-banner mb-6">
+            <span className="ic"><Sparkles className="h-4 w-4" /></span>
+            <div>
+              <div className="l">Free plan</div>
+              <div className="t">{deals.length} of {FREE_TIER_DEAL_LIMIT} deals used — upgrade for unlimited deals + AI features.</div>
+            </div>
+            <Link href="/checkout?plan=ugc" className="bg-white/15 text-white rounded-[8px] px-4 py-2 text-[12px] font-medium hover:bg-white/25 transition-colors whitespace-nowrap">
+              Upgrade — $27/mo →
+            </Link>
           </div>
-          <Link
-            href="/checkout?plan=ugc"
-            className={`flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-[12px] font-sans transition-colors ${
-              deals.length >= FREE_TIER_DEAL_LIMIT
-                ? "bg-[#A03D3D] text-white hover:bg-[#8B2F2F]"
-                : "bg-white/15 text-white hover:bg-white/25"
-            }`}
-            style={{ fontWeight: 600 }}
-          >
-            Upgrade — $27/mo <ChevronRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
+        )
       )}
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-1">
           {filters.map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key)} className={`px-3 py-1.5 text-[10px] font-sans uppercase tracking-[1.5px] rounded-full transition-colors ${filter === f.key ? "bg-[#1E3F52] text-white" : "text-[#8AAABB] hover:text-[#1A2C38] hover:bg-[#F2F8FB]"}`} style={{ fontWeight: 500 }}>{f.label}</button>
+            <button key={f.key} onClick={() => setFilter(f.key)} className={`px-3 py-1.5 text-[11px] font-mono uppercase tracking-[0.12em] rounded-full transition-colors ${filter === f.key ? "bg-[#0F1E28] text-white" : "text-[#8AAABB] hover:text-[#0F1E28] hover:bg-[#F2F8FB]"}`}>{f.label}</button>
           ))}
         </div>
-        <button onClick={openNew} className="flex items-center gap-1.5 bg-[#1E3F52] text-white rounded-[8px] px-4 py-2 text-[12px] font-sans hover:bg-[#2a5269] transition-colors" style={{ fontWeight: 600 }}><Plus className="h-3.5 w-3.5" /> New deal</button>
+        <button onClick={openNew} className="flex items-center gap-1.5 bg-[#0F1E28] text-white rounded-[8px] px-4 py-2 text-[12px] font-medium hover:bg-[#1b2f3a] transition-colors"><Plus className="h-3.5 w-3.5" /> New deal</button>
       </div>
 
       {deals.length === 0 ? (
@@ -274,7 +265,7 @@ export default function DealsPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <span className="text-[10px] font-sans uppercase tracking-[1.5px] text-[#8AAABB]" style={{ fontWeight: 500 }}>{stageLabels[deal.stage]}</span>
+                      <span className={`stage-pill-full ${deal.stage}`}>{stageLabels[deal.stage]}</span>
                       {deal.deliverables && <span className="text-[12px] font-sans text-[#8AAABB] truncate max-w-[300px]">{deal.deliverables}</span>}
                     </div>
                     <div className="flex items-center gap-3">

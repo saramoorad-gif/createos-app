@@ -1,11 +1,9 @@
 "use client";
 
-import { PageHeader } from "@/components/layout/page-header";
 import { useSupabaseQuery } from "@/lib/hooks";
 import { useAuth } from "@/contexts/auth-context";
 import { formatCurrency, formatDate, timeAgo } from "@/lib/utils";
-import Link from "next/link";
-import { AlertTriangle, Clock, FileText, Users, TrendingUp, CheckCircle2, ArrowRight } from "lucide-react";
+import { CheckCircle2, ArrowRight, Briefcase, Users, Plus, Target, BarChart3 } from "lucide-react";
 import { DashboardSkeleton } from "@/components/global/skeleton";
 
 interface Deal {
@@ -52,11 +50,11 @@ interface CreatorLink {
   status: string;
 }
 
-const priorityColors: Record<string, string> = {
-  urgent: "bg-[#A03D3D]",
-  warning: "bg-[#A07830]",
-  info: "bg-[#7BAFC8]",
-  success: "bg-[#3D7A58]",
+const priorityToAlert: Record<string, "danger" | "warn" | "info"> = {
+  urgent: "danger",
+  warning: "warn",
+  info: "info",
+  success: "info",
 };
 
 export function AgencyHome({ onNavigate }: { onNavigate: (tab: string) => void }) {
@@ -112,175 +110,206 @@ export function AgencyHome({ onNavigate }: { onNavigate: (tab: string) => void }
     return <DashboardSkeleton />;
   }
 
+  const hour = now.getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
   return (
-    <div>
-      <PageHeader
-        headline={<>Good morning, <em className="italic text-[#7BAFC8]">{displayName}</em></>}
-        subheading="Here's what's happening across your roster today."
-        stats={[
-          { value: formatCurrency(totalPipeline), label: "Pipeline value" },
-          { value: String(activeDeals.length), label: "Active deals" },
-          { value: String(activeCreators), label: "Creators" },
-          { value: overdueInvoices.length > 0 ? String(overdueInvoices.length) : "0", label: "Overdue" },
-        ]}
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
-        {/* Main content */}
-        <div className="space-y-8">
-          {/* Action items */}
-          {actionItems.length > 0 && (
-            <div>
-              <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>
-                NEEDS ATTENTION ({actionItems.length})
-              </p>
-              <div className="space-y-2">
-                {actionItems.slice(0, 6).map((item, i) => (
-                  <button
-                    key={i}
-                    onClick={() => onNavigate(item.tab)}
-                    className="w-full text-left bg-white border-[1.5px] border-[#D8E8EE] rounded-card p-4 hover:border-[#7BAFC8] hover:shadow-card transition-all flex items-center gap-3"
-                  >
-                    <div className={`w-[3px] h-10 rounded-full ${priorityColors[item.priority]}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-sans text-[#1A2C38]" style={{ fontWeight: 500 }}>{item.text}</p>
-                      <p className="text-[12px] font-sans text-[#8AAABB] mt-0.5">{item.detail}</p>
-                    </div>
-                    <span className="text-[12px] font-sans text-[#7BAFC8] flex-shrink-0" style={{ fontWeight: 500 }}>
-                      {item.action} <ArrowRight className="h-3 w-3 inline" />
-                    </span>
-                  </button>
-                ))}
-                {actionItems.length > 6 && (
-                  <p className="text-[12px] font-sans text-[#7BAFC8] mt-2" style={{ fontWeight: 500 }}>
-                    +{actionItems.length - 6} more items
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {actionItems.length === 0 && (
-            <div className="bg-[#E8F4EE] border-[1.5px] border-[#3D7A58]/20 rounded-card p-4 flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-[#3D7A58] flex-shrink-0" />
-              <p className="text-[13px] font-sans text-[#3D7A58]" style={{ fontWeight: 500 }}>All clear — no urgent items right now.</p>
-            </div>
-          )}
-
-          {/* Pipeline snapshot */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB]" style={{ fontWeight: 600 }}>PIPELINE SNAPSHOT</p>
-              <button onClick={() => onNavigate("pipeline")} className="text-[12px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>View all →</button>
-            </div>
-            {activeDeals.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {activeDeals.slice(0, 4).map(deal => (
-                  <div key={deal.id} className="bg-white border-[1.5px] border-[#D8E8EE] rounded-card p-4 hover:border-[#7BAFC8] transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[14px] font-sans text-[#1A2C38]" style={{ fontWeight: 600 }}>{deal.brand_name}</p>
-                      <p className="text-[16px] font-serif text-[#3D6E8A]">{formatCurrency(deal.value)}</p>
-                    </div>
-                    <p className="text-[12px] font-sans text-[#8AAABB] mb-2">{deal.deliverables}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-sans uppercase tracking-[4px] px-2 py-0.5 rounded bg-[#F2F8FB] text-[#3D6E8A]" style={{ fontWeight: 700 }}>
-                        {deal.stage.replace(/_/g, " ")}
-                      </span>
-                      {deal.due_date && <span className="text-[11px] font-mono text-[#8AAABB]">{formatDate(deal.due_date)}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-white border-[1.5px] border-[#D8E8EE] rounded-card">
-                <p className="text-[14px] font-serif italic text-[#8AAABB]">No active deals</p>
-                <button onClick={() => onNavigate("pipeline")} className="text-[13px] font-sans text-[#7BAFC8] hover:underline mt-2" style={{ fontWeight: 500 }}>Create a deal →</button>
-              </div>
-            )}
-          </div>
-
-          {/* Recent activity */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB]" style={{ fontWeight: 600 }}>RECENT ACTIVITY</p>
-              <button onClick={() => onNavigate("team")} className="text-[12px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>View all →</button>
-            </div>
-            {activity.length > 0 ? (
-              <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-card overflow-hidden">
-                {activity.slice(0, 5).map(entry => (
-                  <div key={entry.id} className="flex items-center gap-3 px-4 py-3 border-b border-[#EEE8E0] last:border-b-0 hover:bg-[#F7F4F0] transition-colors">
-                    <div className="h-2 w-2 rounded-full bg-[#7BAFC8] flex-shrink-0" />
-                    <p className="text-[13px] font-sans text-[#1A2C38] flex-1">{entry.action_type.replace(/_/g, " ")}</p>
-                    <span className="text-[11px] font-mono text-[#8AAABB]">{timeAgo(entry.created_at)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[14px] font-serif italic text-[#8AAABB] text-center py-6">No recent activity</p>
-            )}
+    <div className="app-page">
+      <div className="wrap-app">
+        <div className="page-head">
+          <div className="left">
+            <h1>{greeting}, <em>{displayName}</em></h1>
+            <div className="meta">Here&apos;s what&apos;s happening across your roster today.</div>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <aside className="space-y-6">
-          {/* Quick actions */}
-          <div>
-            <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>QUICK ACTIONS</p>
-            <div className="space-y-2">
-              {[
-                { label: "+ New deal", tab: "pipeline" },
-                { label: "+ New campaign", tab: "campaigns" },
-                { label: "View roster", tab: "roster" },
-                { label: "Check conflicts", tab: "conflicts" },
-                { label: "View reports", tab: "reports" },
-              ].map(a => (
-                <button key={a.label} onClick={() => onNavigate(a.tab)} className="w-full text-left bg-white border-[1.5px] border-[#D8E8EE] rounded-card px-4 py-3 text-[13px] font-sans text-[#1A2C38] hover:border-[#7BAFC8] hover:shadow-card transition-all" style={{ fontWeight: 500 }}>
-                  {a.label}
-                </button>
-              ))}
-            </div>
+        {/* KPI row */}
+        <div className="kpi-row">
+          <div className="kpi">
+            <span className="l">Pipeline value</span>
+            <span className="v">{formatCurrency(totalPipeline)}</span>
           </div>
+          <div className="kpi">
+            <span className="l">Active deals</span>
+            <span className="v">{activeDeals.length}</span>
+          </div>
+          <div className="kpi">
+            <span className="l">Creators</span>
+            <span className="v">{activeCreators}</span>
+          </div>
+          <div className="kpi">
+            <span className="l">Overdue</span>
+            <span className="v">{overdueInvoices.length}</span>
+          </div>
+        </div>
 
-          {/* Pipeline health */}
+        <div className="dash-split">
+          {/* Main content */}
           <div>
-            <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>PIPELINE HEALTH</p>
-            <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-card p-4 space-y-3">
-              {[
-                { label: "On track", count: deals.filter(d => d.due_date && new Date(d.due_date) > now).length, color: "bg-[#3D7A58]" },
-                { label: "Due this week", count: upcomingDeadlines.length, color: "bg-[#A07830]" },
-                { label: "Overdue", count: deals.filter(d => d.due_date && new Date(d.due_date) < now && !["paid", "delivered"].includes(d.stage)).length, color: "bg-[#A03D3D]" },
-                { label: "Stale (14d+)", count: staleDeals.length, color: "bg-[#8AAABB]" },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
-                    <span className="text-[13px] font-sans text-[#1A2C38]">{item.label}</span>
-                  </div>
-                  <span className="text-[14px] font-serif text-[#1A2C38]">{item.count}</span>
+            {/* Action items */}
+            {actionItems.length > 0 && (
+              <div className="block">
+                <div className="section-label-row">
+                  <span className="lbl">Needs attention ({actionItems.length})</span>
                 </div>
-              ))}
+                <div className="flex flex-col gap-2">
+                  {actionItems.slice(0, 6).map((item, i) => (
+                    <button
+                      key={i}
+                      onClick={() => onNavigate(item.tab)}
+                      className={`app-alert ${priorityToAlert[item.priority] || "info"} text-left`}
+                      style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: 12 }}
+                    >
+                      <div>
+                        <span className="al-head">{item.text}</span>
+                        <span className="al-sub" style={{ display: "block", marginTop: 4, textTransform: "none", letterSpacing: 0, fontFamily: "inherit", fontSize: 12 }}>
+                          {item.detail}
+                        </span>
+                      </div>
+                      <span className="text-[12px] font-sans font-medium text-[#3D6E8A] whitespace-nowrap">
+                        {item.action} <ArrowRight className="h-3 w-3 inline" />
+                      </span>
+                    </button>
+                  ))}
+                  {actionItems.length > 6 && (
+                    <p className="text-[12px] font-sans font-medium text-[#3D6E8A] mt-1">
+                      +{actionItems.length - 6} more items
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {actionItems.length === 0 && (
+              <div className="block">
+                <div className="app-alert info" style={{ background: "var(--success-bg)", borderColor: "color-mix(in oklab, var(--success) 20%, white)" }}>
+                  <span className="al-head" style={{ color: "var(--success)" }}>
+                    <CheckCircle2 className="h-4 w-4 inline mr-1" /> All clear
+                  </span>
+                  <span className="al-sub" style={{ color: "var(--success)", opacity: 0.9 }}>No urgent items right now.</span>
+                </div>
+              </div>
+            )}
+
+            {/* Pipeline snapshot */}
+            <div className="block">
+              <div className="section-label-row">
+                <span className="lbl">Pipeline snapshot</span>
+                <a onClick={() => onNavigate("pipeline")}>View all →</a>
+              </div>
+              {activeDeals.length > 0 ? (
+                <div className="active-deals">
+                  {activeDeals.slice(0, 4).map(deal => (
+                    <button key={deal.id} onClick={() => onNavigate("pipeline")} className="deal-card text-left">
+                      <div className="top">
+                        <span className="logo">{deal.brand_name.slice(0, 2).toUpperCase()}</span>
+                        <span className="val">{formatCurrency(deal.value)}</span>
+                      </div>
+                      <div className="brand">{deal.brand_name}</div>
+                      <div className="deliv">{deal.deliverables}</div>
+                      <div className="foot">
+                        <span className={`stage-pill-full ${deal.stage}`}>{deal.stage.replace(/_/g, " ")}</span>
+                        {deal.due_date && <span className="due">{formatDate(deal.due_date)}</span>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="panel panel-padded text-center py-8">
+                  <p className="font-serif italic text-[#8AAABB]">No active deals</p>
+                  <button onClick={() => onNavigate("pipeline")} className="text-[13px] font-sans font-medium text-[#3D6E8A] hover:underline mt-2">Create a deal →</button>
+                </div>
+              )}
+            </div>
+
+            {/* Recent activity */}
+            <div className="block">
+              <div className="section-label-row">
+                <span className="lbl">Recent activity</span>
+                <a onClick={() => onNavigate("team")}>View all →</a>
+              </div>
+              {activity.length > 0 ? (
+                <div className="panel deadlines-list">
+                  {activity.slice(0, 5).map(entry => (
+                    <div key={entry.id} className="item">
+                      <span className="ic"><BarChart3 className="h-4 w-4" /></span>
+                      <div>
+                        <div className="t">{entry.action_type.replace(/_/g, " ")}</div>
+                      </div>
+                      <span className="val" />
+                      <span className="days">{timeAgo(entry.created_at)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[14px] font-serif italic text-[#8AAABB] text-center py-6">No recent activity</p>
+              )}
             </div>
           </div>
 
-          {/* Revenue this month */}
-          <div>
-            <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>THIS MONTH</p>
-            <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-card p-4 space-y-3">
-              <div className="flex justify-between">
-                <span className="text-[12px] font-sans text-[#8AAABB]">Pipeline value</span>
-                <span className="text-[14px] font-serif text-[#1A2C38]">{formatCurrency(totalPipeline)}</span>
-              </div>
-              <div className="flex justify-between border-t border-[#D8E8EE] pt-3">
-                <span className="text-[12px] font-sans text-[#8AAABB]">Invoices paid</span>
-                <span className="text-[14px] font-serif text-[#3D7A58]">{formatCurrency(invoices.filter(i => i.status === "paid").reduce((s, i) => s + i.amount, 0))}</span>
-              </div>
-              <div className="flex justify-between border-t border-[#D8E8EE] pt-3">
-                <span className="text-[12px] font-sans text-[#8AAABB]">Outstanding</span>
-                <span className="text-[14px] font-serif text-[#A07830]">{formatCurrency(invoices.filter(i => i.status !== "paid").reduce((s, i) => s + i.amount, 0))}</span>
+          {/* Sidebar */}
+          <aside className="side-block space-y-6">
+            {/* Quick actions */}
+            <div className="block">
+              <div className="section-label-row"><span className="lbl">Quick actions</span></div>
+              <div className="quick-actions">
+                {[
+                  { label: "New deal", tab: "pipeline", icon: Plus },
+                  { label: "New campaign", tab: "campaigns", icon: Plus },
+                  { label: "View roster", tab: "roster", icon: Users },
+                  { label: "Check conflicts", tab: "conflicts", icon: Target },
+                  { label: "View reports", tab: "reports", icon: BarChart3 },
+                ].map(a => (
+                  <button key={a.label} onClick={() => onNavigate(a.tab)} className="quick-action text-left">
+                    <a.icon className="qi h-4 w-4" />
+                    {a.label}
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
-        </aside>
+
+            {/* Pipeline health — reuses funnel */}
+            <div className="block">
+              <div className="section-label-row"><span className="lbl">Pipeline health</span></div>
+              <div className="panel panel-padded funnel">
+                {[
+                  { label: "On track", count: deals.filter(d => d.due_date && new Date(d.due_date) > now).length, max: deals.length },
+                  { label: "Due this week", count: upcomingDeadlines.length, max: deals.length },
+                  { label: "Overdue", count: deals.filter(d => d.due_date && new Date(d.due_date) < now && !["paid", "delivered"].includes(d.stage)).length, max: deals.length },
+                  { label: "Stale (14d+)", count: staleDeals.length, max: deals.length },
+                ].map(item => {
+                  const pct = item.max > 0 ? (item.count / item.max) * 100 : 0;
+                  return (
+                    <div key={item.label} className="row">
+                      <span className="name">{item.label}</span>
+                      <span className="bar"><i style={{ width: `${pct}%` }} /></span>
+                      <span className="count">{item.count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Revenue this month */}
+            <div className="block">
+              <div className="section-label-row"><span className="lbl">This month</span></div>
+              <div className="panel panel-padded space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-[12px] font-mono uppercase tracking-wider text-[#8AAABB]">Pipeline</span>
+                  <span className="text-[16px] font-serif text-[#0F1E28]">{formatCurrency(totalPipeline)}</span>
+                </div>
+                <div className="flex justify-between border-t border-[#D8E8EE] pt-3">
+                  <span className="text-[12px] font-mono uppercase tracking-wider text-[#8AAABB]">Paid</span>
+                  <span className="text-[16px] font-serif text-[#3D7A58]">{formatCurrency(invoices.filter(i => i.status === "paid").reduce((s, i) => s + i.amount, 0))}</span>
+                </div>
+                <div className="flex justify-between border-t border-[#D8E8EE] pt-3">
+                  <span className="text-[12px] font-mono uppercase tracking-wider text-[#8AAABB]">Outstanding</span>
+                  <span className="text-[16px] font-serif text-[#A07830]">{formatCurrency(invoices.filter(i => i.status !== "paid").reduce((s, i) => s + i.amount, 0))}</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   );
