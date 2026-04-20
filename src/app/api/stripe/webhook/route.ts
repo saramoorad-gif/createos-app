@@ -35,7 +35,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  console.log(`[Stripe Webhook] Received event: ${event.type}`);
+  console.log(`[Stripe Webhook] Received event: ${event.type} (${event.id})`);
+
+  // Idempotency guard — Stripe retries webhook events if we don't ack
+  // within a few seconds. The commissions table already has a unique
+  // constraint on stripe_charge_id, but other side effects (profile
+  // upgrades, account-type flips, activity log rows) aren't constrained,
+  // so gate the whole handler on a seen-events check. If the INSERT
+  // succeeds we own this event; if it fails with 23505 we've already
+  // processed it and can no-op.
+  {
+    const sb = getSupabaseAdmin();
+    const { error: seenErr } = await sb
+      .from("stripe_webhook_events")
+      .insert({ event_id: event.id, type: event.type });
+    if (seenErr && seenErr.code === "23505") {
+      console.log(`[Stripe Webhook] ${event.id} already processed — no-op`);
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    // Any other error (table missing, RLS, etc.) — log but continue so
+    // a missing idempotency table doesn't break payments. The unique
+    // constraint on commissions.stripe_charge_id is still the hard guard.
+    if (seenErr) {
+      console.warn(`[Stripe Webhook] seen-events insert failed: ${seenErr.message} — proceeding without idempotency guard`);
+    }
+  }
 
   try {
     switch (event.type) {

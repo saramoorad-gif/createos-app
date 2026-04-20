@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { getCreatorNavLinks } from "@/lib/feature-gates";
 import { LogOut, Settings, Search, HelpCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NotificationBell } from "@/components/global/notification-panel";
 
 const agencyLinks = [
@@ -27,7 +27,18 @@ export function NavBar() {
   const router = useRouter();
   const { profile, signOut } = useAuth();
   const [showSearch, setShowSearch] = useState(false);
-  const [activeAgencyTab, setActiveAgencyTab] = useState("pipeline");
+  const [activeAgencyTab, setActiveAgencyTab] = useState("home");
+
+  // Keep the NavBar's active-tab underline in sync when the agency
+  // dashboard switches tabs from inside (e.g. AgencyHome → onNavigate).
+  useEffect(() => {
+    function onAgencyTab(e: Event) {
+      const tab = (e as CustomEvent).detail;
+      if (typeof tab === "string") setActiveAgencyTab(tab);
+    }
+    window.addEventListener("agency-tab", onAgencyTab);
+    return () => window.removeEventListener("agency-tab", onAgencyTab);
+  }, []);
 
   const isAgency = profile?.account_type === "agency";
   const displayName = profile?.full_name || "Creator";
@@ -63,13 +74,17 @@ export function NavBar() {
                   key={link.name}
                   onClick={() => {
                     setActiveAgencyTab(link.param);
-                    // Navigate to dashboard first if not already there
                     if (pathname !== "/dashboard") {
+                      // Queue the tab in sessionStorage; AgencyDashboard
+                      // reads + clears it on mount. This is reliable
+                      // regardless of how long the route transition takes
+                      // (the old setTimeout(100) could race mount).
+                      try {
+                        sessionStorage.setItem("cs:agency-tab", link.param);
+                      } catch {
+                        /* no-op */
+                      }
                       router.push("/dashboard");
-                      // Dispatch after navigation
-                      setTimeout(() => {
-                        window.dispatchEvent(new CustomEvent("agency-tab", { detail: link.param }));
-                      }, 100);
                     } else {
                       window.dispatchEvent(new CustomEvent("agency-tab", { detail: link.param }));
                     }

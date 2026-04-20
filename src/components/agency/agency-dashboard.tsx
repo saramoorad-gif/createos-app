@@ -31,6 +31,18 @@ export function AgencyDashboard() {
   const [activeTab, setActiveTab] = useState<AgencyTab>("home");
 
   useEffect(() => {
+    // If the NavBar queued a tab while on another page (so the event
+    // fired before this component was mounted), pick it up here.
+    try {
+      const queued = sessionStorage.getItem("cs:agency-tab");
+      if (queued && tabs.some((t) => t.key === queued)) {
+        setActiveTab(queued as AgencyTab);
+        sessionStorage.removeItem("cs:agency-tab");
+      }
+    } catch {
+      /* sessionStorage unavailable — no-op */
+    }
+
     function handleTabSwitch(e: Event) {
       const tab = (e as CustomEvent).detail as AgencyTab;
       if (tabs.some((t) => t.key === tab)) setActiveTab(tab);
@@ -41,6 +53,8 @@ export function AgencyDashboard() {
 
   function navigateTo(tab: string) {
     setActiveTab(tab as AgencyTab);
+    // Broadcast so NavBar keeps its active-tab underline in sync when
+    // the switch is triggered from inside the dashboard.
     window.dispatchEvent(new CustomEvent("agency-tab", { detail: tab }));
   }
 
