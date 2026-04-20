@@ -90,12 +90,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
-        console.error("Profile fetch error:", error);
-        logError({
-          source: "auth-context.fetchProfile",
-          message: error.message,
-          metadata: { userId, code: error.code },
-        });
+        // PGRST116 = "no rows" — expected during the signup race where
+        // Supabase auth state updates before /api/signup/create-profile
+        // has finished inserting the profile row. A subsequent
+        // refreshProfile() call will pick it up. Don't pollute error logs.
+        if (error.code !== "PGRST116") {
+          console.error("Profile fetch error:", error);
+          logError({
+            source: "auth-context.fetchProfile",
+            message: error.message,
+            metadata: { userId, code: error.code },
+          });
+        }
       }
       setProfile(data as Profile | null);
     } catch (e) {

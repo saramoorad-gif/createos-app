@@ -42,7 +42,14 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (existing) {
-      return NextResponse.json({ ok: true, alreadyExists: true });
+      // Profile already there — skip insert, but still attempt gift
+      // redemption if a code was provided. Otherwise a retry (same
+      // email, different session) would silently drop the gift.
+      let giftResult: any = null;
+      if (giftCode && typeof giftCode === "string" && giftCode.trim()) {
+        giftResult = await redeemGiftCodeForUser(sb, giftCode.trim().toUpperCase(), userId);
+      }
+      return NextResponse.json({ ok: true, alreadyExists: true, gift: giftResult });
     }
 
     // Generate a unique referral code (8-char uppercase).
@@ -77,7 +84,13 @@ export async function POST(req: NextRequest) {
       }
       // 23505 = unique violation — profile already exists (race condition).
       if (insertErr.code === "23505") {
-        return NextResponse.json({ ok: true, alreadyExists: true });
+        // Still redeem the gift code if one was supplied, same reason
+        // as the "existing" branch above.
+        let giftResult: any = null;
+        if (giftCode && typeof giftCode === "string" && giftCode.trim()) {
+          giftResult = await redeemGiftCodeForUser(sb, giftCode.trim().toUpperCase(), userId);
+        }
+        return NextResponse.json({ ok: true, alreadyExists: true, gift: giftResult });
       }
       return NextResponse.json(
         { error: "Failed to create profile", detail: insertErr.message },

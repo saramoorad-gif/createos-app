@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { isAdmin } from "@/lib/admin";
 import { logError } from "@/lib/error-logger";
+import { useAuth } from "@/contexts/auth-context";
 
 type AccountType = "free" | "ugc" | "ugc_influencer" | "agency";
 type Step = "credentials" | "tier";
@@ -50,6 +51,7 @@ const tierCards: {
 function SignUpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshProfile } = useAuth();
   const refCode = searchParams.get("ref");
   // Allow pre-selecting a plan via ?plan=free|ugc|ugc_influencer|agency (from /pricing CTAs).
   // "agency_starter" and "agency_growth" both map to "agency" for signup tier selection.
@@ -192,6 +194,8 @@ function SignUpContent() {
       if (giftCode.trim() && createData.gift) {
         if (createData.gift.ok) {
           // Profile is already upgraded — skip Stripe checkout.
+          // Refresh auth context so /onboarding sees the upgraded profile.
+          await refreshProfile?.();
           setLoading(false);
           router.push("/onboarding?gift=1");
           return;
@@ -235,6 +239,10 @@ function SignUpContent() {
     // The result was already checked above and the client routed to
     // /onboarding?gift=1 on success, or surfaced the error and stopped.
 
+    // Make sure auth context picks up the new profile row before we
+    // route — otherwise the destination page runs with profile=null
+    // and can bounce the user back to /login or show a skeleton forever.
+    await refreshProfile?.();
     setLoading(false);
 
     // Route based on tier selection
