@@ -44,13 +44,15 @@ interface Campaign {
   creators?: CampaignCreator[];
 }
 
+// In-memory shape used across the Campaigns tab. These are built client-side
+// from the roster + form inputs; they are NOT persisted as their own rows, so
+// the shape is camelCase to match how the UI reads/writes them in memory.
 interface CampaignCreator {
-  id: string;
-  campaign_id: string;
-  creator_id: string;
-  budget_allocation: number;
-  deliverables: any[];
+  creatorId: string;
+  name: string;
+  allocation: number;
   status: string;
+  deliverables: any[];
 }
 
 // Computed helpers (agencyCommission and completionPct are NOT real DB columns)
@@ -365,7 +367,7 @@ function OverviewSubTab({ campaign }: { campaign: Campaign }) {
       {/* Brief */}
       <div className="bg-white rounded-[10px] border border-[#D8E8EE] p-5">
         <SectionLabel>Campaign brief</SectionLabel>
-        <p className="text-sm font-sans text-[#1A2C38] leading-relaxed">{campaign.brief}</p>
+        <p className="text-sm font-sans text-[#1A2C38] leading-relaxed">{campaign.brief_text}</p>
       </div>
 
       {/* Brand contact */}
@@ -638,13 +640,15 @@ function BudgetSubTab({ campaign }: { campaign: Campaign }) {
 // ---------------------------------------------------------------------------
 function ReportSubTab({ campaign }: { campaign: Campaign }) {
   const [generated, setGenerated] = useState(false);
+  const { toast } = useToast();
+  const creators = campaign.creators || [];
 
-  const totalReach = campaign.creators.length * 185000; // simulated
+  const totalReach = creators.length * 185000; // simulated
   const deliverablesCompleted = Math.round(
-    campaign.creators.reduce((s, c) => s + c.deliverables.length, 0) *
+    creators.reduce((s, c) => s + c.deliverables.length, 0) *
       (getCompletionPct(campaign) / 100)
   );
-  const totalDeliverables = campaign.creators.reduce(
+  const totalDeliverables = creators.reduce(
     (s, c) => s + c.deliverables.length,
     0
   );
@@ -1105,7 +1109,7 @@ export function CampaignsTab() {
                     {camp.brand_name}
                   </h3>
                   <p className="text-[11px] font-sans text-[#8AAABB] mt-0.5">
-                    {camp.brand}
+                    {camp.brand_contact || ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -1154,9 +1158,9 @@ export function CampaignsTab() {
                   const template = {
                     name: camp.brand_name + " (Template)",
                     brand: "",
-                    brief: camp.brief,
-                    creatorCount: camp.creators.length,
-                    deliverables: camp.creators.map(c => ({
+                    brief: camp.brief_text || "",
+                    creatorCount: camp.creators?.length || 0,
+                    deliverables: (camp.creators || []).map(c => ({
                       role: c.name,
                       deliverables: c.deliverables,
                     })),

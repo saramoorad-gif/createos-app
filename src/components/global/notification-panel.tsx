@@ -157,7 +157,9 @@ export function NotificationBell() {
     { order: { column: "created_at", ascending: false }, limit: 50 }
   );
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // No persisted `read` flag on agency_activity_log; treat every row as
+  // a notification. Read-state is tracked in-session inside NotificationPanel.
+  const unreadCount = notifications.length;
 
   return (
     <div className="relative">
