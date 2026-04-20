@@ -35,8 +35,8 @@ export function NavBar() {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full h-[60px] flex items-center px-6 border-b border-[#D8E8EE]"
-      style={{ background: "rgba(250,248,244,.95)", backdropFilter: "blur(12px)" }}
+      className="sticky top-0 z-50 w-full h-[64px] flex items-center px-6 border-b border-[#D8E8EE]"
+      style={{ background: "rgba(250,248,244,.85)", backdropFilter: "saturate(160%) blur(14px)", WebkitBackdropFilter: "saturate(160%) blur(14px)" }}
     >
       {/* Left — Logo */}
       <Link href="/dashboard" className="flex-shrink-0 mr-6">
@@ -76,7 +76,7 @@ export function NavBar() {
                   }}
                   className={cn(
                     "px-3 py-1.5 text-[13px] font-sans font-500 transition-colors relative whitespace-nowrap",
-                    isActive ? "text-[#1A2C38]" : "text-[#8AAABB] hover:text-[#4A6070]"
+                    isActive ? "text-[#0F1E28] font-semibold" : "text-[#8AAABB] hover:text-[#4A6070]"
                   )}
                 >
                   {link.name}
@@ -93,7 +93,7 @@ export function NavBar() {
                   href={link.href}
                   className={cn(
                     "px-3 py-1.5 text-[13px] font-sans font-500 transition-colors relative whitespace-nowrap",
-                    isActive ? "text-[#1A2C38]" : "text-[#8AAABB] hover:text-[#4A6070]"
+                    isActive ? "text-[#0F1E28] font-semibold" : "text-[#8AAABB] hover:text-[#4A6070]"
                   )}
                 >
                   {link.name}
