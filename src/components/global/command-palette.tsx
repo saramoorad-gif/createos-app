@@ -58,10 +58,24 @@ export function CommandPalette() {
     if (e.key === "Escape") setOpen(false);
   }, []);
 
+  // The nav-bar search button + any other UI (e.g. /?k=open deep links)
+  // can trigger the palette via this custom event. Synthetic
+  // KeyboardEvents can't carry a real metaKey flag, so a dispatched
+  // "keydown" from JS wouldn't match the shortcut handler above.
+  const handleOpenEvent = useCallback(() => {
+    setOpen(true);
+    setQuery("");
+    setSelected(0);
+  }, []);
+
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+    window.addEventListener("cs:open-command-palette", handleOpenEvent);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("cs:open-command-palette", handleOpenEvent);
+    };
+  }, [handleKeyDown, handleOpenEvent]);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();

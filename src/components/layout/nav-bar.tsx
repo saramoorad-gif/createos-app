@@ -45,7 +45,7 @@ export function NavBar() {
 
       {/* Search — opens command palette */}
       <button
-        onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+        onClick={() => window.dispatchEvent(new CustomEvent("cs:open-command-palette"))}
         className="flex-shrink-0 mr-4 flex items-center gap-2 bg-white/60 border border-[#D8E8EE] rounded-[8px] px-3 py-1.5 text-[12px] font-sans text-[#8AAABB] hover:border-[#7BAFC8] hover:text-[#4A6070] transition-colors cursor-pointer"
       >
         <Search className="h-3.5 w-3.5" />

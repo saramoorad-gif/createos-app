@@ -217,10 +217,13 @@ function SignUpContent() {
         }
       }
 
-      // Track the referral if one was used
+      // Track the referral if one was used. Don't block signup if
+      // the track endpoint errors, but do log so we can catch it in
+      // the admin error dashboard — otherwise a broken referrals row
+      // is invisible until the Stripe webhook tries to fire on it.
       if (refCode) {
         try {
-          await fetch("/api/referrals/track", {
+          const trackRes = await fetch("/api/referrals/track", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -228,8 +231,20 @@ function SignUpContent() {
               referralCode: refCode.toUpperCase(),
             }),
           });
+          if (!trackRes.ok) {
+            const body = await trackRes.text().catch(() => "");
+            logError({
+              source: "signup.track-referral",
+              message: `Track referral returned ${trackRes.status}`,
+              metadata: { referredId: data.user.id, refCode, body: body.slice(0, 200) },
+            });
+          }
         } catch (e) {
-          console.error("Failed to track referral:", e);
+          logError({
+            source: "signup.track-referral",
+            message: e instanceof Error ? e.message : "Unknown error",
+            metadata: { referredId: data.user.id, refCode },
+          });
         }
       }
     }
@@ -250,9 +265,10 @@ function SignUpContent() {
     if (accountType === "free" || isAdmin(email)) {
       router.push("/onboarding");
     } else {
-      // Paid tiers → go to checkout first
-      // If they came from a referral and picked ugc_influencer, include the ref in checkout URL
-      const checkoutUrl = refCode && accountType === "ugc_influencer"
+      // Paid tiers → go to checkout first. Always forward the
+      // referral code (if any) so the discount banner renders and
+      // the ref reaches Stripe metadata regardless of plan.
+      const checkoutUrl = refCode
         ? `/checkout?plan=${accountType}&ref=${refCode.toUpperCase()}`
         : `/checkout?plan=${accountType}`;
       router.push(checkoutUrl);

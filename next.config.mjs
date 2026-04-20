@@ -7,6 +7,11 @@ const nextConfig = {
     // Skip type checking during builds — types verified locally
     ignoreBuildErrors: true,
   },
+  // Stripe ships ESM with cross-file imports webpack can't follow when it
+  // tries to bundle server code. Let Next require it at runtime instead.
+  experimental: {
+    serverComponentsExternalPackages: ["stripe"],
+  },
   async redirects() {
     return [
       {
