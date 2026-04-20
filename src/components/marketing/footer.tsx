@@ -6,58 +6,58 @@ const columns = [
     links: [
       { name: "Features", href: "/features" },
       { name: "Pricing", href: "/pricing" },
-      { name: "For Creators", href: "/for-creators" },
-      { name: "For Agencies", href: "/for-agencies" },
-      { name: "Help Center", href: "/help" },
+      { name: "Referral program", href: "/referral-program" },
+      { name: "Help center", href: "/help" },
     ],
   },
   {
-    title: "For Creators",
+    title: "For",
     links: [
-      { name: "Deal Pipeline", href: "/features" },
-      { name: "AI Contracts", href: "/features" },
-      { name: "Rate Calculator", href: "/features" },
-      { name: "Brand Radar", href: "/features" },
-      { name: "Media Kit", href: "/features" },
-      { name: "Invoicing", href: "/features" },
+      { name: "Creators", href: "/for-creators" },
+      { name: "Agencies", href: "/for-agencies" },
     ],
   },
   {
-    title: "For Agencies",
+    title: "Company",
     links: [
-      { name: "Roster Dashboard", href: "/features" },
-      { name: "Campaign Builder", href: "/features" },
-      { name: "Conflict Detection", href: "/features" },
-      { name: "Commission Tracking", href: "/features" },
-      { name: "Brand Reports", href: "/features" },
-      { name: "Internal Messaging", href: "/features" },
+      { name: "Contact", href: "/contact" },
+      { name: "FAQ", href: "/faq" },
     ],
   },
   {
     title: "Legal",
     links: [
-      { name: "Privacy Policy", href: "/privacy" },
-      { name: "Terms of Service", href: "/terms" },
-      { name: "Contact", href: "/contact" },
+      { name: "Terms", href: "/terms" },
+      { name: "Privacy", href: "/privacy" },
+      { name: "Affiliate Agreement", href: "/affiliate-agreement" },
     ],
   },
 ];
 
 export function MarketingFooter() {
   return (
-    <footer className="bg-[#F0EAE0] border-t border-[#DDD6C8]">
-      <div className="max-w-[1200px] mx-auto px-6 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+    <footer className="bg-[#FAF8F4] border-t border-[#E3DED2] pt-14 pb-6">
+      <div className="max-w-[1200px] mx-auto px-6">
+        <div className="grid grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)] gap-8 pb-10 border-b border-[#E3DED2]">
+          <div className="col-span-2 lg:col-span-1">
+            <div className="font-serif font-normal text-[40px] lg:text-[56px] tracking-[-0.02em] leading-[0.95] text-[#0F1E28]">
+              Create<em className="italic text-[#3D6E8A]">Suite.</em>
+            </div>
+            <p className="max-w-[32ch] text-[#4A6070] text-[13px] mt-2.5 leading-[1.5]">
+              The operating system for creators. Deals, contracts, invoices, and your roster — all in one place.
+            </p>
+          </div>
+
           {columns.map((col) => (
             <div key={col.title}>
-              <p className="text-[12px] font-sans font-600 uppercase tracking-[2px] text-[#4A6070] mb-4">
+              <h5 className="font-mono text-[10.5px] uppercase tracking-widest text-[#8AAABB] font-medium m-0 mb-3">
                 {col.title}
-              </p>
-              <ul className="space-y-2.5">
-                {col.links.map((l) => (
-                  <li key={l.name}>
-                    <Link href={l.href} className="text-[14px] font-sans text-[#4A6070] hover:text-[#1A2C38] transition-colors">
-                      {l.name}
+              </h5>
+              <ul className="list-none p-0 m-0 flex flex-col gap-2.5">
+                {col.links.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="text-[13.5px] text-[#4A6070] hover:text-[#0F1E28]">
+                      {link.name}
                     </Link>
                   </li>
                 ))}
@@ -66,11 +66,14 @@ export function MarketingFooter() {
           ))}
         </div>
 
-        <div className="border-t border-[#DDD6C8] pt-6 flex items-center justify-between">
-          <img src="/logo.svg" alt="Create Suite" className="h-7" />
-          <p className="text-[13px] font-sans text-[#8AAABB]">
-            &copy; 2026 Create Suite. All rights reserved.
-          </p>
+        {/* Giant outlined brand mark */}
+        <div className="foot-mark">
+          Create<em>Suite.</em>
+        </div>
+
+        <div className="flex justify-between items-center pt-5 font-mono text-[11px] text-[#8AAABB] tracking-wider">
+          <span>© 2026 CREATE SUITE LLC</span>
+          <span>MADE FOR CREATORS</span>
         </div>
       </div>
     </footer>

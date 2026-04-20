@@ -109,7 +109,7 @@ function SignUpContent() {
   }, [refCode]);
 
   const inputClass =
-    "w-full rounded-[10px] border border-[#D8E8EE] px-3 py-2.5 text-[13px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:ring-2 focus:ring-[#7BAFC8]/20 focus:border-[#7BAFC8]";
+    "w-full h-[44px] rounded-[8px] border border-[#D8E8EE] px-3.5 text-[14.5px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:ring-[3px] focus:ring-[#7BAFC8]/20 focus:border-[#7BAFC8] transition-all";
 
   function handleCredentialsNext(e: React.FormEvent) {
     e.preventDefault();
@@ -251,17 +251,26 @@ function SignUpContent() {
     }
   }
 
+  const labelClass =
+    "font-mono text-[10.5px] uppercase tracking-[0.14em] text-[#8AAABB] block mb-1.5";
+
   return (
-    <div className="min-h-screen bg-[#FAF8F4] flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-2xl">
-        {/* Referral banner */}
+    <div className="min-h-screen bg-[#FAF8F4] grid grid-cols-1 lg:grid-cols-2">
+      {/* ─── LEFT: FORM ─── */}
+      <div className="px-6 lg:px-16 py-12 lg:py-20 flex flex-col gap-7 justify-center max-w-[560px] w-full lg:ml-auto">
+        {/* Brand */}
+        <div className="font-serif text-[22px] tracking-[-0.01em] text-[#0F1E28]">
+          Create<em className="italic text-[#3D6E8A]">Suite.</em>
+        </div>
+
+        {/* Referral banner (preserved) */}
         {refCode && (
-          <div className="mb-6 bg-gradient-to-r from-[#1E3F52] to-[#2a5269] rounded-[10px] p-4 flex items-center gap-3">
+          <div className="bg-gradient-to-r from-[#0F1E28] to-[#1b2f3a] rounded-[10px] p-4 flex items-center gap-3">
             <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
               <span className="text-[16px]">🎁</span>
             </div>
             <div className="flex-1">
-              <p className="text-[13px] font-sans text-white" style={{ fontWeight: 600 }}>
+              <p className="text-[13px] font-sans text-white font-semibold">
                 {referrerName ? `${referrerName} invited you!` : "You've been invited!"}
               </p>
               <p className="text-[11px] font-sans text-white/70">
@@ -271,153 +280,202 @@ function SignUpContent() {
           </div>
         )}
 
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-[28px] font-serif text-[#1A2C38]">
-            create<em className="italic text-[#7BAFC8]">Suite</em>
-          </h1>
-          <p className="text-[13px] font-sans text-[#8AAABB] mt-1">
-            {step === "credentials" ? "Create your account" : "Choose your plan"}
-          </p>
+        <div className="section-num">
+          <span>{step === "credentials" ? "Create your workspace" : "Pick a plan"}</span>
+          <span className="line" />
         </div>
 
-        {/* Step 1 — Credentials */}
+        {/* Headline — changes per step */}
+        <h1
+          className="font-serif font-normal text-[38px] sm:text-[50px] lg:text-[60px] leading-none tracking-[-0.02em] text-[#0F1E28] m-0"
+          style={{ textWrap: "balance" as any }}
+        >
+          {step === "credentials" ? (
+            <>
+              Welcome to the
+              <br />
+              <em className="italic text-[#3D6E8A]">serious</em> part.
+            </>
+          ) : (
+            <>
+              Choose a <em className="italic text-[#3D6E8A]">plan</em>.
+            </>
+          )}
+        </h1>
+
         {step === "credentials" && (
-          <div className="max-w-md mx-auto">
-            <div className="bg-white border border-[#D8E8EE] rounded-[10px] p-6">
-              <form onSubmit={handleCredentialsNext} className="space-y-4">
-                {error && (
-                  <div className="flex items-center gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5">
-                    <span className="text-red-500 text-sm">&#9888;</span>
-                    <p className="text-[13px] font-sans text-red-700">{error}</p>
-                  </div>
-                )}
-                <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Full name</label>
-                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Brianna Cole" required className={inputClass} />
-                </div>
-                <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Email</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required className={inputClass} />
-                </div>
-                <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Password</label>
-                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 6 characters" required className={inputClass} />
-                </div>
-                <div>
-                  <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Confirm password</label>
-                  <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Confirm your password" required className={inputClass} />
-                </div>
-                <label className="flex items-start gap-2 cursor-pointer pt-1">
-                  <input
-                    type="checkbox"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-[1.5px] border-[#D8E8EE] text-[#7BAFC8] focus:ring-[#7BAFC8]/30"
-                  />
-                  <span className="text-[12px] font-sans text-[#4A6070] leading-relaxed">
-                    I agree to the{" "}
-                    <Link href="/terms" target="_blank" className="text-[#7BAFC8] hover:underline">
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" target="_blank" className="text-[#7BAFC8] hover:underline">
-                      Privacy Policy
-                    </Link>
-                    .
-                  </span>
-                </label>
-                <button
-                  className="w-full bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] transition-colors disabled:opacity-50"
-                  type="submit"
-                  disabled={!agreedToTerms}
-                >
-                  Continue &rarr;
-                </button>
-              </form>
-            </div>
+          <p className="text-[15px] text-[#4A6070] m-0 max-w-[40ch] leading-[1.5]">
+            Two minutes, no card. Gmail stays read-only. You stay in control.
+          </p>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5">
+            <span className="text-red-500 text-sm">⚠</span>
+            <p className="text-[13px] font-sans text-red-700 m-0">{error}</p>
           </div>
         )}
 
-        {/* Step 2 — Tier selection cards */}
-        {step === "tier" && (
-          <div>
-            {error && (
-              <div className="flex items-center gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5 mb-4 max-w-md mx-auto">
-                <span className="text-red-500 text-sm">&#9888;</span>
-                <p className="text-[13px] font-sans text-red-700">{error}</p>
+        {/* STEP 1 — CREDENTIALS */}
+        {step === "credentials" && (
+          <form onSubmit={handleCredentialsNext} className="flex flex-col gap-4">
+            <div>
+              <label className={labelClass}>Full name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Brianna Cole"
+                required
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                className={inputClass}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="6+ characters"
+                  required
+                  className={inputClass}
+                />
               </div>
-            )}
+              <div>
+                <label className={labelClass}>Confirm</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repeat password"
+                  required
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <label className="flex items-start gap-2 cursor-pointer pt-1">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-[1.5px] border-[#D8E8EE] text-[#7BAFC8] focus:ring-[#7BAFC8]/30"
+              />
+              <span className="text-[12px] font-sans text-[#4A6070] leading-relaxed">
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" className="text-[#3D6E8A] underline underline-offset-2">
+                  Terms
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" target="_blank" className="text-[#3D6E8A] underline underline-offset-2">
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+            <button
+              type="submit"
+              disabled={!agreedToTerms}
+              className="inline-flex items-center justify-center gap-2 bg-[#0F1E28] text-white font-sans font-medium text-[14px] h-[48px] rounded-[8px] hover:bg-[#1b2f3a] transition-colors disabled:opacity-40 mt-2"
+            >
+              Continue →
+            </button>
+          </form>
+        )}
 
+        {/* STEP 2 — TIER PICKER */}
+        {step === "tier" && (
+          <div className="flex flex-col gap-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {tierCards.map((tier) => (
                 <button
                   key={tier.key}
                   onClick={() => setAccountType(tier.key)}
-                  className={`text-left bg-white border rounded-[10px] p-5 transition-colors ${
+                  className={`text-left bg-white border rounded-[10px] p-5 transition-all ${
                     accountType === tier.key
-                      ? "border-[#7BAFC8] ring-1 ring-[#7BAFC8]/20"
-                      : "border-[#D8E8EE] hover:border-[#1A2C38]/20"
+                      ? "border-[#0F1E28] ring-[3px] ring-[#0F1E28]/10"
+                      : "border-[#D8E8EE] hover:border-[#0F1E28]/30"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[14px] font-sans font-600 text-[#1A2C38]">{tier.name}</span>
-                    <span className="text-[18px] font-serif text-[#7BAFC8]">{tier.price}</span>
+                  <div className="flex items-baseline justify-between mb-1">
+                    <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#8AAABB]">
+                      {tier.name}
+                    </span>
+                    <span className="font-serif text-[22px] text-[#0F1E28] tracking-[-0.02em]">
+                      {tier.price}
+                    </span>
                   </div>
-                  <p className="text-[12px] font-sans text-[#8AAABB] mb-3">{tier.tagline}</p>
-                  <div className="space-y-1.5">
+                  <p className="text-[13px] font-sans text-[#1A2C38] m-0 mb-3 font-medium">
+                    {tier.tagline}
+                  </p>
+                  <div className="flex flex-col gap-1">
                     {tier.features.map((f) => (
-                      <div key={f} className="flex items-start gap-2">
-                        <span className="text-[#3D7A58] text-xs mt-0.5">&#10003;</span>
-                        <span className="text-[11px] font-sans text-[#1A2C38]">{f}</span>
+                      <div key={f} className="flex items-start gap-1.5">
+                        <span className="text-[#7BAFC8] text-xs">✓</span>
+                        <span className="text-[11px] font-sans text-[#4A6070]">{f}</span>
                       </div>
                     ))}
                   </div>
-                  {accountType === tier.key && (
-                    <div className="mt-3 text-[#7BAFC8] text-sm">&#10003; Selected</div>
-                  )}
                 </button>
               ))}
             </div>
 
             {/* Agency name — conditional */}
             {accountType === "agency" && (
-              <div className="max-w-md mx-auto mt-4">
-                <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">Agency / Company name</label>
-                <input type="text" value={agencyName} onChange={e => setAgencyName(e.target.value)} placeholder="Bright Talent Mgmt" className={inputClass} />
+              <div>
+                <label className={labelClass}>Agency / Company name</label>
+                <input
+                  type="text"
+                  value={agencyName}
+                  onChange={(e) => setAgencyName(e.target.value)}
+                  placeholder="Bright Talent Mgmt"
+                  className={inputClass}
+                />
               </div>
             )}
 
-            {/* Gift code — skip checkout for comped accounts */}
+            {/* Gift code */}
             {accountType && accountType !== "free" && (
-              <div className="max-w-md mx-auto mt-4">
+              <div>
                 {!showGiftCodeField ? (
                   <button
                     type="button"
                     onClick={() => setShowGiftCodeField(true)}
-                    className="text-[12px] font-sans text-[#7BAFC8] hover:underline"
+                    className="text-[12px] font-sans text-[#3D6E8A] underline underline-offset-2 hover:text-[#0F1E28]"
                   >
                     Have a gift code?
                   </button>
                 ) : (
                   <div>
-                    <label className="text-[12px] font-sans font-medium text-[#1A2C38] block mb-1.5">
-                      Gift code
-                    </label>
+                    <label className={labelClass}>Gift code</label>
                     <input
                       type="text"
                       value={giftCode}
                       onChange={(e) => setGiftCode(e.target.value.toUpperCase().replace(/\s+/g, ""))}
                       placeholder="BRI-FREE"
-                      className={inputClass}
+                      className={`${inputClass} font-mono tracking-wider`}
                       autoFocus
                     />
-                    <p className="text-[11px] font-sans text-[#8AAABB] mt-1">
-                      Gift codes give you free access for a set period. You&apos;ll skip the payment step and can cancel anytime.{" "}
+                    <p className="text-[11px] font-sans text-[#8AAABB] mt-1.5">
+                      Gift codes give you free access for a set period. You&apos;ll skip the payment step.{" "}
                       <button
                         type="button"
-                        onClick={() => { setShowGiftCodeField(false); setGiftCode(""); }}
-                        className="text-[#7BAFC8] hover:underline"
+                        onClick={() => {
+                          setShowGiftCodeField(false);
+                          setGiftCode("");
+                        }}
+                        className="text-[#3D6E8A] underline underline-offset-2 hover:text-[#0F1E28]"
                       >
                         Remove
                       </button>
@@ -427,24 +485,78 @@ function SignUpContent() {
               </div>
             )}
 
-            <div className="max-w-md mx-auto mt-5 flex gap-2">
-              <button onClick={() => setStep("credentials")} className="flex-1 border border-[#D8E8EE] rounded-[10px] px-4 py-2.5 text-[13px] font-sans font-500 hover:bg-[#FAF8F4]">
-                &larr; Back
+            <div className="flex gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => setStep("credentials")}
+                className="flex-1 bg-white text-[#1A2C38] border border-[#D8E8EE] h-[48px] rounded-[8px] text-[13.5px] font-sans font-medium hover:border-[#0F1E28]"
+              >
+                ← Back
               </button>
               <button
+                type="button"
                 onClick={handleSignUp}
                 disabled={!accountType || loading}
-                className="flex-1 bg-[#7BAFC8] text-white font-sans font-medium text-[13px] py-2.5 rounded-[10px] hover:bg-[#6AA0BB] transition-colors disabled:opacity-50"
+                className="flex-[2] inline-flex items-center justify-center gap-2 bg-[#0F1E28] text-white font-sans font-medium text-[14px] h-[48px] rounded-[8px] hover:bg-[#1b2f3a] transition-colors disabled:opacity-40"
               >
-                {loading ? "Creating account..." : "Create account"}
+                {loading ? "Creating account..." : "Create workspace →"}
               </button>
             </div>
           </div>
         )}
 
-        <p className="text-[13px] text-center font-sans text-[#8AAABB] mt-4">
-          Already have an account? <Link href="/login" className="text-[#7BAFC8] hover:underline font-medium">Sign in</Link>
+        <p className="text-[13px] font-sans text-[#8AAABB]">
+          Already have an account?{" "}
+          <Link href="/login" className="text-[#3D6E8A] underline underline-offset-2 font-medium hover:text-[#0F1E28]">
+            Sign in
+          </Link>
         </p>
+      </div>
+
+      {/* ─── RIGHT: TESTIMONIAL (beige + radial gradient) ─── */}
+      <div
+        className="hidden lg:flex bg-[#F0EAE0] border-l border-[#E3DED2] px-16 py-20 flex-col gap-6 justify-center relative overflow-hidden"
+      >
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(60% 60% at 80% 20%, color-mix(in oklab, #7BAFC8 20%, transparent), transparent 70%)",
+          }}
+        />
+        <div className="relative max-w-[480px]">
+          <div className="signup-quote">
+            Flagged a <em>perpetual IP</em> clause I would have signed without reading. That one catch paid for the tool for <em>three years</em>.
+          </div>
+        </div>
+        <div className="relative flex items-center gap-3.5">
+          <span
+            className="inline-flex items-center justify-center w-11 h-11 rounded-full text-white text-[13px] font-medium"
+            style={{ background: "linear-gradient(135deg, #7BAFC8, #3D6E8A)" }}
+          >
+            MH
+          </span>
+          <div>
+            <div className="text-[14px] font-semibold text-[#1A2C38]">Maya Hayes</div>
+            <div className="text-[12px] text-[#4A6070] font-mono tracking-wider mt-0.5">
+              Beauty creator · 410K
+            </div>
+          </div>
+        </div>
+        <div className="signup-proof">
+          <div>
+            <div className="v">Unlimited</div>
+            <div className="l">Deal pipeline</div>
+          </div>
+          <div>
+            <div className="v">9 sec</div>
+            <div className="l">Contract review</div>
+          </div>
+          <div>
+            <div className="v">Read-only</div>
+            <div className="l">Gmail access</div>
+          </div>
+        </div>
       </div>
     </div>
   );

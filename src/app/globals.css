@@ -559,6 +559,59 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
+   FEATURE-SPLIT (used on /for-creators, /for-agencies)
+   ══════════════════════════════════════════════════════════════ */
+
+.feat-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.feat-list li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start; }
+.feat-list .num-stamp {
+  width: 22px; height: 22px;
+  border-radius: 50%; background: var(--pale-blue);
+  border: 1px solid var(--rule-cool);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 10px; color: var(--accent-dark);
+  font-weight: 500;
+}
+.feat-list .title { font-size: 14px; font-weight: 600; color: var(--foreground); }
+.feat-list .desc { font-size: 13px; color: var(--secondary); margin-top: 2px; line-height: 1.5;}
+
+/* ══════════════════════════════════════════════════════════════
+   SIGNUP SPLIT LAYOUT
+   ══════════════════════════════════════════════════════════════ */
+
+.signup-quote {
+  position: relative; max-width: 480px;
+  font-family: var(--font-instrument), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.15; letter-spacing: -0.015em;
+  color: var(--ink-deep);
+  text-wrap: balance;
+}
+.signup-quote em { font-style: italic; color: var(--accent-dark); }
+.signup-quote::before {
+  content: "\201C"; font-size: 80px; line-height: 0;
+  color: var(--accent); position: absolute;
+  top: 18px; left: -38px; font-style: italic;
+}
+
+.signup-proof {
+  position: relative;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 12px; overflow: hidden; margin-top: 40px;
+}
+.signup-proof > div {
+  background: var(--beige);
+  padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.signup-proof .v { font-family: var(--font-instrument), Georgia, serif; font-size: 26px; letter-spacing: -0.02em; color: var(--ink-deep); line-height: 1;}
+.signup-proof .l { font-family: var(--font-ibm-mono), monospace; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted-foreground); }
+
+/* ══════════════════════════════════════════════════════════════
    FOOTER — giant outlined brand mark
    ══════════════════════════════════════════════════════════════ */
 
