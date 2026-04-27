@@ -3,6 +3,7 @@ import { Instrument_Serif, DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
 import { ToastProvider } from "@/components/global/toast";
+import { Analytics } from "@vercel/analytics/next";
 
 const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
@@ -51,6 +52,7 @@ export default function RootLayout({
             {children}
           </ToastProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
