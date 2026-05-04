@@ -1,0 +1,1305 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { PageHeader } from "@/components/layout/page-header";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
+import { useAuth } from "@/contexts/auth-context";
+import { hasPermission } from "@/lib/permissions";
+import { formatDate, timeAgo } from "@/lib/utils";
+import { useToast } from "@/components/global/toast";
+import { TableSkeleton } from "@/components/global/skeleton";
+import {
+  Home,
+  Inbox,
+  CheckSquare,
+  Hash,
+  Send,
+  Plus,
+  Pin,
+  X,
+  ChevronRight,
+  Circle,
+  MessageSquare,
+  User,
+  Clock,
+  Filter,
+  AlertCircle,
+} from "lucide-react";
+
+/* ─── Types ──────────────────────────────────────────────────── */
+
+interface TeamMember {
+  id: string;
+  name: string;
+  avatar: string;
+  role: string;
+  email: string;
+}
+
+interface Presence {
+  user_id: string;
+  last_seen_at: string;
+}
+
+interface ActivityEntry {
+  id: string;
+  actor_name: string;
+  action: string;
+  target: string;
+  created_at: string;
+}
+
+interface Task {
+  id: string;
+  agency_id?: string;
+  title: string;
+  description: string;
+  assigned_to: string | null;
+  created_by?: string;
+  due_date: string;
+  priority: "urgent" | "high" | "medium" | "low";
+  status: "todo" | "in_progress" | "done";
+  linked_deal_id?: string | null;
+  linked_creator_id?: string | null;
+  linked_campaign_id?: string | null;
+  created_at?: string;
+  // Derived for display (joined via profiles map):
+  assignee_name?: string;
+}
+
+interface InboxThread {
+  id: string;
+  agency_id?: string;
+  creator_id: string;
+  assigned_to: string | null;
+  status: "open" | "in_progress" | "resolved";
+  last_message_at: string;
+  created_at: string;
+  // Derived for display (joined from profiles + agency_inbox_messages):
+  creator_name?: string;
+  assignee_name?: string;
+  last_message_preview?: string;
+}
+
+interface InboxMessage {
+  id: string;
+  thread_id: string;
+  sender_id: string;
+  sender_type?: "creator" | "agency";
+  content: string;
+  created_at: string;
+  internal_note?: boolean;
+  // Derived for display:
+  sender_name?: string;
+}
+
+interface Channel {
+  id: string;
+  agency_id?: string;
+  name: string;
+  description?: string;
+  visibility: "all" | "managers" | "custom";
+  created_by?: string | null;
+  archived?: boolean;
+  created_at?: string;
+  // Derived for display:
+  unread_count?: number;
+}
+
+interface ChannelMessage {
+  id: string;
+  channel_id: string;
+  agency_id?: string;
+  sender_id: string;
+  content: string;
+  pinned: boolean;
+  parent_message_id?: string | null;
+  created_at: string;
+  edited_at?: string | null;
+  // Derived for display:
+  sender_name?: string;
+}
+
+type SubView = "home" | "inbox" | "tasks" | "channels";
+
+const priorityColor: Record<string, string> = {
+  urgent: "#A03D3D",
+  high: "#A07830",
+  medium: "#7BAFC8",
+  low: "#8AAABB",
+};
+
+const statusLabel: Record<string, string> = {
+  open: "Open",
+  in_progress: "In Progress",
+  resolved: "Resolved",
+  todo: "To Do",
+  done: "Done",
+};
+
+const statusStyle: Record<string, string> = {
+  open: "bg-[#FFF4EC] text-[#A07830] border border-[#E8D5B8]",
+  in_progress: "bg-[#EDF6FA] text-[#7BAFC8] border border-[#C4DDE8]",
+  resolved: "bg-[#EDF8F0] text-[#3D7A58] border border-[#B8DEC4]",
+  todo: "bg-[#F2F8FB] text-[#8AAABB] border border-[#D8E8EE]",
+  done: "bg-[#EDF8F0] text-[#3D7A58] border border-[#B8DEC4]",
+};
+
+/* ─── Shared pieces ──────────────────────────────────────────── */
+
+function Spinner() {
+  return <TableSkeleton rows={6} cols={4} />;
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-24">
+      <p className="font-serif italic text-[16px] text-[#8AAABB]">{text}</p>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] font-semibold mb-3">
+      {children}
+    </p>
+  );
+}
+
+function PriorityPill({ priority }: { priority: string }) {
+  return (
+    <span
+      className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium text-white capitalize"
+      style={{ backgroundColor: priorityColor[priority] || "#8AAABB" }}
+    >
+      {priority}
+    </span>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  return (
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium capitalize ${statusStyle[status] || statusStyle.todo}`}>
+      {statusLabel[status] || status}
+    </span>
+  );
+}
+
+function isOnline(lastSeenAt: string): boolean {
+  return new Date().getTime() - new Date(lastSeenAt).getTime() < 15 * 60 * 1000;
+}
+
+/* ─── SUB-VIEW 1: TEAM HOME ─────────────────────────────────── */
+
+function TeamHome({ userId }: { userId: string }) {
+  const { data: rawTeam, loading: teamLoading } = useSupabaseQuery<any>("agency_team");
+  const { data: profiles } = useSupabaseQuery<any>("profiles");
+  const { data: presence, loading: presenceLoading } = useSupabaseQuery<Presence>("agency_presence");
+  const { data: rawActivity, loading: activityLoading } = useSupabaseQuery<any>(
+    "agency_activity_log",
+    { order: { column: "created_at", ascending: false }, limit: 20 }
+  );
+  const { data: rawTasks, loading: tasksLoading } = useSupabaseQuery<any>(
+    "agency_tasks",
+    { eq: { column: "assigned_to", value: userId } }
+  );
+
+  const loading = teamLoading || presenceLoading || activityLoading || tasksLoading;
+
+  if (loading) return <Spinner />;
+
+  const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
+  const presenceMap = new Map(presence.map((p) => [p.user_id, p.last_seen_at]));
+
+  // Map raw team rows → TeamMember (join with profiles for name/avatar/email)
+  const team: TeamMember[] = (rawTeam || []).map((t: any) => {
+    const profile = profileById.get(t.user_id);
+    return {
+      id: t.id,
+      name: profile?.full_name || "Unknown",
+      avatar: profile?.avatar_url || "",
+      role: t.role,
+      email: profile?.email || "",
+    };
+  });
+
+  // Map raw activity rows → ActivityEntry (join with profiles for actor name)
+  const activity: ActivityEntry[] = (rawActivity || []).map((a: any) => ({
+    id: a.id,
+    actor_name: profileById.get(a.actor_id)?.full_name || "Someone",
+    action: a.action_type || "did something",
+    target: a.target_type || "",
+    created_at: a.created_at,
+  }));
+
+  // Map raw tasks → Task (schema already matches — just cast)
+  const myTasks: Task[] = (rawTasks || []).map((t: any): Task => ({
+    id: t.id,
+    title: t.title,
+    description: t.description || "",
+    assigned_to: t.assigned_to,
+    due_date: t.due_date || "",
+    priority: t.priority,
+    status: t.status,
+    linked_deal_id: t.linked_deal_id,
+    linked_creator_id: t.linked_creator_id,
+    linked_campaign_id: t.linked_campaign_id,
+  }));
+
+  const sortedTasks = [...myTasks].sort(
+    (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+  );
+
+  return (
+    <div className="space-y-8">
+      {/* Team presence strip */}
+      <div>
+        <SectionLabel>Team</SectionLabel>
+        <div className="flex items-center gap-3 flex-wrap">
+          {team.length === 0 && (
+            <p className="text-[13px] text-[#8AAABB]">No team members yet.</p>
+          )}
+          {team.map((member) => {
+            const online = presenceMap.has(member.id) && isOnline(presenceMap.get(member.id)!);
+            return (
+              <div key={member.id} className="relative group" title={member.name}>
+                <div className="w-10 h-10 rounded-full bg-[#EDF6FA] flex items-center justify-center text-[14px] font-medium text-[#1E3F52] border border-[#D8E8EE]">
+                  {member.avatar ? (
+                    <img src={member.avatar} alt={member.name} className="w-10 h-10 rounded-full object-cover" />
+                  ) : (
+                    member.name.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <span
+                  className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                    online ? "bg-emerald-500" : "bg-gray-300"
+                  }`}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Activity feed */}
+      <div>
+        <SectionLabel>Recent Activity</SectionLabel>
+        <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] divide-y divide-[#EDF6FA]">
+          {activity.length === 0 ? (
+            <div className="px-5 py-8 text-center">
+              <p className="text-[13px] text-[#8AAABB] italic">No activity yet.</p>
+            </div>
+          ) : (
+            activity.map((entry) => (
+              <div key={entry.id} className="px-5 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[13px]">
+                  <span className="font-medium text-[#1A2C38]">{entry.actor_name}</span>
+                  <span className="text-[#4A6070]">{entry.action}</span>
+                  <span className="text-[#7BAFC8] font-medium">{entry.target}</span>
+                </div>
+                <span className="text-[11px] font-mono text-[#8AAABB] shrink-0 ml-4">
+                  {timeAgo(entry.created_at)}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* My assignments */}
+      <div>
+        <SectionLabel>My Assignments</SectionLabel>
+        {sortedTasks.length === 0 ? (
+          <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] px-5 py-8 text-center">
+            <p className="text-[13px] text-[#8AAABB] italic">No tasks assigned to you.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {sortedTasks.map((task) => (
+              <div
+                key={task.id}
+                className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] px-5 py-3.5 flex items-center justify-between"
+                style={{ borderLeftWidth: 3, borderLeftColor: priorityColor[task.priority] }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-[14px] font-medium text-[#1A2C38]">{task.title}</span>
+                  <PriorityPill priority={task.priority} />
+                </div>
+                <div className="flex items-center gap-4">
+                  {(task.linked_deal_id || task.linked_creator_id) && (
+                    <span className="text-[12px] text-[#7BAFC8]">
+                      Linked
+                    </span>
+                  )}
+                  <span className="text-[12px] font-mono text-[#8AAABB]">
+                    {formatDate(task.due_date)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── SUB-VIEW 2: TEAM INBOX ────────────────────────────────── */
+
+function TeamInbox({ userId, role }: { userId: string; role: string }) {
+  const [selectedThread, setSelectedThread] = useState<string | null>(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [isInternal, setIsInternal] = useState(false);
+  const { toast } = useToast();
+
+  const { data: rawThreads, loading: threadsLoading, setData: setRawThreads } =
+    useSupabaseQuery<any>("agency_inbox_threads");
+  const { data: rawMessages, loading: messagesLoading, setData: setRawMessages } =
+    useSupabaseQuery<any>("agency_inbox_messages");
+  const { data: rawTeam } = useSupabaseQuery<any>("agency_team");
+  const { data: profiles } = useSupabaseQuery<any>("profiles");
+  const { update: updateThread } = useSupabaseMutation("agency_inbox_threads");
+  const { insert: insertMessage, loading: sending } = useSupabaseMutation("agency_inbox_messages");
+
+  const loading = threadsLoading || messagesLoading;
+
+  // Build a profile lookup for joins
+  const profileById = useMemo(
+    () => new Map((profiles || []).map((p: any) => [p.id, p])),
+    [profiles]
+  );
+
+  // Transform raw team rows → TeamMember[]
+  const team: TeamMember[] = useMemo(() => {
+    return (rawTeam || []).map((t: any) => {
+      const profile = profileById.get(t.user_id) as any;
+      return {
+        id: t.id,
+        name: profile?.full_name || "Unknown",
+        avatar: profile?.avatar_url || "",
+        role: t.role,
+        email: profile?.email || "",
+      };
+    });
+  }, [rawTeam, profileById]);
+
+  // Helper: map a raw message row → InboxMessage with sender_name
+  function enrichMessage(m: any): InboxMessage {
+    const senderProfile = profileById.get(m.sender_id) as any;
+    return {
+      id: m.id,
+      thread_id: m.thread_id,
+      sender_id: m.sender_id,
+      sender_type: m.sender_type,
+      content: m.content,
+      created_at: m.created_at,
+      internal_note: m.internal_note,
+      sender_name: senderProfile?.full_name || (m.sender_type === "creator" ? "Creator" : "Team"),
+    };
+  }
+
+  // Transform raw threads → InboxThread[] with derived display fields
+  const threads: InboxThread[] = useMemo(() => {
+    return (rawThreads || []).map((t: any) => {
+      const creatorProfile = profileById.get(t.creator_id) as any;
+      const assigneeProfile = t.assigned_to ? (profileById.get(t.assigned_to) as any) : null;
+      // Find the most recent message for this thread for a preview
+      const threadMsgs = (rawMessages || [])
+        .filter((m: any) => m.thread_id === t.id)
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const latest = threadMsgs[0];
+      return {
+        id: t.id,
+        agency_id: t.agency_id,
+        creator_id: t.creator_id,
+        assigned_to: t.assigned_to,
+        status: t.status,
+        last_message_at: t.last_message_at,
+        created_at: t.created_at,
+        creator_name: creatorProfile?.full_name || "Creator",
+        assignee_name: assigneeProfile?.full_name || undefined,
+        last_message_preview: latest?.content?.slice(0, 80) || "No messages yet",
+      };
+    });
+  }, [rawThreads, rawMessages, profileById]);
+
+  const messages: InboxMessage[] = useMemo(
+    () => (rawMessages || []).map(enrichMessage),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rawMessages, profileById]
+  );
+
+  if (loading) return <Spinner />;
+  if (threads.length === 0) return <EmptyState text="No creator messages yet." />;
+
+  const threadMessages = messages.filter((m) => m.thread_id === selectedThread);
+  const activeThreadData = threads.find((t) => t.id === selectedThread);
+
+  async function handleSend() {
+    if (!newMessage.trim() || !selectedThread) return;
+    const msg = await insertMessage({
+      thread_id: selectedThread,
+      sender_id: userId,
+      sender_type: "agency",
+      content: newMessage.trim(),
+      internal_note: isInternal,
+    });
+    if (msg) {
+      setRawMessages((prev) => [...prev, msg]);
+      toast("success", "Message sent");
+    }
+    setNewMessage("");
+    setIsInternal(false);
+  }
+
+  async function handleAssign(threadId: string, memberUserId: string) {
+    // In our team list, each row's id is the agency_team.id but we need user_id.
+    // The select below passes the TeamMember.id (agency_team row id), so look it up.
+    const teamRow = (rawTeam || []).find((t: any) => t.id === memberUserId);
+    const assigneeUserId = teamRow?.user_id || memberUserId;
+    const updated = await updateThread(threadId, { assigned_to: assigneeUserId });
+    if (updated) {
+      setRawThreads((prev) =>
+        prev.map((t: any) => (t.id === threadId ? { ...t, assigned_to: assigneeUserId } : t))
+      );
+    }
+  }
+
+  return (
+    <div className="flex bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] overflow-hidden" style={{ height: 560 }}>
+      {/* Thread sidebar */}
+      <div className="w-[280px] border-r border-[#D8E8EE] overflow-y-auto shrink-0">
+        <div className="px-4 py-3 border-b border-[#D8E8EE]">
+          <SectionLabel>Creator Threads</SectionLabel>
+        </div>
+        {threads.map((thread) => (
+          <button
+            key={thread.id}
+            onClick={() => setSelectedThread(thread.id)}
+            className={`w-full text-left px-4 py-3.5 border-b border-[#EDF6FA] hover:bg-[#FAFCFD] transition-colors ${
+              selectedThread === thread.id ? "bg-[#EDF6FA]" : ""
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[13px] font-medium text-[#1A2C38] truncate">{thread.creator_name}</span>
+              <StatusPill status={thread.status} />
+            </div>
+            <p className="text-[12px] text-[#4A6070] truncate">{thread.last_message_preview}</p>
+            <div className="flex items-center justify-between mt-1.5">
+              <span className="text-[11px] text-[#8AAABB]">{thread.assignee_name || "Unassigned"}</span>
+              <span className="text-[10px] font-mono text-[#8AAABB]">{timeAgo(thread.last_message_at)}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Message panel */}
+      <div className="flex-1 flex flex-col">
+        {!selectedThread ? (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-[13px] text-[#8AAABB] italic">Select a thread to view messages</p>
+          </div>
+        ) : (
+          <>
+            {/* Thread header with assign */}
+            <div className="px-5 py-3 border-b border-[#D8E8EE] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-[#7BAFC8]" />
+                <span className="text-[14px] font-medium text-[#1A2C38]">
+                  {activeThreadData?.creator_name}
+                </span>
+              </div>
+              {hasPermission(role, "canAssignTasks") && (
+                <select
+                  className="text-[12px] border border-[#D8E8EE] rounded-md px-2 py-1 text-[#4A6070] bg-white"
+                  value={activeThreadData?.assigned_to || ""}
+                  onChange={(e) => handleAssign(selectedThread, e.target.value)}
+                >
+                  <option value="">Assign to...</option>
+                  {team.map((m) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+              {threadMessages.length === 0 ? (
+                <p className="text-[13px] text-[#8AAABB] italic text-center py-8">No messages in this thread yet.</p>
+              ) : (
+                threadMessages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`rounded-[8px] px-4 py-3 ${
+                      msg.internal_note
+                        ? "bg-[#FFF8E7] border border-[#E8D5B8]"
+                        : "bg-[#F2F8FB] border border-[#D8E8EE]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-medium text-[#1A2C38]">{msg.sender_name}</span>
+                        {msg.internal_note && (
+                          <span className="text-[10px] uppercase tracking-wide font-semibold text-[#A07830] bg-[#FFF4EC] px-1.5 py-0.5 rounded">
+                            Internal
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-mono text-[#8AAABB]">{timeAgo(msg.created_at)}</span>
+                    </div>
+                    <p className="text-[13px] text-[#4A6070] leading-relaxed">{msg.content}</p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Compose */}
+            <div className="px-5 py-3 border-t border-[#D8E8EE]">
+              <div className="flex items-center gap-2 mb-2">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isInternal}
+                    onChange={(e) => setIsInternal(e.target.checked)}
+                    className="rounded border-[#D8E8EE] text-[#7BAFC8] focus:ring-[#7BAFC8]"
+                  />
+                  <span className="text-[11px] text-[#4A6070]">Internal note (not visible to creator)</span>
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                  placeholder="Type a message..."
+                  className="flex-1 border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] placeholder:text-[#8AAABB] focus:outline-none focus:border-[#7BAFC8]"
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={sending || !newMessage.trim()}
+                  className="bg-[#1E3F52] text-white rounded-[8px] px-4 py-2 text-[13px] font-medium hover:bg-[#1A3648] disabled:opacity-40 flex items-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  Send
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── SUB-VIEW 3: TASKS ─────────────────────────────────────── */
+
+type TaskFilter = "mine" | "all" | "overdue";
+
+function TasksView({ userId, role }: { userId: string; role: string }) {
+  const [filter, setFilter] = useState<TaskFilter>("mine");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const { toast } = useToast();
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    assigned_to: "",
+    due_date: "",
+    priority: "medium" as Task["priority"],
+    linked_deal_id: "",
+    linked_creator_id: "",
+    linked_campaign_id: "",
+  });
+
+  const { data: rawTasks, loading, setData: setRawTasks } = useSupabaseQuery<any>("agency_tasks");
+  const { data: rawTeam } = useSupabaseQuery<any>("agency_team");
+  const { data: profiles } = useSupabaseQuery<any>("profiles");
+  const { insert: insertTask, update: updateTask, loading: mutating } = useSupabaseMutation("agency_tasks");
+
+  const now = new Date();
+
+  // Profile lookup
+  const profileById = useMemo(
+    () => new Map((profiles || []).map((p: any) => [p.id, p])),
+    [profiles]
+  );
+
+  // Team members with display info
+  const team: TeamMember[] = useMemo(() => {
+    return (rawTeam || []).map((t: any) => {
+      const profile = profileById.get(t.user_id) as any;
+      return {
+        id: t.id,
+        name: profile?.full_name || "Unknown",
+        avatar: profile?.avatar_url || "",
+        role: t.role,
+        email: profile?.email || "",
+      };
+    });
+  }, [rawTeam, profileById]);
+
+  // Tasks enriched with assignee_name
+  const tasks: Task[] = useMemo(() => {
+    return (rawTasks || []).map((t: any): Task => {
+      const assigneeProfile = t.assigned_to ? (profileById.get(t.assigned_to) as any) : null;
+      return {
+        id: t.id,
+        agency_id: t.agency_id,
+        title: t.title,
+        description: t.description || "",
+        assigned_to: t.assigned_to,
+        created_by: t.created_by,
+        due_date: t.due_date || "",
+        priority: t.priority,
+        status: t.status,
+        linked_deal_id: t.linked_deal_id,
+        linked_creator_id: t.linked_creator_id,
+        linked_campaign_id: t.linked_campaign_id,
+        created_at: t.created_at,
+        assignee_name: assigneeProfile?.full_name || undefined,
+      };
+    });
+  }, [rawTasks, profileById]);
+
+  const filtered = useMemo(() => {
+    let list = [...tasks];
+    if (filter === "mine") list = list.filter((t) => t.assigned_to === userId);
+    if (filter === "overdue") list = list.filter((t) => t.due_date && new Date(t.due_date) < now && t.status !== "done");
+    return list.sort((a, b) => new Date(a.due_date || 0).getTime() - new Date(b.due_date || 0).getTime());
+  }, [tasks, filter, userId]);
+
+  async function handleAddTask() {
+    if (!newTask.title.trim()) return;
+    // Resolve assigned_to — the UI passes the agency_team.id; we need the user_id.
+    const teamRow = (rawTeam || []).find((t: any) => t.id === newTask.assigned_to);
+    const assignedUserId = teamRow?.user_id || null;
+    const payload: Record<string, any> = {
+      title: newTask.title,
+      description: newTask.description || null,
+      assigned_to: assignedUserId,
+      created_by: userId,
+      due_date: newTask.due_date || null,
+      priority: newTask.priority,
+      status: "todo",
+    };
+    if (newTask.linked_deal_id) payload.linked_deal_id = newTask.linked_deal_id;
+    if (newTask.linked_creator_id) payload.linked_creator_id = newTask.linked_creator_id;
+    if (newTask.linked_campaign_id) payload.linked_campaign_id = newTask.linked_campaign_id;
+
+    const result = await insertTask(payload);
+    if (result) {
+      setRawTasks((prev) => [...prev, result]);
+      toast("success", "Task created");
+    }
+    setNewTask({
+      title: "",
+      description: "",
+      assigned_to: "",
+      due_date: "",
+      priority: "medium",
+      linked_deal_id: "",
+      linked_creator_id: "",
+      linked_campaign_id: "",
+    });
+    setShowAddModal(false);
+  }
+
+  async function cycleStatus(task: Task) {
+    const nextStatus: Record<string, string> = { todo: "in_progress", in_progress: "done", done: "todo" };
+    const newStatus = nextStatus[task.status] || "todo";
+    await updateTask(task.id, { status: newStatus });
+    setRawTasks((prev) =>
+      prev.map((t: any) => (t.id === task.id ? { ...t, status: newStatus } : t))
+    );
+    toast("success", `Task moved to ${statusLabel[newStatus] || newStatus}`);
+  }
+
+  if (loading) return <Spinner />;
+
+  const filterButtons: { key: TaskFilter; label: string }[] = [
+    { key: "mine", label: "My Tasks" },
+    { key: "all", label: "All Tasks" },
+    { key: "overdue", label: "Overdue" },
+  ];
+
+  return (
+    <div className="space-y-5">
+      {/* Filter bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1.5">
+          {filterButtons.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-colors ${
+                filter === f.key
+                  ? "bg-[#1E3F52] text-white"
+                  : "bg-[#F2F8FB] text-[#4A6070] hover:bg-[#E4EFF4]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        {hasPermission(role, "canAssignTasks") && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1.5 bg-[#7BAFC8] text-white rounded-[8px] px-4 py-2 text-[13px] font-medium hover:bg-[#6AA0BB]"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add Task
+          </button>
+        )}
+      </div>
+
+      {/* Task list */}
+      {filtered.length === 0 ? (
+        <EmptyState text="No tasks yet — create one to keep your team on track." />
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((task) => (
+            <button
+              key={task.id}
+              onClick={() => cycleStatus(task)}
+              className="w-full text-left bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] px-5 py-3.5 flex items-center justify-between hover:bg-[#FAFCFD] transition-colors"
+              style={{ borderLeftWidth: 3, borderLeftColor: priorityColor[task.priority] }}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={`text-[14px] font-medium ${task.status === "done" ? "line-through text-[#8AAABB]" : "text-[#1A2C38]"}`}>
+                  {task.title}
+                </span>
+                <StatusPill status={task.status} />
+                <PriorityPill priority={task.priority} />
+              </div>
+              <div className="flex items-center gap-4 shrink-0 ml-4">
+                {task.assignee_name && (
+                  <span className="text-[12px] text-[#4A6070]">{task.assignee_name}</span>
+                )}
+                {(task.linked_deal_id || task.linked_creator_id || task.linked_campaign_id) && (
+                  <span className="text-[12px] text-[#7BAFC8]">Linked</span>
+                )}
+                <span className="text-[12px] font-mono text-[#8AAABB]">{formatDate(task.due_date)}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Add task modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-[#FAF8F4] border-[1.5px] border-[#D8E8EE] rounded-[10px] w-full max-w-lg p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-[18px] font-serif text-[#1A2C38]">
+                New <em className="text-[#7BAFC8]">task</em>
+              </h3>
+              <button onClick={() => setShowAddModal(false)} className="text-[#8AAABB] hover:text-[#4A6070]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Title</label>
+                <input
+                  type="text"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                  className="w-full border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] focus:outline-none focus:border-[#7BAFC8]"
+                />
+              </div>
+              <div>
+                <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Description</label>
+                <textarea
+                  value={newTask.description}
+                  onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                  rows={3}
+                  className="w-full border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] focus:outline-none focus:border-[#7BAFC8] resize-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Assign to</label>
+                  <select
+                    value={newTask.assigned_to}
+                    onChange={(e) => setNewTask({ ...newTask, assigned_to: e.target.value })}
+                    className="w-full border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]"
+                  >
+                    <option value="">Select member</option>
+                    {team.map((m) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Due date</label>
+                  <input
+                    type="date"
+                    value={newTask.due_date}
+                    onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+                    className="w-full border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] focus:outline-none focus:border-[#7BAFC8]"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Priority</label>
+                  <select
+                    value={newTask.priority}
+                    onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as Task["priority"] })}
+                    className="w-full border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]"
+                  >
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Link to (optional)</label>
+                  <p className="text-[11px] text-[#8AAABB] italic pt-2">
+                    Link tasks to deals or creators from their detail pages.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 text-[13px] font-medium text-[#4A6070] hover:text-[#1A2C38]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddTask}
+                disabled={mutating || !newTask.title.trim()}
+                className="bg-[#1E3F52] text-white rounded-[8px] px-5 py-2 text-[13px] font-medium hover:bg-[#1A3648] disabled:opacity-40"
+              >
+                Create Task
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── SUB-VIEW 4: CHANNELS ──────────────────────────────────── */
+
+function ChannelsView({ role, userId, agencyId }: { role: string; userId: string; agencyId: string }) {
+  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [pinToggle, setPinToggle] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newChannel, setNewChannel] = useState({ name: "", description: "", visibility: "all" as Channel["visibility"] });
+  const { toast } = useToast();
+
+  const { data: rawChannels, loading: channelsLoading, setData: setRawChannels } =
+    useSupabaseQuery<any>("agency_channels");
+  const { data: rawMessages, loading: messagesLoading, setData: setRawMessages } =
+    useSupabaseQuery<any>("agency_channel_messages");
+  const { data: profiles } = useSupabaseQuery<any>("profiles");
+  const { insert: insertMessage, loading: sending } = useSupabaseMutation("agency_channel_messages");
+  const { insert: insertChannel, loading: creating } = useSupabaseMutation("agency_channels");
+
+  const loading = channelsLoading || messagesLoading;
+
+  // Profile lookup
+  const profileById = useMemo(
+    () => new Map((profiles || []).map((p: any) => [p.id, p])),
+    [profiles]
+  );
+
+  // Channels (unread_count is client-side placeholder since DB doesn't track it)
+  const channels: Channel[] = useMemo(() => {
+    return (rawChannels || [])
+      .filter((c: any) => !c.archived)
+      .map((c: any): Channel => ({
+        id: c.id,
+        agency_id: c.agency_id,
+        name: c.name,
+        description: c.description,
+        visibility: c.visibility,
+        created_by: c.created_by,
+        archived: c.archived,
+        created_at: c.created_at,
+        unread_count: 0,
+      }));
+  }, [rawChannels]);
+
+  // Messages enriched with sender_name
+  const messages: ChannelMessage[] = useMemo(() => {
+    return (rawMessages || []).map((m: any): ChannelMessage => {
+      const senderProfile = profileById.get(m.sender_id) as any;
+      return {
+        id: m.id,
+        channel_id: m.channel_id,
+        agency_id: m.agency_id,
+        sender_id: m.sender_id,
+        content: m.content,
+        pinned: m.pinned || false,
+        parent_message_id: m.parent_message_id,
+        created_at: m.created_at,
+        edited_at: m.edited_at,
+        sender_name: senderProfile?.full_name || "Team",
+      };
+    });
+  }, [rawMessages, profileById]);
+
+  if (loading) return <Spinner />;
+
+  if (channels.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <p className="font-serif italic text-[16px] text-[#8AAABB] mb-4">
+          No channels yet — they'll be created automatically when your team starts using Create Suite.
+        </p>
+        {hasPermission(role, "canCreateChannels") && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-1.5 bg-[#7BAFC8] text-white rounded-[8px] px-4 py-2 text-[13px] font-medium hover:bg-[#6AA0BB]"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Create Channel
+          </button>
+        )}
+        {showCreateModal && (
+          <CreateChannelModal
+            newChannel={newChannel}
+            setNewChannel={setNewChannel}
+            creating={creating}
+            onClose={() => setShowCreateModal(false)}
+            onCreate={handleCreateChannel}
+          />
+        )}
+      </div>
+    );
+  }
+
+  const channelMessages = messages
+    .filter((m) => m.channel_id === selectedChannel && !m.parent_message_id)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  const replies = messages.filter((m) => m.channel_id === selectedChannel && m.parent_message_id);
+  const activeChannel = channels.find((c) => c.id === selectedChannel);
+
+  async function handleSend() {
+    if (!newMessage.trim() || !selectedChannel) return;
+    const msg = await insertMessage({
+      channel_id: selectedChannel,
+      agency_id: agencyId,
+      sender_id: userId,
+      content: newMessage.trim(),
+      pinned: pinToggle,
+    });
+    if (msg) {
+      setRawMessages((prev) => [...prev, msg]);
+      toast("success", "Message sent");
+    }
+    setNewMessage("");
+    setPinToggle(false);
+  }
+
+  async function handleCreateChannel() {
+    if (!newChannel.name.trim()) return;
+    const result = await insertChannel({
+      name: newChannel.name,
+      description: newChannel.description || null,
+      visibility: newChannel.visibility,
+      agency_id: agencyId,
+      created_by: userId,
+      archived: false,
+    });
+    if (result) {
+      setRawChannels((prev) => [...prev, result]);
+      toast("success", "Channel created");
+    }
+    setNewChannel({ name: "", description: "", visibility: "all" });
+    setShowCreateModal(false);
+  }
+
+  return (
+    <>
+      <div className="flex bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] overflow-hidden" style={{ height: 560 }}>
+        {/* Channel sidebar */}
+        <div className="w-[240px] border-r border-[#D8E8EE] flex flex-col shrink-0">
+          <div className="px-4 py-3 border-b border-[#D8E8EE]">
+            <SectionLabel>Channels</SectionLabel>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {channels.map((ch) => (
+              <button
+                key={ch.id}
+                onClick={() => setSelectedChannel(ch.id)}
+                className={`w-full text-left px-4 py-3 border-b border-[#EDF6FA] hover:bg-[#FAFCFD] transition-colors flex items-center justify-between ${
+                  selectedChannel === ch.id ? "bg-[#EDF6FA]" : ""
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Hash className="w-3.5 h-3.5 text-[#8AAABB]" />
+                  <span className="text-[13px] font-medium text-[#1A2C38]">{ch.name}</span>
+                </div>
+                {(ch.unread_count ?? 0) > 0 && (
+                  <span className="bg-[#7BAFC8] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {ch.unread_count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          {hasPermission(role, "canCreateChannels") && (
+            <div className="px-4 py-3 border-t border-[#D8E8EE]">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="w-full flex items-center justify-center gap-1.5 text-[12px] font-medium text-[#7BAFC8] hover:text-[#6AA0BB]"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Create channel
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Message panel */}
+        <div className="flex-1 flex flex-col">
+          {!selectedChannel ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-[13px] text-[#8AAABB] italic">Select a channel to view messages</p>
+            </div>
+          ) : (
+            <>
+              {/* Channel header */}
+              <div className="px-5 py-3 border-b border-[#D8E8EE] flex items-center gap-2">
+                <Hash className="w-4 h-4 text-[#7BAFC8]" />
+                <span className="text-[14px] font-medium text-[#1A2C38]">{activeChannel?.name}</span>
+                {activeChannel?.description && (
+                  <span className="text-[12px] text-[#8AAABB] ml-2">{activeChannel.description}</span>
+                )}
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+                {channelMessages.length === 0 ? (
+                  <p className="text-[13px] text-[#8AAABB] italic text-center py-8">No messages in this channel yet.</p>
+                ) : (
+                  channelMessages.map((msg) => {
+                    const msgReplies = replies.filter((r) => r.parent_message_id === msg.id);
+                    return (
+                      <div key={msg.id}>
+                        <div className={`rounded-[8px] px-4 py-3 ${msg.pinned ? "bg-[#FFF8E7] border border-[#E8D5B8]" : "bg-[#F2F8FB] border border-[#D8E8EE]"}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[13px] font-medium text-[#1A2C38]">{msg.sender_name}</span>
+                              {msg.pinned && (
+                                <Pin className="w-3 h-3 text-[#A07830]" />
+                              )}
+                            </div>
+                            <span className="text-[11px] font-mono text-[#8AAABB]">{timeAgo(msg.created_at)}</span>
+                          </div>
+                          <p className="text-[13px] text-[#4A6070] leading-relaxed">{msg.content}</p>
+                        </div>
+                        {/* Thread replies */}
+                        {msgReplies.length > 0 && (
+                          <div className="ml-6 mt-1 space-y-1.5">
+                            {msgReplies.map((reply) => (
+                              <div key={reply.id} className="rounded-[6px] px-3 py-2 bg-[#FAFCFD] border border-[#EDF6FA]">
+                                <div className="flex items-center justify-between mb-0.5">
+                                  <span className="text-[12px] font-medium text-[#1A2C38]">{reply.sender_name}</span>
+                                  <span className="text-[10px] font-mono text-[#8AAABB]">{timeAgo(reply.created_at)}</span>
+                                </div>
+                                <p className="text-[12px] text-[#4A6070]">{reply.content}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Compose */}
+              <div className="px-5 py-3 border-t border-[#D8E8EE]">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                    placeholder={`Message #${activeChannel?.name || ""}...`}
+                    className="flex-1 border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] placeholder:text-[#8AAABB] focus:outline-none focus:border-[#7BAFC8]"
+                  />
+                  <button
+                    onClick={() => setPinToggle(!pinToggle)}
+                    className={`rounded-[8px] px-2.5 py-2 border transition-colors ${
+                      pinToggle ? "bg-[#FFF8E7] border-[#E8D5B8] text-[#A07830]" : "border-[#D8E8EE] text-[#8AAABB] hover:text-[#4A6070]"
+                    }`}
+                    title="Pin message"
+                  >
+                    <Pin className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={handleSend}
+                    disabled={sending || !newMessage.trim()}
+                    className="bg-[#1E3F52] text-white rounded-[8px] px-4 py-2 text-[13px] font-medium hover:bg-[#1A3648] disabled:opacity-40 flex items-center gap-1.5"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    Send
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Create channel modal */}
+      {showCreateModal && (
+        <CreateChannelModal
+          newChannel={newChannel}
+          setNewChannel={setNewChannel}
+          creating={creating}
+          onClose={() => setShowCreateModal(false)}
+          onCreate={handleCreateChannel}
+        />
+      )}
+    </>
+  );
+}
+
+function CreateChannelModal({
+  newChannel,
+  setNewChannel,
+  creating,
+  onClose,
+  onCreate,
+}: {
+  newChannel: { name: string; description: string; visibility: Channel["visibility"] };
+  setNewChannel: (v: { name: string; description: string; visibility: Channel["visibility"] }) => void;
+  creating: boolean;
+  onClose: () => void;
+  onCreate: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+      <div className="bg-[#FAF8F4] border-[1.5px] border-[#D8E8EE] rounded-[10px] w-full max-w-md p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-[18px] font-serif text-[#1A2C38]">
+            New <em className="text-[#7BAFC8]">channel</em>
+          </h3>
+          <button onClick={onClose} className="text-[#8AAABB] hover:text-[#4A6070]">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Channel name</label>
+            <input
+              type="text"
+              value={newChannel.name}
+              onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
+              placeholder="e.g. deals, contracts"
+              className="w-full border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] placeholder:text-[#8AAABB] focus:outline-none focus:border-[#7BAFC8]"
+            />
+          </div>
+          <div>
+            <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Description</label>
+            <input
+              type="text"
+              value={newChannel.description}
+              onChange={(e) => setNewChannel({ ...newChannel, description: e.target.value })}
+              placeholder="What is this channel about?"
+              className="w-full border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] placeholder:text-[#8AAABB] focus:outline-none focus:border-[#7BAFC8]"
+            />
+          </div>
+          <div>
+            <label className="text-[12px] font-medium text-[#4A6070] block mb-1">Visibility</label>
+            <select
+              value={newChannel.visibility}
+              onChange={(e) => setNewChannel({ ...newChannel, visibility: e.target.value as Channel["visibility"] })}
+              className="w-full border border-[#D8E8EE] rounded-[8px] px-3 py-2 text-[13px] text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]"
+            >
+              <option value="all">All team members</option>
+              <option value="managers">Managers only</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <button onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-[#4A6070] hover:text-[#1A2C38]">
+            Cancel
+          </button>
+          <button
+            onClick={onCreate}
+            disabled={creating || !newChannel.name.trim()}
+            className="bg-[#1E3F52] text-white rounded-[8px] px-5 py-2 text-[13px] font-medium hover:bg-[#1A3648] disabled:opacity-40"
+          >
+            Create Channel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── MAIN COMPONENT ─────────────────────────────────────────── */
+
+const navItems: { key: SubView; label: string; icon: React.ElementType }[] = [
+  { key: "home", label: "Home", icon: Home },
+  { key: "inbox", label: "Inbox", icon: Inbox },
+  { key: "tasks", label: "Tasks", icon: CheckSquare },
+  { key: "channels", label: "Channels", icon: Hash },
+];
+
+export function TeamTab() {
+  const [view, setView] = useState<SubView>("home");
+  const { user, profile } = useAuth();
+
+  const userId = user?.id || "";
+  // agency_id resolution: if the current user is the agency owner, their own id is the agency_id.
+  // If they're a team member, their profile should have agency_id set.
+  const agencyId = (profile as any)?.account_type === "agency"
+    ? userId
+    : ((profile as any)?.agency_id || userId);
+  // If account_type is agency, they're the owner. Otherwise check agency_role.
+  const role = (profile as any)?.account_type === "agency" ? "owner" : ((profile as any)?.agency_role || "assistant");
+
+  return (
+    <div className="bg-[#FAF8F4] min-h-screen">
+      <PageHeader
+        headline={
+          <>
+            Your <em className="text-[#7BAFC8]">team</em>
+          </>
+        }
+        subheading="Collaborate, communicate, and stay aligned."
+      />
+
+      {/* Sub-view nav pills */}
+      <div className="flex gap-1.5 mb-8">
+        {navItems.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
+              view === key
+                ? "bg-[#1E3F52] text-white"
+                : "bg-white border border-[#D8E8EE] text-[#4A6070] hover:bg-[#F2F8FB]"
+            }`}
+          >
+            <Icon className="w-3.5 h-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Active sub-view */}
+      {view === "home" && <TeamHome userId={userId} />}
+      {view === "inbox" && <TeamInbox userId={userId} role={role} />}
+      {view === "tasks" && <TasksView userId={userId} role={role} />}
+      {view === "channels" && <ChannelsView role={role} userId={userId} agencyId={agencyId} />}
+    </div>
+  );
+}

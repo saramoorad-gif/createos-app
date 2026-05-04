@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="60" viewBox="0 0 340 60" role="img">
+<title>CreateSuite</title>
+<circle cx="24" cy="30" r="18" fill="#D6EAF4"/>
+<circle cx="41" cy="30" r="18" fill="#8BBFD8" opacity="0.85"/>
+<text x="68" y="40" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="400" fill="#2A3D48" letter-spacing="-0.5">Create<tspan font-weight="300" font-style="italic" fill="#B8D8EC" letter-spacing="-0.5">suite</tspan></text>
+</svg>
