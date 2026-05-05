@@ -14,10 +14,18 @@ import { createHash } from "crypto";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { promo_code, cookie_id, referer, user_agent, landing_page } = await req.json();
+    const body = await req.json();
+    // Accept both { promo_code } (original middleware flow) and
+    // { code } (signup/checkout page direct call). cookie_id is
+    // optional — callers that don't have one get a server-generated id.
+    const promo_code: string = (body.promo_code || body.code || "").trim();
+    const cookie_id: string = (body.cookie_id || `auto-${Date.now()}`).trim();
+    const referer: string = body.referer || "";
+    const user_agent: string = body.user_agent || "";
+    const landing_page: string = body.landing_page || body.page || "";
 
-    if (!promo_code || !cookie_id) {
-      return NextResponse.json({ error: "Missing promo_code or cookie_id" }, { status: 400 });
+    if (!promo_code) {
+      return NextResponse.json({ error: "Missing promo_code" }, { status: 400 });
     }
 
     const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();

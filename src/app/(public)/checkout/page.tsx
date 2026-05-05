@@ -104,6 +104,17 @@ function CheckoutContent() {
     | { status: "invalid"; message: string }
   >(refCode ? { status: "checking" } : { status: "idle" });
 
+  // Track affiliate link clicks from the checkout page too (creator may share
+  // /checkout?ref=CODE directly instead of /signup?ref=CODE).
+  useEffect(() => {
+    if (!refCode) return;
+    fetch("/api/affiliates/track-click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: refCode.toUpperCase(), page: "checkout" }),
+    }).catch(() => {});
+  }, [refCode]);
+
   // Auto-validate a ref code that arrived via URL so the banner matches reality
   // (we used to assume URL codes were always valid, which meant a typo in a
   // shared link silently gave $12 off to a non-existent referrer).
@@ -166,9 +177,13 @@ function CheckoutContent() {
   useEffect(() => {
     if (authLoading) return;
 
-    // Not signed in → signup
+    // Not signed in → signup. Preserve the ref code so the creator
+    // gets credited even if the user lands directly on /checkout.
     if (!user && isSupabaseConfigured()) {
-      router.push("/signup");
+      const signupUrl = refCode
+        ? `/signup?plan=${planKey}&ref=${encodeURIComponent(refCode)}`
+        : `/signup?plan=${planKey}`;
+      router.push(signupUrl);
       return;
     }
 

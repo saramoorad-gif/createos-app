@@ -118,6 +118,17 @@ function SignUpContent() {
     }
   }
 
+  // Track affiliate link clicks so conversion analytics work even for users
+  // who come in via a shared URL (not just the marketing homepage).
+  useEffect(() => {
+    if (!refCode) return;
+    fetch("/api/affiliates/track-click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: refCode.toUpperCase(), page: "signup" }),
+    }).catch(() => {}); // fire-and-forget; never block the UI
+  }, [refCode]);
+
   // Clear any existing session on mount so a pre-signed-in user (e.g. admin)
   // doesn't accidentally hijack the new account creation flow. Supabase's
   // signUp() does NOT replace an existing session when email confirmation is
@@ -134,18 +145,40 @@ function SignUpContent() {
     })();
   }, []);
 
-  // Look up referrer name if ref code is present
+  // Look up referrer name if ref code is present.
+  // Checks profiles.referral_code first, then affiliates.promo_code so that
+  // UGC creators who are approved affiliates show their name in the banner
+  // instead of the generic "You've been invited!" fallback.
   useEffect(() => {
     async function lookupReferrer() {
       if (!refCode || !isSupabaseConfigured()) return;
       const sb = getSupabase();
-      const { data } = await sb
+      // 1. Check regular referral code on profiles
+      const { data: profileData } = await sb
         .from("profiles")
         .select("full_name")
         .eq("referral_code", refCode.toUpperCase())
         .single();
-      if (data?.full_name) {
-        setReferrerName(data.full_name);
+      if (profileData?.full_name) {
+        setReferrerName(profileData.full_name);
+        return;
+      }
+      // 2. Fallback: check affiliate promo codes and look up the owner's name
+      const { data: affiliateData } = await sb
+        .from("affiliates")
+        .select("user_id")
+        .eq("promo_code", refCode.toUpperCase())
+        .eq("status", "active")
+        .single();
+      if (affiliateData?.user_id) {
+        const { data: ownerData } = await sb
+          .from("profiles")
+          .select("full_name")
+          .eq("id", affiliateData.user_id)
+          .single();
+        if (ownerData?.full_name) {
+          setReferrerName(ownerData.full_name);
+        }
       }
     }
     lookupReferrer();
