@@ -615,7 +615,7 @@ function SignUpContent() {
                           setGiftCode(e.target.value.toUpperCase().replace(/\s+/g, ""));
                           if (giftCheck.status !== "idle") setGiftCheck({ status: "idle" });
                         }}
-                        placeholder="BRI-FREE"
+                        placeholder="CREATORCODE"
                         className={`${inputClass} font-mono tracking-wider flex-1`}
                         autoFocus
                       />

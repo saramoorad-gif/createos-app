@@ -792,7 +792,7 @@ function GiftCodesTab({ getAuthHeader }: { getAuthHeader: () => Promise<Record<s
                 type="text"
                 value={form.code}
                 onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase().replace(/\s+/g, "") })}
-                placeholder="BRI-FREE"
+                placeholder="CREATOR-FREE"
                 required
                 minLength={2}
                 className={`${inputClass} font-mono`}

@@ -439,7 +439,7 @@ function CheckoutContent() {
                             setRefInput(e.target.value.toUpperCase().replace(/\s+/g, ""));
                             if (refCheck.status !== "idle") setRefCheck({ status: "idle" });
                           }}
-                          placeholder="BRIFREE"
+                          placeholder="CREATORCODE"
                           className="flex-1 h-[40px] rounded-[8px] border border-[#D8E8EE] px-3 text-[13px] font-mono tracking-wider text-[#1A2C38] bg-white focus:outline-none focus:ring-[3px] focus:ring-[#7BAFC8]/20 focus:border-[#7BAFC8]"
                         />
                         <button
