@@ -9,6 +9,10 @@ import { createClient } from "@supabase/supabase-js";
 function getSupabaseServer(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   if (!authHeader) return null;
+  // Reject obviously malformed tokens before hitting Supabase — a valid
+  // Supabase JWT always has exactly 3 dot-separated parts.
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  if (token.split(".").length !== 3) return null;
   return createClient(
     (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim(),
     (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim(),
