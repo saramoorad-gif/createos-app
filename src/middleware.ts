@@ -12,6 +12,15 @@ const publicRoutes = [
   "/admin", // /admin has its own auth check inside the page
 ];
 
+// Match a public route with exact path-segment boundary so a route like "/r"
+// doesn't accidentally match "/rate-calculator" or "/referrals". A route
+// matches if the pathname equals it exactly OR starts with it followed by "/".
+function isPublicRoute(pathname: string): boolean {
+  return publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  );
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
@@ -34,11 +43,12 @@ export async function middleware(request: NextRequest) {
   // Homepage is always public
   if (pathname === "/") return response;
 
-  // Allow public routes
-  if (publicRoutes.some((route) => pathname.startsWith(route))) return response;
+  // Allow public routes (exact segment match — prevents "/r" matching "/referrals")
+  if (isPublicRoute(pathname)) return response;
 
-  // Allow static files and API routes
-  if (pathname.startsWith("/_next") || pathname.startsWith("/api") || pathname.includes(".")) {
+  // Allow static files and API routes ("/api/" with trailing slash so "/api-keys"
+  // app page is not accidentally treated as an API route and skipped)
+  if (pathname.startsWith("/_next") || pathname.startsWith("/api/") || pathname.includes(".")) {
     return response;
   }
 
