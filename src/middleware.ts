@@ -7,6 +7,8 @@ const publicRoutes = [
   "/help", "/contact", "/privacy", "/terms", "/team-onboarding",
   "/forgot-password", "/reset-password",
   "/affiliate-agreement", "/referral-program", "/creators",
+  "/docs", // public API documentation
+  "/r",    // public brand report viewer (/r/[token])
   "/admin", // /admin has its own auth check inside the page
 ];
 
