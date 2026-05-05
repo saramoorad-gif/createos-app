@@ -642,17 +642,10 @@ function StanTab() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowManual(true)}
-            className="flex items-center gap-1.5 border-[1.5px] border-[#D8E8EE] rounded-[8px] px-3.5 py-2 text-[12px] font-sans text-[#1A2C38] hover:bg-[#FAF8F4]"
-            style={{ fontWeight: 500 }}
-          >
-            <Plus className="h-3.5 w-3.5" /> Log Manually
-          </button>
-          <button
-            onClick={() => setShowConnect(true)}
             className="flex items-center gap-1.5 bg-[#1E3F52] text-white rounded-[8px] px-3.5 py-2 text-[12px] font-sans"
             style={{ fontWeight: 600 }}
           >
-            <LinkIcon className="h-3.5 w-3.5" /> Connect Stan Store
+            <Plus className="h-3.5 w-3.5" /> Log Earnings
           </button>
         </div>
       </div>
@@ -660,9 +653,8 @@ function StanTab() {
       {!hasData ? (
         <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-10 text-center">
           <DollarSign className="h-8 w-8 text-[#D8E8EE] mx-auto mb-3" />
-          <p className="text-[14px] font-sans text-[#4A6070]">
-            Connect your Stan Store or log earnings manually.
-          </p>
+          <p className="text-[14px] font-sans text-[#4A6070] mb-1">Track your Stan Store earnings</p>
+          <p className="text-[12px] font-sans text-[#8AAABB]">Log earnings manually to include them in your income summary and tax export.</p>
         </div>
       ) : (
         <>
@@ -745,49 +737,6 @@ function StanTab() {
             </table>
           </div>
         </>
-      )}
-
-      {/* Connect Modal */}
-      {showConnect && (
-        <Modal title="Connect Stan Store" onClose={() => setShowConnect(false)}>
-          <Field label="Stan Store Username">
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="yourstore"
-              className={inputClass}
-            />
-          </Field>
-          <Field label="API Key">
-            <input
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk_live_..."
-              className={inputClass}
-              type="password"
-            />
-          </Field>
-          <button
-            onClick={() => {
-              setConnected(true);
-              setShowConnect(false);
-            }}
-            className="w-full bg-[#1E3F52] text-white rounded-[8px] px-4 py-2.5 text-[13px] font-sans mt-2"
-            style={{ fontWeight: 600 }}
-          >
-            Connect
-          </button>
-          <button
-            onClick={() => {
-              setShowConnect(false);
-              setShowManual(true);
-            }}
-            className="w-full border-[1.5px] border-[#D8E8EE] rounded-[8px] px-4 py-2.5 text-[13px] font-sans text-[#4A6070] hover:bg-[#FAF8F4]"
-            style={{ fontWeight: 500 }}
-          >
-            Or enter earnings manually
-          </button>
-        </Modal>
       )}
 
       {/* Manual Entry Modal */}

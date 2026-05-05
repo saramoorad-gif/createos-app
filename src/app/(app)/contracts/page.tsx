@@ -372,6 +372,24 @@ export default function ContractsPage() {
       )}
 
       {/* ─── AI Review View ──────────────────────────── */}
+      {view === "review" && profile?.account_type === "free" && (
+        <div className="bg-[#FFF8EC] border border-amber-200 rounded-[10px] p-6 mb-6 flex items-start gap-4">
+          <Sparkles className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[14px] font-sans text-[#1A2C38] mb-1" style={{ fontWeight: 600 }}>AI Contract Review is a paid feature</p>
+            <p className="text-[13px] font-sans text-[#4A6070] mb-3">
+              Upgrade to UGC Creator or UGC + Influencer to get instant AI analysis of payment terms, usage rights, exclusivity clauses, and red flags — with specific negotiation tips.
+            </p>
+            <a
+              href="/pricing"
+              className="inline-block bg-[#1E3F52] text-white rounded-[8px] px-4 py-2 text-[12px] font-sans hover:bg-[#2a5269] transition-colors"
+              style={{ fontWeight: 600 }}
+            >
+              View plans →
+            </a>
+          </div>
+        </div>
+      )}
       {view === "review" && (
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
         {/* Main area */}

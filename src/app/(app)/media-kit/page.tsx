@@ -78,7 +78,8 @@ function MediaKitPageContent() {
 
   const displayName = fullName || profile.full_name || "Creator";
   const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  const slug = displayName.toLowerCase().replace(/\s+/g, "");
+  // Use profile ID as the kit URL — guaranteed unique, no name collision issues.
+  const kitId = profile.id;
   const inputClass = "w-full rounded-btn border-[1.5px] border-[#D8E8EE] px-3 py-2.5 text-[14px] font-sans text-[#1A2C38] bg-white focus:outline-none focus:border-[#7BAFC8]";
   const labelClass = "text-[11px] font-sans text-[#8AAABB] uppercase tracking-[1.5px] block mb-1.5";
 
@@ -90,9 +91,9 @@ function MediaKitPageContent() {
       <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-card p-4 flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <ExternalLink className="h-4 w-4 text-[#8AAABB]" />
-          <code className="text-[12px] font-mono text-[#8AAABB]">createsuite.co/kit/{slug}</code>
+          <code className="text-[12px] font-mono text-[#8AAABB]">createsuite.co/kit/{kitId}</code>
         </div>
-        <button onClick={() => { navigator.clipboard.writeText("https://createsuite.co/kit/" + slug); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="flex items-center gap-1.5 text-[12px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>
+        <button onClick={() => { navigator.clipboard.writeText("https://createsuite.co/kit/" + kitId); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="flex items-center gap-1.5 text-[12px] font-sans text-[#7BAFC8] hover:underline" style={{ fontWeight: 500 }}>
           {copied ? <><Check className="h-3.5 w-3.5" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy link</>}
         </button>
       </div>

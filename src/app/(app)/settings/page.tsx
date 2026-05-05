@@ -443,25 +443,14 @@ function IntegrationsSection() {
 }
 
 function NotificationsSection() {
-  const events = ["Deal stage changes", "New brand inquiry", "Invoice overdue", "Contract expiring", "Creator message", "Weekly digest"];
-  const [prefs, setPrefs] = useState(Object.fromEntries(events.map(e => [e, { email: true, inApp: true }])));
   return (
     <div className="space-y-6">
       <p className="text-[10px] font-sans uppercase tracking-[3px] text-[#8AAABB] mb-4" style={{ fontWeight: 600 }}>NOTIFICATIONS</p>
-      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] overflow-hidden">
-        <div className="grid grid-cols-3 gap-4 px-5 py-3 bg-[#F0EAE0] text-[9px] font-sans uppercase tracking-[2px] text-[#8AAABB] border-b border-[#D8E8EE]" style={{ fontWeight: 600 }}><span>Event</span><span className="text-center">Email</span><span className="text-center">In-App</span></div>
-        {events.map(ev => (
-          <div key={ev} className="grid grid-cols-3 gap-4 px-5 py-3 border-b border-[#EEE8E0] last:border-b-0 items-center">
-            <span className="text-[13px] font-sans text-[#1A2C38]">{ev}</span>
-            {["email", "inApp"].map(type => (
-              <div key={type} className="text-center">
-                <button onClick={() => setPrefs(p => ({ ...p, [ev]: { ...p[ev], [type]: !p[ev][type] } }))} className={`h-6 w-11 rounded-full transition-colors inline-flex ${prefs[ev]?.[type] ? "bg-[#7BAFC8]" : "bg-[#D8E8EE]"}`}>
-                  <div className={`h-5 w-5 rounded-full bg-white shadow transition-transform mt-0.5 ${prefs[ev]?.[type] ? "translate-x-5" : "translate-x-0.5"}`} />
-                </button>
-              </div>
-            ))}
-          </div>
-        ))}
+      <div className="bg-white border-[1.5px] border-[#D8E8EE] rounded-[10px] p-10 text-center">
+        <p className="text-[16px] font-serif italic text-[#8AAABB] mb-2">Notification preferences coming soon</p>
+        <p className="text-[13px] font-sans text-[#4A6070] max-w-sm mx-auto">
+          We&apos;re building email and in-app notification controls — deal stage changes, overdue invoices, contract expiry alerts, and more. This will be available in the next update.
+        </p>
       </div>
     </div>
   );

@@ -64,10 +64,13 @@ function BrandRadarContent() {
   async function findMatches() {
     setLoading(true);
     setHasRun(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
     try {
       const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           type: "brand_match",
           context: {
@@ -96,9 +99,15 @@ function BrandRadarContent() {
       } else {
         throw new Error("Malformed response");
       }
-    } catch (e) {
+    } catch (e: any) {
+      if (e?.name === "AbortError") {
+        toast("error", "Took too long — try again in a moment.");
+      } else {
+        toast("error", "Couldn't generate matches. Try again.");
+      }
       console.error("Failed to get brand matches:", e);
-      toast("error", "Couldn't generate matches. Try again.");
+    } finally {
+      clearTimeout(timeout);
     }
     setLoading(false);
   }
